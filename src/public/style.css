@@ -80,8 +80,10 @@ body::before {
   display: grid;
   place-items: center;
   background:
-    linear-gradient(130deg, rgba(12, 14, 18, 0.42), rgba(41, 28, 21, 0.2)),
-    url('/static/arena.jpeg') center / cover no-repeat;
+    radial-gradient(circle at 18% 16%, rgba(255, 224, 190, 0.26), transparent 42%),
+    radial-gradient(circle at 82% 18%, rgba(146, 170, 191, 0.2), transparent 38%),
+    radial-gradient(circle at 50% 84%, rgba(191, 150, 116, 0.22), transparent 45%),
+    linear-gradient(145deg, #2b241f 0%, #3a2c22 36%, #5b4736 100%);
   transform: translateZ(0);
   will-change: transform;
   overflow: hidden;
@@ -105,8 +107,7 @@ body::before {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  backdrop-filter: blur(1.5px);
-  background: linear-gradient(180deg, rgba(17, 14, 12, 0.08), rgba(14, 13, 12, 0.18));
+  background: linear-gradient(180deg, rgba(17, 14, 12, 0.05), rgba(14, 13, 12, 0.12));
 }
 
 .intro-core {
@@ -120,7 +121,6 @@ body::before {
   background: linear-gradient(160deg, rgba(32, 26, 23, 0.42), rgba(38, 30, 24, 0.2));
   border-radius: 24px;
   box-shadow: 0 34px 80px rgba(14, 10, 9, 0.35);
-  backdrop-filter: blur(4px);
   transform: translateZ(0);
 }
 
@@ -172,7 +172,7 @@ body::before {
   background:
     linear-gradient(180deg, rgba(255, 228, 196, 0.68), rgba(207, 170, 130, 0.18)),
     radial-gradient(circle at 26% 24%, rgba(255, 243, 230, 0.52), transparent 45%);
-  filter: blur(3px);
+  filter: blur(2px);
 }
 
 .river-b {
@@ -182,7 +182,7 @@ body::before {
   background:
     linear-gradient(180deg, rgba(233, 199, 164, 0.56), rgba(160, 127, 95, 0.14)),
     radial-gradient(circle at 78% 24%, rgba(255, 232, 206, 0.38), transparent 42%);
-  filter: blur(5px);
+  filter: blur(3px);
 }
 
 .river-c {
@@ -192,7 +192,7 @@ body::before {
   background:
     linear-gradient(180deg, rgba(189, 163, 138, 0.34), rgba(118, 100, 82, 0.08)),
     radial-gradient(circle at 52% 30%, rgba(224, 201, 179, 0.26), transparent 48%);
-  filter: blur(8px);
+  filter: blur(4px);
 }
 
 body.intro-pushing .river-a {
@@ -219,20 +219,34 @@ body.intro-pushing .landing-intro {
 
 @keyframes riverRiseA {
   0% { opacity: 0; transform: translateY(68%); }
-  24% { opacity: 0.72; }
+  24% { opacity: 0.62; }
   100% { opacity: 0.1; transform: translateY(-58%); }
 }
 
 @keyframes riverRiseB {
   0% { opacity: 0; transform: translateY(74%); }
-  26% { opacity: 0.62; }
+  26% { opacity: 0.54; }
   100% { opacity: 0.08; transform: translateY(-48%); }
 }
 
 @keyframes riverRiseC {
   0% { opacity: 0; transform: translateY(82%); }
-  28% { opacity: 0.48; }
+  28% { opacity: 0.42; }
   100% { opacity: 0.06; transform: translateY(-42%); }
+}
+
+@media (max-width: 760px) {
+  .intro-core {
+    box-shadow: 0 16px 34px rgba(14, 10, 9, 0.28);
+  }
+
+  .sand-river {
+    filter: none;
+  }
+
+  .river-c {
+    display: none;
+  }
 }
 
 @keyframes breath {
