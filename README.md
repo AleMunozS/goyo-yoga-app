@@ -26,7 +26,7 @@ Monolito Node.js SSR para reservas fitness por tickets, QR de acceso y operació
 npm install
 cp .env.example .env
 npm run prisma:generate
-npm run prisma:push
+npm run db:init
 npm run seed
 npm run dev
 ```

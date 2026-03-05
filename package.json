@@ -11,6 +11,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:push": "prisma db push",
+    "db:init": "prisma db execute --file prisma/init.sql --schema prisma/schema.prisma",
     "seed": "node prisma/seed.js"
   },
   "keywords": ["fitness", "booking", "qr", "stripe"],
