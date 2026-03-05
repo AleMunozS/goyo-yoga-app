@@ -30,6 +30,22 @@ function renderError(message) {
   return `<section class="section"><div class="card"><h2>Error</h2><p>${esc(message)}</p></div></section>`;
 }
 
+function startOfWeekMonday(value) {
+  const d = dayjs(value).startOf('day');
+  const weekday = d.day(); // 0 = Sunday
+  const diff = (weekday + 6) % 7;
+  return d.subtract(diff, 'day');
+}
+
+function getBaseUrl(req) {
+  const envUrl = String(config.appUrl || '').trim();
+  if (envUrl && !envUrl.includes('localhost')) return envUrl;
+  const proto = String(req.headers['x-forwarded-proto'] || req.protocol || 'http');
+  const host = String(req.headers['x-forwarded-host'] || req.get('host') || '').trim();
+  if (!host) return envUrl || 'http://localhost:3000';
+  return `${proto}://${host}`;
+}
+
 export function createApp({ prisma }) {
   const app = express();
   const stripe = config.stripeSecretKey ? new Stripe(config.stripeSecretKey) : null;
@@ -228,13 +244,34 @@ export function createApp({ prisma }) {
   });
 
   app.get('/classes', async (req, res) => {
+    const view = String(req.query.view || 'week') === 'month' ? 'month' : 'week';
+    const requestedStart = req.query.start ? dayjs(String(req.query.start)) : dayjs();
+    const periodStart = view === 'month' ? dayjs(requestedStart).startOf('month') : startOfWeekMonday(requestedStart);
+    const periodEnd = view === 'month' ? dayjs(periodStart).endOf('month').add(7, 'day') : dayjs(periodStart).add(7, 'day');
+
     const classes = await prisma.class_occurrences.findMany({
       include: { classType: true, trainer: true, location: true },
       orderBy: { startsAt: 'asc' },
-      take: 120,
-      where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
+      take: 500,
+      where: {
+        startsAt: {
+          gte: new Date(periodStart.startOf('day').toISOString()),
+          lt: new Date(periodEnd.endOf('day').toISOString()),
+        },
+      },
     });
-    const days = Array.from({ length: 7 }, (_, i) => dayjs().startOf('day').add(i, 'day'));
+    const days =
+      view === 'month'
+        ? Array.from({ length: 42 }, (_, i) => startOfWeekMonday(periodStart).add(i, 'day'))
+        : Array.from({ length: 7 }, (_, i) => startOfWeekMonday(periodStart).add(i, 'day'));
+
+    const prevStart = view === 'month' ? periodStart.subtract(1, 'month') : periodStart.subtract(7, 'day');
+    const nextStart = view === 'month' ? periodStart.add(1, 'month') : periodStart.add(7, 'day');
+    const titleRange =
+      view === 'month'
+        ? periodStart.format('MMMM YYYY')
+        : `${periodStart.format('DD MMM')} - ${periodStart.add(6, 'day').format('DD MMM YYYY')}`;
+
     const startHour = 6;
     const endHour = 22;
     const totalSlots = endHour - startHour;
@@ -246,7 +283,7 @@ export function createApp({ prisma }) {
         (d) => `
       <div class="calendar-day-head">
         <span>${d.format('ddd').toUpperCase()}</span>
-        <strong>${d.format('DD MMM')}</strong>
+        <strong>${d.format(view === 'month' ? 'DD' : 'DD MMM')}</strong>
       </div>`
       )
       .join('');
@@ -258,6 +295,40 @@ export function createApp({ prisma }) {
     const dayColumns = days
       .map((d) => {
         const dayClasses = classes.filter((c) => dayjs(c.startsAt).isSame(d, 'day'));
+        if (view === 'month') {
+          const monthEvents = dayClasses
+            .map((c) => {
+              const start = dayjs(c.startsAt);
+              const isCancelled = c.status === 'CANCELLED';
+              const disabled = isCancelled || c.availableSlots <= 0;
+              return `
+              <button
+                type="button"
+                class="month-class-chip ${isCancelled ? 'is-cancelled' : ''} ${c.availableSlots <= 0 ? 'is-full' : ''}"
+                data-occurrence-id="${c.id}"
+                data-class-name="${esc(c.classType.name)}"
+                data-trainer="${esc(c.trainer.displayName)}"
+                data-location="${esc(c.location.name)}"
+                data-start="${start.format('DD MMM HH:mm')}"
+                data-cupos="${c.availableSlots}"
+                data-status="${c.status}"
+                ${disabled ? 'disabled' : ''}
+              >
+                <span>${start.format('HH:mm')}</span>
+                <strong>${esc(c.classType.name)}</strong>
+              </button>
+              `;
+            })
+            .join('');
+
+          return `
+          <div class="calendar-month-day ${!d.isSame(periodStart, 'month') ? 'is-out-month' : ''}">
+            <div class="month-day-number">${d.format('D')}</div>
+            <div class="month-day-events">${monthEvents || '<span class="month-empty">Sin clases</span>'}</div>
+          </div>
+          `;
+        }
+
         const blocks = dayClasses
           .map((c) => {
             const start = dayjs(c.startsAt);
@@ -301,17 +372,30 @@ export function createApp({ prisma }) {
       .join('');
 
     const body = `<section class="section">
-      <h2>Agenda de clases</h2>
-      <p class="calendar-subtitle">Vista semanal: selecciona cualquier bloque para reservar en popup.</p>
+      <div class="calendar-toolbar">
+        <h2>Agenda de clases</h2>
+        <div class="calendar-toolbar-actions">
+          <a class="btn alt" href="/classes?view=${view}&start=${prevStart.format('YYYY-MM-DD')}">Anterior</a>
+          <span class="calendar-range">${titleRange}</span>
+          <a class="btn alt" href="/classes?view=${view}&start=${nextStart.format('YYYY-MM-DD')}">Siguiente</a>
+          <a class="btn ${view === 'week' ? '' : 'alt'}" href="/classes?view=week&start=${periodStart.format('YYYY-MM-DD')}">Semana</a>
+          <a class="btn ${view === 'month' ? '' : 'alt'}" href="/classes?view=month&start=${periodStart.format('YYYY-MM-DD')}">Mes</a>
+        </div>
+      </div>
+      <p class="calendar-subtitle">Selecciona cualquier bloque para reservar. Las clases canceladas aparecen bloqueadas.</p>
       <div class="calendar-shell reveal">
-        <div class="calendar-grid-header">
-          <div class="calendar-time-head">Hora</div>
-          ${dayHeaders}
-        </div>
-        <div class="calendar-grid-body">
-          <div class="calendar-time-col">${timeLabels}</div>
-          ${dayColumns || '<div class="card">No hay clases próximas.</div>'}
-        </div>
+        ${
+          view === 'month'
+            ? `<div class="calendar-month-grid">${dayColumns}</div>`
+            : `<div class="calendar-grid-header">
+                <div class="calendar-time-head">Hora</div>
+                ${dayHeaders}
+              </div>
+              <div class="calendar-grid-body">
+                <div class="calendar-time-col">${timeLabels}</div>
+                ${dayColumns || '<div class="card">No hay clases próximas.</div>'}
+              </div>`
+        }
       </div>
 
       <dialog id="booking-modal" class="booking-modal">
@@ -363,7 +447,8 @@ export function createApp({ prisma }) {
       },
     });
 
-    const url = `${config.appUrl}/booking/start?token=${token}&occurrenceId=${occurrenceId}`;
+    const baseUrl = getBaseUrl(req);
+    const url = `${baseUrl}/booking/start?token=${token}&occurrenceId=${occurrenceId}`;
     console.log(`[magic-link] send to ${email}: ${url}`);
 
     const body = `
@@ -648,38 +733,122 @@ export function createApp({ prisma }) {
   });
 
   app.get('/trainer/classes', requireStaff, requireRole('TRAINER'), async (req, res) => {
+    const view = String(req.query.view || 'week') === 'month' ? 'month' : 'week';
+    const requestedStart = req.query.start ? dayjs(String(req.query.start)) : dayjs();
+    const periodStart = view === 'month' ? dayjs(requestedStart).startOf('month') : startOfWeekMonday(requestedStart);
+    const periodEnd = view === 'month' ? dayjs(periodStart).endOf('month').add(7, 'day') : dayjs(periodStart).add(7, 'day');
+
     const [classes, classTypes, locations] = await Promise.all([
       prisma.class_occurrences.findMany({
-        where: { trainerId: req.session.staffId, startsAt: { gte: new Date(dayjs().subtract(1, 'day').toISOString()) } },
+        where: {
+          trainerId: req.session.staffId,
+          startsAt: {
+            gte: new Date(periodStart.startOf('day').toISOString()),
+            lt: new Date(periodEnd.endOf('day').toISOString()),
+          },
+        },
         include: { classType: true, location: true, bookings: { where: { status: 'BOOKED' }, include: { client: true } } },
         orderBy: { startsAt: 'asc' },
-        take: 40,
+        take: 200,
       }),
       prisma.class_types.findMany({ orderBy: { name: 'asc' } }),
       prisma.locations.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } }),
     ]);
 
+    const days =
+      view === 'month'
+        ? Array.from({ length: 42 }, (_, i) => startOfWeekMonday(periodStart).add(i, 'day'))
+        : Array.from({ length: 7 }, (_, i) => startOfWeekMonday(periodStart).add(i, 'day'));
+    const prevStart = view === 'month' ? periodStart.subtract(1, 'month') : periodStart.subtract(7, 'day');
+    const nextStart = view === 'month' ? periodStart.add(1, 'month') : periodStart.add(7, 'day');
+    const titleRange =
+      view === 'month'
+        ? periodStart.format('MMMM YYYY')
+        : `${periodStart.format('DD MMM')} - ${periodStart.add(6, 'day').format('DD MMM YYYY')}`;
+
+    const startHour = 6;
+    const endHour = 22;
+    const totalSlots = endHour - startHour;
+    const rowHeight = 78;
+    const trackHeight = totalSlots * rowHeight;
+
+    const dayHeaders = days
+      .map((d) => `<div class="calendar-day-head"><span>${d.format('ddd').toUpperCase()}</span><strong>${d.format(view === 'month' ? 'DD' : 'DD MMM')}</strong></div>`)
+      .join('');
+    const timeLabels = Array.from({ length: totalSlots }, (_, idx) => startHour + idx)
+      .map((hour) => `<div class="calendar-time-label">${String(hour).padStart(2, '0')}:00</div>`)
+      .join('');
+
+    const trainerColumns = days
+      .map((d) => {
+        const dayClasses = classes.filter((c) => dayjs(c.startsAt).isSame(d, 'day'));
+        if (view === 'month') {
+          const events = dayClasses
+            .map((c) => {
+              const start = dayjs(c.startsAt);
+              return `<button type="button" class="month-class-chip trainer-chip ${c.status === 'CANCELLED' ? 'is-cancelled' : ''}"
+                data-trainer-occurrence-id="${c.id}"
+                data-trainer-class="${esc(c.classType.name)}"
+                data-trainer-time="${start.format('DD MMM HH:mm')}"
+                data-trainer-status="${c.status}"
+                data-trainer-bookings="${c.bookings.length}"
+                data-trainer-cancelable="${(c.status !== 'CANCELLED' && start.isAfter(dayjs())) ? '1' : '0'}"
+              >
+                <span>${start.format('HH:mm')}</span>
+                <strong>${esc(c.classType.name)}</strong>
+              </button>`;
+            })
+            .join('');
+          return `<div class="calendar-month-day ${!d.isSame(periodStart, 'month') ? 'is-out-month' : ''}">
+            <div class="month-day-number">${d.format('D')}</div>
+            <div class="month-day-events">${events || '<span class="month-empty">Sin clases</span>'}</div>
+          </div>`;
+        }
+
+        const blocks = dayClasses
+          .map((c) => {
+            const start = dayjs(c.startsAt);
+            const end = dayjs(c.endsAt);
+            const top = (((start.hour() - startHour) * 60 + start.minute()) / 60) * rowHeight;
+            const height = Math.max((Math.max(end.diff(start, 'minute'), 30) / 60) * rowHeight, 36);
+            return `<button type="button"
+              class="calendar-class-block trainer-chip ${c.status === 'CANCELLED' ? 'is-cancelled' : ''}"
+              style="top:${top}px;height:${height}px;"
+              data-trainer-occurrence-id="${c.id}"
+              data-trainer-class="${esc(c.classType.name)}"
+              data-trainer-time="${start.format('DD MMM HH:mm')}"
+              data-trainer-status="${c.status}"
+              data-trainer-bookings="${c.bookings.length}"
+              data-trainer-cancelable="${(c.status !== 'CANCELLED' && start.isAfter(dayjs())) ? '1' : '0'}"
+            >
+              <strong>${esc(c.classType.name)}</strong>
+              <small>${start.format('HH:mm')} · ${c.bookings.length} reservas</small>
+              <small>${c.status === 'CANCELLED' ? 'Cancelada' : 'Programada'}</small>
+            </button>`;
+          })
+          .join('');
+
+        return `<div class="calendar-day-column"><div class="calendar-day-track" style="height:${trackHeight}px;">
+          ${Array.from({ length: totalSlots }, () => '<div class="calendar-hour-line"></div>').join('')}
+          ${blocks}
+        </div></div>`;
+      })
+      .join('');
+
     const classTypeOptions = classTypes.map((t) => `<option value="${t.id}">${esc(t.name)} (${t.durationMin} min)</option>`).join('');
     const locationOptions = locations.map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
 
-    const cards = classes.map((c) => {
-      const attendees = c.bookings.map((b) => `<li>${esc(b.client.fullName)} (${esc(b.client.email)})</li>`).join('');
-      const isCancelled = c.status === 'CANCELLED';
-      const cancelBtn =
-        !isCancelled && dayjs(c.startsAt).isAfter(dayjs())
-          ? `<form method="post" action="/trainer/classes/${c.id}/cancel"><button class="btn alt" type="submit">Cancelar clase</button></form>`
-          : '';
-      return `<article class="card">
-        <h3>${esc(c.classType.name)} · ${dayjs(c.startsAt).format('DD MMM HH:mm')}</h3>
-        <p>${esc(c.location.name)} · Estado: <strong>${isCancelled ? 'CANCELADA' : 'PROGRAMADA'}</strong></p>
-        <p>Asistencia prevista: ${c.bookings.length}</p>
-        ${cancelBtn}
-        <ul>${attendees || '<li>Sin reservas</li>'}</ul>
-      </article>`;
-    }).join('');
-
     const body = `<section class="section">
-      <h2>Mis clases</h2>
+      <div class="calendar-toolbar">
+        <h2>Mis clases</h2>
+        <div class="calendar-toolbar-actions">
+          <a class="btn alt" href="/trainer/classes?view=${view}&start=${prevStart.format('YYYY-MM-DD')}">Anterior</a>
+          <span class="calendar-range">${titleRange}</span>
+          <a class="btn alt" href="/trainer/classes?view=${view}&start=${nextStart.format('YYYY-MM-DD')}">Siguiente</a>
+          <a class="btn ${view === 'week' ? '' : 'alt'}" href="/trainer/classes?view=week&start=${periodStart.format('YYYY-MM-DD')}">Semana</a>
+          <a class="btn ${view === 'month' ? '' : 'alt'}" href="/trainer/classes?view=month&start=${periodStart.format('YYYY-MM-DD')}">Mes</a>
+        </div>
+      </div>
       <div class="card trainer-create-card">
         <h3>Crear nueva clase</h3>
         <form method="post" action="/trainer/classes">
@@ -694,7 +863,25 @@ export function createApp({ prisma }) {
           <button class="btn" type="submit">Crear clase</button>
         </form>
       </div>
-      ${cards || '<div class="card">No tienes clases asignadas.</div>'}
+      <div class="calendar-shell reveal">
+        ${
+          view === 'month'
+            ? `<div class="calendar-month-grid">${trainerColumns}</div>`
+            : `<div class="calendar-grid-header"><div class="calendar-time-head">Hora</div>${dayHeaders}</div>
+               <div class="calendar-grid-body"><div class="calendar-time-col">${timeLabels}</div>${trainerColumns}</div>`
+        }
+      </div>
+      <dialog id="trainer-class-modal" class="booking-modal">
+        <div class="booking-modal-card">
+          <button type="button" class="booking-close" data-close-trainer-modal>&times;</button>
+          <h3 id="trainer-modal-title">Clase</h3>
+          <p id="trainer-modal-meta"></p>
+          <p id="trainer-modal-status"></p>
+          <form method="post" id="trainer-cancel-form">
+            <button class="btn alt" type="submit" id="trainer-cancel-btn">Cancelar clase</button>
+          </form>
+        </div>
+      </dialog>
     </section>`;
     res.send(renderLayout({ title: 'Trainer', body, staff: req.session.staffName, simulationMode: config.simulationMode }));
   });

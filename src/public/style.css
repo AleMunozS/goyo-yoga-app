@@ -472,6 +472,29 @@ textarea {
   opacity: 0.8;
 }
 
+.calendar-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.calendar-toolbar-actions {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.calendar-range {
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(95, 69, 46, 0.1);
+  border: 1px solid rgba(95, 69, 46, 0.24);
+  font-size: 0.86rem;
+}
+
 .calendar-shell {
   border: 1px solid rgba(66, 50, 37, 0.22);
   border-radius: 16px;
@@ -581,6 +604,70 @@ textarea {
   opacity: 0.86;
 }
 
+.calendar-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(150px, 1fr));
+  gap: 1px;
+  background: rgba(88, 62, 43, 0.12);
+}
+
+.calendar-month-day {
+  min-height: 170px;
+  padding: 0.5rem;
+  background: rgba(246, 239, 230, 0.92);
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-month-day.is-out-month {
+  opacity: 0.55;
+}
+
+.month-day-number {
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+}
+
+.month-day-events {
+  display: grid;
+  gap: 0.33rem;
+}
+
+.month-class-chip {
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(140deg, rgba(153, 103, 69, 0.95), rgba(118, 82, 58, 0.95));
+  color: #f4eee8;
+  text-align: left;
+  padding: 0.35rem 0.4rem;
+  cursor: pointer;
+}
+
+.month-class-chip span {
+  font-size: 0.68rem;
+  display: block;
+  opacity: 0.9;
+}
+
+.month-class-chip strong {
+  font-size: 0.72rem;
+}
+
+.month-class-chip.is-full {
+  background: linear-gradient(140deg, rgba(96, 92, 87, 0.95), rgba(62, 59, 54, 0.95));
+}
+
+.month-class-chip.is-cancelled {
+  background: linear-gradient(140deg, rgba(138, 63, 63, 0.94), rgba(97, 43, 43, 0.94));
+  text-decoration: line-through;
+}
+
+.month-empty {
+  font-size: 0.72rem;
+  opacity: 0.62;
+}
+
 .booking-modal {
   border: 0;
   padding: 0;
@@ -615,4 +702,10 @@ textarea {
 
 .trainer-create-card {
   margin-bottom: 1rem;
+}
+
+@media (max-width: 860px) {
+  .calendar-month-grid {
+    grid-template-columns: repeat(2, minmax(170px, 1fr));
+  }
 }

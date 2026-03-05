@@ -53,7 +53,7 @@
   const seats = document.getElementById('booking-seats');
   const occInput = document.getElementById('booking-occurrence-id');
 
-  document.querySelectorAll('.calendar-class-block').forEach((btn) => {
+  document.querySelectorAll('.calendar-class-block:not(.trainer-chip), .month-class-chip:not(.trainer-chip)').forEach((btn) => {
     btn.addEventListener('click', () => {
       if (!modal || !title || !meta || !seats || !occInput) return;
       occInput.value = btn.dataset.occurrenceId || '';
@@ -67,6 +67,35 @@
   document.querySelectorAll('[data-close-booking]').forEach((btn) => {
     btn.addEventListener('click', () => {
       if (modal && typeof modal.close === 'function') modal.close();
+    });
+  });
+
+  const trainerModal = document.getElementById('trainer-class-modal');
+  const trainerTitle = document.getElementById('trainer-modal-title');
+  const trainerMeta = document.getElementById('trainer-modal-meta');
+  const trainerStatus = document.getElementById('trainer-modal-status');
+  const trainerCancelForm = document.getElementById('trainer-cancel-form');
+  const trainerCancelBtn = document.getElementById('trainer-cancel-btn');
+
+  document.querySelectorAll('.trainer-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (!trainerModal || !trainerTitle || !trainerMeta || !trainerStatus || !trainerCancelForm || !trainerCancelBtn) return;
+      const id = btn.dataset.trainerOccurrenceId || '';
+      const status = btn.dataset.trainerStatus || 'SCHEDULED';
+      const canCancel = btn.dataset.trainerCancelable === '1';
+      trainerTitle.textContent = btn.dataset.trainerClass || 'Clase';
+      trainerMeta.textContent = `${btn.dataset.trainerTime || ''} · Reservas: ${btn.dataset.trainerBookings || '0'}`;
+      trainerStatus.textContent = `Estado: ${status === 'CANCELLED' ? 'CANCELADA' : 'PROGRAMADA'}`;
+      trainerCancelForm.action = `/trainer/classes/${id}/cancel`;
+      trainerCancelBtn.disabled = !canCancel;
+      trainerCancelBtn.textContent = canCancel ? 'Cancelar clase' : 'No cancelable';
+      if (typeof trainerModal.showModal === 'function') trainerModal.showModal();
+    });
+  });
+
+  document.querySelectorAll('[data-close-trainer-modal]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (trainerModal && typeof trainerModal.close === 'function') trainerModal.close();
     });
   });
 })();
