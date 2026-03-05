@@ -50,15 +50,9 @@ body.has-landing-intro .site-header,
 body.has-landing-intro main,
 body.has-landing-intro .sim-banner {
   transition:
-    opacity 1.15s cubic-bezier(.19,.74,.2,1),
-    transform 1.15s cubic-bezier(.19,.74,.2,1),
-    filter 1.15s cubic-bezier(.19,.74,.2,1);
-}
-
-body.intro-leaving .site-header,
-body.intro-leaving main,
-body.intro-leaving .sim-banner {
-  transition-delay: 0.06s;
+    opacity 0.78s cubic-bezier(.2,.75,.2,1),
+    transform 0.78s cubic-bezier(.2,.75,.2,1),
+    filter 0.78s cubic-bezier(.2,.75,.2,1);
 }
 
 body::before {
@@ -178,22 +172,22 @@ body::before {
 }
 
 body.intro-leaving .fluid-layer-a {
-  animation: fluidSweepA 1.9s cubic-bezier(.2,.7,.2,1) forwards;
+  animation: fluidSweepA 1.2s cubic-bezier(.2,.7,.2,1) forwards;
 }
 body.intro-leaving .fluid-layer-b {
-  animation: fluidSweepB 2s cubic-bezier(.2,.7,.2,1) .06s forwards;
+  animation: fluidSweepB 1.25s cubic-bezier(.2,.7,.2,1) .03s forwards;
 }
 body.intro-leaving .fluid-layer-c {
-  animation: fluidSweepC 2.08s cubic-bezier(.2,.7,.2,1) .12s forwards;
+  animation: fluidSweepC 1.3s cubic-bezier(.2,.7,.2,1) .06s forwards;
 }
 
 body.intro-leaving .intro-core {
-  animation: introFade 1.05s cubic-bezier(.2,.7,.2,1) forwards;
+  animation: introFade 0.64s cubic-bezier(.2,.7,.2,1) forwards;
 }
 
 body.intro-leaving .landing-intro {
   pointer-events: none;
-  animation: introOut 2.05s cubic-bezier(.2,.72,.2,1) forwards;
+  animation: introOut 1.22s cubic-bezier(.2,.72,.2,1) forwards;
 }
 
 @keyframes fluidSweepA {
@@ -221,7 +215,7 @@ body.intro-leaving .landing-intro {
 
 @keyframes introOut {
   0% { opacity: 1; visibility: visible; transform: scale(1); filter: saturate(1) brightness(1); }
-  55% { opacity: 0.82; }
+  45% { opacity: 0.72; }
   100% { opacity: 0; visibility: hidden; transform: scale(1.02); filter: saturate(1.08) brightness(1.08); }
 }
 

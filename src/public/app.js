@@ -51,7 +51,7 @@
       }, { once: true });
 
       // Fallback guard in case animationend is skipped by browser.
-      setTimeout(finalize, 2300);
+      setTimeout(finalize, 1450);
     });
   }
 
