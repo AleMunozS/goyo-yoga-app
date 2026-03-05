@@ -46,4 +46,27 @@
     const dim = Math.min(1, progressed * 0.9 + flicker * 0.08);
     document.documentElement.style.setProperty('--glow-dim', dim.toFixed(3));
   }, 160);
+
+  const modal = document.getElementById('booking-modal');
+  const title = document.getElementById('booking-title');
+  const meta = document.getElementById('booking-meta');
+  const seats = document.getElementById('booking-seats');
+  const occInput = document.getElementById('booking-occurrence-id');
+
+  document.querySelectorAll('.calendar-class-block').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (!modal || !title || !meta || !seats || !occInput) return;
+      occInput.value = btn.dataset.occurrenceId || '';
+      title.textContent = btn.dataset.className || 'Reservar clase';
+      meta.textContent = `${btn.dataset.start || ''} · ${btn.dataset.trainer || ''} · ${btn.dataset.location || ''}`;
+      seats.textContent = `Cupos disponibles: ${btn.dataset.cupos || '0'}`;
+      if (typeof modal.showModal === 'function') modal.showModal();
+    });
+  });
+
+  document.querySelectorAll('[data-close-booking]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (modal && typeof modal.close === 'function') modal.close();
+    });
+  });
 })();

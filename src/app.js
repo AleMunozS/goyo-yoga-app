@@ -231,29 +231,103 @@ export function createApp({ prisma }) {
     const classes = await prisma.class_occurrences.findMany({
       include: { classType: true, trainer: true, location: true },
       orderBy: { startsAt: 'asc' },
-      take: 30,
+      take: 120,
       where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
     });
-    const items = classes.map((c) => {
-      const start = dayjs(c.startsAt).format('DD MMM HH:mm');
-      return `
-      <article class="card reveal">
-        <h3>${esc(c.classType.name)}</h3>
-        <p>${esc(c.location.name)} · ${esc(c.trainer.displayName)}</p>
-        <p><strong>${start}</strong></p>
-        <p>Cupos disponibles: <span class="metric">${c.availableSlots}</span></p>
-        <form action="/magic-link/request" method="post">
-          <input type="hidden" name="occurrenceId" value="${c.id}" />
-          <div class="form-row">
-            <label>Email cliente</label>
-            <input type="email" name="email" required />
-          </div>
-          <button class="btn" type="submit">Reservar con email mágico</button>
-        </form>
-      </article>`;
-    }).join('');
+    const days = Array.from({ length: 7 }, (_, i) => dayjs().startOf('day').add(i, 'day'));
+    const startHour = 6;
+    const endHour = 22;
+    const totalSlots = endHour - startHour;
+    const rowHeight = 78;
+    const trackHeight = totalSlots * rowHeight;
 
-    const body = `<section class="section"><h2>Agenda de clases</h2><div class="grid">${items || '<div class="card">No hay clases próximas.</div>'}</div></section>`;
+    const dayHeaders = days
+      .map(
+        (d) => `
+      <div class="calendar-day-head">
+        <span>${d.format('ddd').toUpperCase()}</span>
+        <strong>${d.format('DD MMM')}</strong>
+      </div>`
+      )
+      .join('');
+
+    const timeLabels = Array.from({ length: totalSlots }, (_, idx) => startHour + idx)
+      .map((hour) => `<div class="calendar-time-label">${String(hour).padStart(2, '0')}:00</div>`)
+      .join('');
+
+    const dayColumns = days
+      .map((d) => {
+        const dayClasses = classes.filter((c) => dayjs(c.startsAt).isSame(d, 'day'));
+        const blocks = dayClasses
+          .map((c) => {
+            const start = dayjs(c.startsAt);
+            const end = dayjs(c.endsAt);
+            const startMinutes = (start.hour() - startHour) * 60 + start.minute();
+            const durationMinutes = Math.max(end.diff(start, 'minute'), 30);
+            const top = (startMinutes / 60) * rowHeight;
+            const height = Math.max((durationMinutes / 60) * rowHeight, 36);
+            return `
+            <button
+              type="button"
+              class="calendar-class-block ${c.availableSlots <= 0 ? 'is-full' : ''}"
+              style="top:${top}px;height:${height}px;"
+              data-occurrence-id="${c.id}"
+              data-class-name="${esc(c.classType.name)}"
+              data-trainer="${esc(c.trainer.displayName)}"
+              data-location="${esc(c.location.name)}"
+              data-start="${start.format('DD MMM HH:mm')}"
+              data-cupos="${c.availableSlots}"
+              ${c.availableSlots <= 0 ? 'disabled' : ''}
+            >
+              <strong>${esc(c.classType.name)}</strong>
+              <small>${start.format('HH:mm')} · ${esc(c.trainer.displayName)}</small>
+              <small>${c.availableSlots} cupos</small>
+            </button>
+          `;
+          })
+          .join('');
+
+        return `
+        <div class="calendar-day-column">
+          <div class="calendar-day-track" style="height:${trackHeight}px;">
+            ${Array.from({ length: totalSlots }, () => '<div class="calendar-hour-line"></div>').join('')}
+            ${blocks}
+          </div>
+        </div>`;
+      })
+      .join('');
+
+    const body = `<section class="section">
+      <h2>Agenda de clases</h2>
+      <p class="calendar-subtitle">Vista semanal: selecciona cualquier bloque para reservar en popup.</p>
+      <div class="calendar-shell reveal">
+        <div class="calendar-grid-header">
+          <div class="calendar-time-head">Hora</div>
+          ${dayHeaders}
+        </div>
+        <div class="calendar-grid-body">
+          <div class="calendar-time-col">${timeLabels}</div>
+          ${dayColumns || '<div class="card">No hay clases próximas.</div>'}
+        </div>
+      </div>
+
+      <dialog id="booking-modal" class="booking-modal">
+        <div class="booking-modal-card">
+          <button type="button" class="booking-close" data-close-booking>&times;</button>
+          <h3 id="booking-title">Reservar clase</h3>
+          <p id="booking-meta"></p>
+          <p id="booking-seats"></p>
+          <form action="/magic-link/request" method="post" id="booking-form">
+            <input type="hidden" name="occurrenceId" id="booking-occurrence-id" />
+            <div class="form-row">
+              <label>Email cliente</label>
+              <input type="email" name="email" required />
+            </div>
+            <button class="btn" type="submit">Reservar con email mágico</button>
+          </form>
+        </div>
+      </dialog>
+    </section>`;
     res.send(renderLayout({ title: 'Clases', body, simulationMode: config.simulationMode }));
   });
 
