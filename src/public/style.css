@@ -575,6 +575,12 @@ textarea {
   cursor: not-allowed;
 }
 
+.calendar-class-block.is-cancelled {
+  background: linear-gradient(140deg, rgba(138, 63, 63, 0.94), rgba(97, 43, 43, 0.94));
+  text-decoration: line-through;
+  opacity: 0.86;
+}
+
 .booking-modal {
   border: 0;
   padding: 0;
@@ -605,4 +611,8 @@ textarea {
   font-size: 1.9rem;
   cursor: pointer;
   line-height: 1;
+}
+
+.trainer-create-card {
+  margin-bottom: 1rem;
 }

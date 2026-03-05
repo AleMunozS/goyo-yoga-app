@@ -266,10 +266,12 @@ export function createApp({ prisma }) {
             const durationMinutes = Math.max(end.diff(start, 'minute'), 30);
             const top = (startMinutes / 60) * rowHeight;
             const height = Math.max((durationMinutes / 60) * rowHeight, 36);
+            const isCancelled = c.status === 'CANCELLED';
+            const disabled = isCancelled || c.availableSlots <= 0;
             return `
             <button
               type="button"
-              class="calendar-class-block ${c.availableSlots <= 0 ? 'is-full' : ''}"
+              class="calendar-class-block ${isCancelled ? 'is-cancelled' : ''} ${c.availableSlots <= 0 ? 'is-full' : ''}"
               style="top:${top}px;height:${height}px;"
               data-occurrence-id="${c.id}"
               data-class-name="${esc(c.classType.name)}"
@@ -277,11 +279,12 @@ export function createApp({ prisma }) {
               data-location="${esc(c.location.name)}"
               data-start="${start.format('DD MMM HH:mm')}"
               data-cupos="${c.availableSlots}"
-              ${c.availableSlots <= 0 ? 'disabled' : ''}
+              data-status="${c.status}"
+              ${disabled ? 'disabled' : ''}
             >
               <strong>${esc(c.classType.name)}</strong>
               <small>${start.format('HH:mm')} · ${esc(c.trainer.displayName)}</small>
-              <small>${c.availableSlots} cupos</small>
+              <small>${isCancelled ? 'Clase cancelada' : `${c.availableSlots} cupos`}</small>
             </button>
           `;
           })
@@ -337,6 +340,11 @@ export function createApp({ prisma }) {
     if (!parsed.success) return res.status(400).send(renderError('Datos inválidos para crear magic link.'));
 
     const { email, occurrenceId } = parsed.data;
+    const occurrence = await prisma.class_occurrences.findUnique({ where: { id: occurrenceId } });
+    if (!occurrence) return res.status(404).send(renderError('Clase no encontrada.'));
+    if (occurrence.status === 'CANCELLED') return res.status(409).send(renderError('Esta clase fue cancelada por el trainer.'));
+    if (occurrence.availableSlots <= 0) return res.status(409).send(renderError('Clase sin cupo disponible.'));
+
     const client = await prisma.clients.upsert({
       where: { email },
       update: {},
@@ -380,6 +388,8 @@ export function createApp({ prisma }) {
 
     const occurrence = await prisma.class_occurrences.findUnique({ where: { id: occurrenceId }, include: { classType: true, trainer: true, location: true } });
     if (!occurrence) return res.status(404).send(renderError('Clase no encontrada'));
+    if (occurrence.status === 'CANCELLED') return res.status(409).send(renderError('La clase fue cancelada por el trainer.'));
+    if (occurrence.availableSlots <= 0) return res.status(409).send(renderError('La clase ya no tiene cupos disponibles.'));
 
     const wallet = await prisma.client_wallets.findUnique({ where: { clientId_classTypeId: { clientId: found.clientId, classTypeId: occurrence.classTypeId } } });
 
@@ -473,6 +483,7 @@ export function createApp({ prisma }) {
 
     const occurrence = await prisma.class_occurrences.findUnique({ where: { id: occurrenceId } });
     if (!occurrence) return res.status(404).send(renderError('Clase no encontrada'));
+    if (occurrence.status === 'CANCELLED') return res.status(409).send(renderError('La clase fue cancelada por el trainer.'));
     if (occurrence.availableSlots <= 0) return res.status(409).send(renderError('Clase sin cupo'));
 
     const wallet = await prisma.client_wallets.findUnique({ where: { clientId_classTypeId: { clientId: link.clientId, classTypeId: occurrence.classTypeId } } });
@@ -637,20 +648,134 @@ export function createApp({ prisma }) {
   });
 
   app.get('/trainer/classes', requireStaff, requireRole('TRAINER'), async (req, res) => {
-    const classes = await prisma.class_occurrences.findMany({
-      where: { trainerId: req.session.staffId, startsAt: { gte: new Date(dayjs().subtract(1, 'day').toISOString()) } },
-      include: { classType: true, bookings: { where: { status: 'BOOKED' }, include: { client: true } } },
-      orderBy: { startsAt: 'asc' },
-      take: 20,
-    });
+    const [classes, classTypes, locations] = await Promise.all([
+      prisma.class_occurrences.findMany({
+        where: { trainerId: req.session.staffId, startsAt: { gte: new Date(dayjs().subtract(1, 'day').toISOString()) } },
+        include: { classType: true, location: true, bookings: { where: { status: 'BOOKED' }, include: { client: true } } },
+        orderBy: { startsAt: 'asc' },
+        take: 40,
+      }),
+      prisma.class_types.findMany({ orderBy: { name: 'asc' } }),
+      prisma.locations.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } }),
+    ]);
+
+    const classTypeOptions = classTypes.map((t) => `<option value="${t.id}">${esc(t.name)} (${t.durationMin} min)</option>`).join('');
+    const locationOptions = locations.map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
 
     const cards = classes.map((c) => {
       const attendees = c.bookings.map((b) => `<li>${esc(b.client.fullName)} (${esc(b.client.email)})</li>`).join('');
-      return `<article class="card"><h3>${esc(c.classType.name)} · ${dayjs(c.startsAt).format('DD MMM HH:mm')}</h3><p>Asistencia prevista: ${c.bookings.length}</p><ul>${attendees || '<li>Sin reservas</li>'}</ul></article>`;
+      const isCancelled = c.status === 'CANCELLED';
+      const cancelBtn =
+        !isCancelled && dayjs(c.startsAt).isAfter(dayjs())
+          ? `<form method="post" action="/trainer/classes/${c.id}/cancel"><button class="btn alt" type="submit">Cancelar clase</button></form>`
+          : '';
+      return `<article class="card">
+        <h3>${esc(c.classType.name)} · ${dayjs(c.startsAt).format('DD MMM HH:mm')}</h3>
+        <p>${esc(c.location.name)} · Estado: <strong>${isCancelled ? 'CANCELADA' : 'PROGRAMADA'}</strong></p>
+        <p>Asistencia prevista: ${c.bookings.length}</p>
+        ${cancelBtn}
+        <ul>${attendees || '<li>Sin reservas</li>'}</ul>
+      </article>`;
     }).join('');
 
-    const body = `<section class="section"><h2>Mis clases</h2>${cards || '<div class="card">No tienes clases asignadas.</div>'}</section>`;
+    const body = `<section class="section">
+      <h2>Mis clases</h2>
+      <div class="card trainer-create-card">
+        <h3>Crear nueva clase</h3>
+        <form method="post" action="/trainer/classes">
+          <div class="grid">
+            <div class="form-row"><label>Tipo de clase</label><select name="classTypeId" required>${classTypeOptions}</select></div>
+            <div class="form-row"><label>Sede</label><select name="locationId" required>${locationOptions}</select></div>
+            <div class="form-row"><label>Fecha</label><input type="date" name="date" required /></div>
+            <div class="form-row"><label>Hora inicio</label><input type="time" name="startTime" required /></div>
+            <div class="form-row"><label>Duración (min)</label><input type="number" name="durationMin" min="30" max="180" value="60" required /></div>
+            <div class="form-row"><label>Cupo</label><input type="number" name="capacity" min="1" max="80" value="18" required /></div>
+          </div>
+          <button class="btn" type="submit">Crear clase</button>
+        </form>
+      </div>
+      ${cards || '<div class="card">No tienes clases asignadas.</div>'}
+    </section>`;
     res.send(renderLayout({ title: 'Trainer', body, staff: req.session.staffName, simulationMode: config.simulationMode }));
+  });
+
+  app.post('/trainer/classes', requireStaff, requireRole('TRAINER'), async (req, res) => {
+    const schema = z.object({
+      classTypeId: z.string().min(8),
+      locationId: z.string().min(8),
+      date: z.string().min(10),
+      startTime: z.string().min(4),
+      durationMin: z.coerce.number().int().min(30).max(180),
+      capacity: z.coerce.number().int().min(1).max(80),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).send(renderError('Datos inválidos para crear clase.'));
+
+    const { classTypeId, locationId, date, startTime, durationMin, capacity } = parsed.data;
+    const startsAt = dayjs(`${date}T${startTime}`);
+    if (!startsAt.isValid()) return res.status(400).send(renderError('Fecha u hora inválida.'));
+    if (startsAt.isBefore(dayjs().subtract(5, 'minute'))) return res.status(400).send(renderError('No se puede crear una clase en el pasado.'));
+
+    const endsAt = startsAt.add(durationMin, 'minute');
+    await prisma.class_occurrences.create({
+      data: {
+        locationId,
+        classTypeId,
+        trainerId: req.session.staffId,
+        startsAt: startsAt.toDate(),
+        endsAt: endsAt.toDate(),
+        capacity,
+        availableSlots: capacity,
+        status: 'SCHEDULED',
+      },
+    });
+
+    res.redirect('/trainer/classes');
+  });
+
+  app.post('/trainer/classes/:id/cancel', requireStaff, requireRole('TRAINER'), async (req, res) => {
+    const occurrence = await prisma.class_occurrences.findUnique({
+      where: { id: req.params.id },
+      include: { bookings: { where: { status: 'BOOKED' } } },
+    });
+    if (!occurrence || occurrence.trainerId !== req.session.staffId) {
+      return res.status(404).send(renderError('Clase no encontrada para este trainer.'));
+    }
+    if (occurrence.status === 'CANCELLED') return res.redirect('/trainer/classes');
+
+    await prisma.$transaction(async (tx) => {
+      await tx.class_occurrences.update({
+        where: { id: occurrence.id },
+        data: { status: 'CANCELLED', availableSlots: 0 },
+      });
+
+      if (occurrence.bookings.length > 0) {
+        await tx.bookings.updateMany({
+          where: { classOccurrenceId: occurrence.id, status: 'BOOKED' },
+          data: { status: 'CANCELLED', cancelledAt: new Date() },
+        });
+
+        for (const booking of occurrence.bookings) {
+          const wallet = await tx.client_wallets.findUnique({
+            where: { clientId_classTypeId: { clientId: booking.clientId, classTypeId: occurrence.classTypeId } },
+          });
+          if (wallet) {
+            await tx.client_wallets.update({ where: { id: wallet.id }, data: { credits: { increment: 1 } } });
+            await tx.wallet_ledger.create({
+              data: {
+                walletId: wallet.id,
+                type: 'REFUND',
+                amount: 1,
+                reason: 'Clase cancelada por trainer',
+                bookingId: booking.id,
+              },
+            });
+          }
+        }
+      }
+    });
+
+    res.redirect('/trainer/classes');
   });
 
   app.get('/ops/checkin', requireStaff, requireRole('OPS', 'ADMIN'), (req, res) => {
