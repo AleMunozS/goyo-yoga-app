@@ -62,6 +62,8 @@ body::before {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background:
     radial-gradient(circle at calc(20% + (var(--intro-mx, 0) * 20px)) calc(10% + (var(--intro-my, 0) * 14px)), rgba(255, 231, 208, 0.23), transparent 42%),
     radial-gradient(circle at calc(84% - (var(--intro-mx, 0) * 18px)) calc(88% - (var(--intro-my, 0) * 14px)), rgba(124, 139, 159, 0.2), transparent 38%);
@@ -72,12 +74,15 @@ body::before {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: 0;
+  pointer-events: none;
   backdrop-filter: blur(2px);
   background: linear-gradient(180deg, rgba(17, 14, 12, 0.06), rgba(14, 13, 12, 0.22));
 }
 
 .intro-core {
   position: relative;
+  z-index: 3;
   text-align: center;
   width: min(720px, 92vw);
   padding: 2.2rem 1.4rem;
@@ -124,6 +129,7 @@ body::before {
 .fluid-layer {
   position: absolute;
   inset: -20% -10%;
+  z-index: 1;
   pointer-events: none;
   opacity: 0;
   transform: translateY(-100%) scale(1.06);
