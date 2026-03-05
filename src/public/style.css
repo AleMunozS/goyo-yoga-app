@@ -53,8 +53,9 @@ body::before {
   display: grid;
   place-items: center;
   background:
-    linear-gradient(160deg, rgba(27, 21, 17, 0.38), rgba(42, 28, 20, 0.18)),
+    linear-gradient(130deg, rgba(15, 16, 20, 0.48), rgba(46, 30, 20, 0.22)),
     url('/static/arena.jpeg') center / cover no-repeat;
+  transform: translateZ(0);
 }
 
 .landing-intro::before {
@@ -62,16 +63,31 @@ body::before {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 10%, rgba(247, 219, 187, 0.22), transparent 42%),
-    radial-gradient(circle at 84% 88%, rgba(117, 124, 133, 0.2), transparent 38%);
+    radial-gradient(circle at calc(20% + (var(--intro-mx, 0) * 20px)) calc(10% + (var(--intro-my, 0) * 14px)), rgba(255, 231, 208, 0.23), transparent 42%),
+    radial-gradient(circle at calc(84% - (var(--intro-mx, 0) * 18px)) calc(88% - (var(--intro-my, 0) * 14px)), rgba(124, 139, 159, 0.2), transparent 38%);
+  transition: background-position 0.25s ease;
+}
+
+.landing-intro::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(2px);
+  background: linear-gradient(180deg, rgba(17, 14, 12, 0.06), rgba(14, 13, 12, 0.22));
 }
 
 .intro-core {
   position: relative;
   text-align: center;
   width: min(720px, 92vw);
-  padding: 2rem 1rem;
+  padding: 2.2rem 1.4rem;
   color: #f8f0e6;
+  border: 1px solid rgba(255, 234, 212, 0.28);
+  background: linear-gradient(160deg, rgba(32, 26, 23, 0.5), rgba(38, 30, 24, 0.22));
+  border-radius: 24px;
+  box-shadow: 0 34px 80px rgba(14, 10, 9, 0.35);
+  backdrop-filter: blur(8px);
+  transform: translateZ(0);
 }
 
 .intro-logo-mark {
@@ -105,59 +121,60 @@ body::before {
   text-shadow: 0 2px 12px rgba(16, 10, 8, 0.5);
 }
 
-.sand-flow {
+.fluid-layer {
   position: absolute;
   inset: -20% -10%;
   pointer-events: none;
   opacity: 0;
-  transform: translateY(-105%);
-  background:
-    repeating-linear-gradient(98deg, rgba(236, 205, 171, 0.86) 0 14px, rgba(188, 149, 112, 0.9) 14px 26px, rgba(231, 208, 181, 0.88) 26px 37px);
-  mix-blend-mode: multiply;
-  filter: blur(1px);
+  transform: translateY(-100%) scale(1.06);
+  filter: blur(24px) saturate(1.08);
+  mix-blend-mode: screen;
 }
 
-.sand-flow-a { clip-path: polygon(0 0, 100% 0, 100% 35%, 0 62%); }
-.sand-flow-b { clip-path: polygon(0 18%, 100% 2%, 100% 72%, 0 86%); }
-.sand-flow-c { clip-path: polygon(0 42%, 100% 28%, 100% 100%, 0 100%); }
+.fluid-layer-a {
+  background: radial-gradient(circle at 18% 16%, rgba(255, 196, 132, 0.64), transparent 48%);
+}
+.fluid-layer-b {
+  background: radial-gradient(circle at 76% 24%, rgba(124, 176, 210, 0.46), transparent 50%);
+}
+.fluid-layer-c {
+  background: radial-gradient(circle at 52% 78%, rgba(241, 170, 130, 0.44), transparent 52%);
+}
 
-body.intro-leaving .sand-flow-a {
-  animation: sandDropA 1.85s cubic-bezier(.18,.85,.2,1) forwards;
+body.intro-leaving .fluid-layer-a {
+  animation: fluidSweepA 2.2s cubic-bezier(.18,.8,.2,1) forwards;
 }
-body.intro-leaving .sand-flow-b {
-  animation: sandDropB 2s cubic-bezier(.18,.85,.2,1) .12s forwards;
+body.intro-leaving .fluid-layer-b {
+  animation: fluidSweepB 2.35s cubic-bezier(.18,.8,.2,1) .08s forwards;
 }
-body.intro-leaving .sand-flow-c {
-  animation: sandDropC 2.15s cubic-bezier(.18,.85,.2,1) .22s forwards;
+body.intro-leaving .fluid-layer-c {
+  animation: fluidSweepC 2.5s cubic-bezier(.18,.8,.2,1) .16s forwards;
 }
 
 body.intro-leaving .intro-core {
-  animation: introFade .95s ease forwards;
+  animation: introFade 1.2s cubic-bezier(.2,.7,.2,1) forwards;
 }
 
 body.intro-leaving .landing-intro {
-  animation: introOut 2.45s ease forwards;
+  animation: introOut 2.7s ease forwards;
 }
 
-@keyframes sandDropA {
-  0% { opacity: 0; transform: translateY(-112%); }
-  12% { opacity: .86; }
-  65% { opacity: .96; }
-  100% { opacity: 1; transform: translateY(0%); }
+@keyframes fluidSweepA {
+  0% { opacity: 0; transform: translate(-12%, -112%) scale(1.14); }
+  16% { opacity: .78; }
+  100% { opacity: .88; transform: translate(8%, 2%) scale(1.02); }
 }
 
-@keyframes sandDropB {
-  0% { opacity: 0; transform: translateY(-118%); }
-  14% { opacity: .82; }
-  68% { opacity: .9; }
-  100% { opacity: .95; transform: translateY(-1%); }
+@keyframes fluidSweepB {
+  0% { opacity: 0; transform: translate(14%, -118%) scale(1.16); }
+  18% { opacity: .7; }
+  100% { opacity: .82; transform: translate(-6%, 0%) scale(1.03); }
 }
 
-@keyframes sandDropC {
-  0% { opacity: 0; transform: translateY(-122%); }
-  18% { opacity: .8; }
-  70% { opacity: .9; }
-  100% { opacity: .94; transform: translateY(-1.4%); }
+@keyframes fluidSweepC {
+  0% { opacity: 0; transform: translate(0%, -124%) scale(1.12); }
+  20% { opacity: .72; }
+  100% { opacity: .86; transform: translate(2%, -2%) scale(1.01); }
 }
 
 @keyframes introFade {

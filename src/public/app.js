@@ -2,6 +2,29 @@
   const intro = document.getElementById('landing-intro');
   const introEnter = document.getElementById('intro-enter');
   if (intro && introEnter) {
+    const state = { tx: 0, ty: 0, x: 0, y: 0 };
+    const tick = () => {
+      state.x += (state.tx - state.x) * 0.08;
+      state.y += (state.ty - state.y) * 0.08;
+      document.documentElement.style.setProperty('--intro-mx', state.x.toFixed(3));
+      document.documentElement.style.setProperty('--intro-my', state.y.toFixed(3));
+      requestAnimationFrame(tick);
+    };
+    tick();
+
+    intro.addEventListener('pointermove', (ev) => {
+      const rect = intro.getBoundingClientRect();
+      const px = (ev.clientX - rect.left) / rect.width;
+      const py = (ev.clientY - rect.top) / rect.height;
+      state.tx = (px - 0.5) * 2;
+      state.ty = (py - 0.5) * 2;
+    });
+
+    intro.addEventListener('pointerleave', () => {
+      state.tx = 0;
+      state.ty = 0;
+    });
+
     introEnter.addEventListener('click', () => {
       document.body.classList.add('intro-leaving');
       const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
