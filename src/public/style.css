@@ -37,6 +37,24 @@ body.has-landing-intro {
   overflow: hidden;
 }
 
+body.has-landing-intro:not(.intro-leaving) .site-header,
+body.has-landing-intro:not(.intro-leaving) main,
+body.has-landing-intro:not(.intro-leaving) .sim-banner {
+  opacity: 0;
+  transform: translateY(18px) scale(0.992);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+body.has-landing-intro .site-header,
+body.has-landing-intro main,
+body.has-landing-intro .sim-banner {
+  transition:
+    opacity 0.9s cubic-bezier(.2,.72,.2,1),
+    transform 0.9s cubic-bezier(.2,.72,.2,1),
+    filter 0.9s cubic-bezier(.2,.72,.2,1);
+}
+
 body::before {
   content: '';
   position: fixed;
@@ -56,6 +74,7 @@ body::before {
     linear-gradient(130deg, rgba(15, 16, 20, 0.48), rgba(46, 30, 20, 0.22)),
     url('/static/arena.jpeg') center / cover no-repeat;
   transform: translateZ(0);
+  will-change: opacity, transform;
 }
 
 .landing-intro::before {
@@ -148,39 +167,40 @@ body::before {
 }
 
 body.intro-leaving .fluid-layer-a {
-  animation: fluidSweepA 2.2s cubic-bezier(.18,.8,.2,1) forwards;
+  animation: fluidSweepA 1.55s cubic-bezier(.22,.72,.2,1) forwards;
 }
 body.intro-leaving .fluid-layer-b {
-  animation: fluidSweepB 2.35s cubic-bezier(.18,.8,.2,1) .08s forwards;
+  animation: fluidSweepB 1.62s cubic-bezier(.22,.72,.2,1) .04s forwards;
 }
 body.intro-leaving .fluid-layer-c {
-  animation: fluidSweepC 2.5s cubic-bezier(.18,.8,.2,1) .16s forwards;
+  animation: fluidSweepC 1.68s cubic-bezier(.22,.72,.2,1) .08s forwards;
 }
 
 body.intro-leaving .intro-core {
-  animation: introFade 1.2s cubic-bezier(.2,.7,.2,1) forwards;
+  animation: introFade 0.78s cubic-bezier(.2,.7,.2,1) forwards;
 }
 
 body.intro-leaving .landing-intro {
-  animation: introOut 2.7s ease forwards;
+  pointer-events: none;
+  animation: introOut 1.6s cubic-bezier(.2,.72,.2,1) forwards;
 }
 
 @keyframes fluidSweepA {
   0% { opacity: 0; transform: translate(-12%, -112%) scale(1.14); }
-  16% { opacity: .78; }
-  100% { opacity: .88; transform: translate(8%, 2%) scale(1.02); }
+  20% { opacity: .7; }
+  100% { opacity: .42; transform: translate(8%, 2%) scale(1.01); }
 }
 
 @keyframes fluidSweepB {
   0% { opacity: 0; transform: translate(14%, -118%) scale(1.16); }
-  18% { opacity: .7; }
-  100% { opacity: .82; transform: translate(-6%, 0%) scale(1.03); }
+  22% { opacity: .64; }
+  100% { opacity: .38; transform: translate(-6%, 0%) scale(1.01); }
 }
 
 @keyframes fluidSweepC {
   0% { opacity: 0; transform: translate(0%, -124%) scale(1.12); }
-  20% { opacity: .72; }
-  100% { opacity: .86; transform: translate(2%, -2%) scale(1.01); }
+  24% { opacity: .62; }
+  100% { opacity: .34; transform: translate(2%, -2%) scale(1); }
 }
 
 @keyframes introFade {
@@ -189,8 +209,9 @@ body.intro-leaving .landing-intro {
 }
 
 @keyframes introOut {
-  0%, 88% { opacity: 1; visibility: visible; }
-  100% { opacity: 0; visibility: hidden; }
+  0% { opacity: 1; visibility: visible; transform: scale(1); }
+  70% { opacity: 0.84; }
+  100% { opacity: 0; visibility: hidden; transform: scale(1.015); }
 }
 
 @keyframes breath {
