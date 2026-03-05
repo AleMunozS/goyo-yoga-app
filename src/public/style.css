@@ -41,10 +41,13 @@ body.has-landing-intro .site-header,
 body.has-landing-intro main,
 body.has-landing-intro .sim-banner {
   transform: translateY(100vh);
-  opacity: 1;
+  opacity: 0;
   filter: none;
   will-change: transform;
-  transition: transform 0.95s cubic-bezier(.2,.74,.2,1);
+  visibility: hidden;
+  transition:
+    transform 0.95s cubic-bezier(.2,.74,.2,1),
+    opacity 0.25s ease;
   pointer-events: none;
 }
 
@@ -52,6 +55,8 @@ body.intro-pushing .site-header,
 body.intro-pushing main,
 body.intro-pushing .sim-banner {
   transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
 }
 
 body.intro-pushing {
@@ -61,6 +66,8 @@ body.intro-pushing {
 body:not(.has-landing-intro) .site-header,
 body:not(.has-landing-intro) main,
 body:not(.has-landing-intro) .sim-banner {
+  opacity: 1;
+  visibility: visible;
   pointer-events: auto;
 }
 
