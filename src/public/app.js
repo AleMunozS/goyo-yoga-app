@@ -5,12 +5,28 @@
     introEnter.addEventListener('click', () => {
       document.body.classList.add('intro-leaving');
       const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const timeout = reduce ? 120 : 1650;
-      setTimeout(() => {
+      if (reduce) {
         intro.remove();
         document.body.classList.remove('has-landing-intro');
         document.body.classList.remove('intro-leaving');
-      }, timeout);
+        return;
+      }
+
+      let settled = false;
+      const finalize = () => {
+        if (settled) return;
+        settled = true;
+        intro.remove();
+        document.body.classList.remove('has-landing-intro');
+        document.body.classList.remove('intro-leaving');
+      };
+
+      intro.addEventListener('animationend', (ev) => {
+        if (ev.animationName === 'introOut') finalize();
+      }, { once: true });
+
+      // Fallback guard in case animationend is skipped by browser.
+      setTimeout(finalize, 2800);
     });
   }
 

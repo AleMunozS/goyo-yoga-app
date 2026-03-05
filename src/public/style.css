@@ -53,15 +53,25 @@ body::before {
   display: grid;
   place-items: center;
   background:
-    radial-gradient(circle at 18% 15%, rgba(255, 214, 172, 0.22), transparent 40%),
-    radial-gradient(circle at 82% 80%, rgba(131, 139, 146, 0.18), transparent 40%),
-    linear-gradient(150deg, #ece2d5, #d6bea4 62%, #b99474);
+    linear-gradient(160deg, rgba(27, 21, 17, 0.38), rgba(42, 28, 20, 0.18)),
+    url('/static/arena.jpeg') center / cover no-repeat;
+}
+
+.landing-intro::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(247, 219, 187, 0.22), transparent 42%),
+    radial-gradient(circle at 84% 88%, rgba(117, 124, 133, 0.2), transparent 38%);
 }
 
 .intro-core {
+  position: relative;
   text-align: center;
   width: min(720px, 92vw);
   padding: 2rem 1rem;
+  color: #f8f0e6;
 }
 
 .intro-logo-mark {
@@ -74,8 +84,9 @@ body::before {
   font-family: 'Cormorant Garamond', serif;
   font-size: 2rem;
   color: #f8f2ea;
-  background: linear-gradient(135deg, #8f5f43, #5d3f2c);
+  background: linear-gradient(135deg, rgba(148, 98, 66, 0.94), rgba(93, 63, 44, 0.96));
   box-shadow: 0 18px 38px rgba(58, 37, 26, 0.35);
+  animation: breath 4.8s ease-in-out infinite;
 }
 
 .intro-core h1 {
@@ -83,13 +94,15 @@ body::before {
   font-family: 'Cormorant Garamond', serif;
   font-size: clamp(2.4rem, 8vw, 5rem);
   letter-spacing: 0.1em;
-  color: #4a3426;
+  color: #f6ece2;
+  text-shadow: 0 8px 32px rgba(26, 18, 12, 0.45);
 }
 
 .intro-core p {
   margin: 0.5rem 0 1rem;
   font-size: 1rem;
-  color: #5a4638;
+  color: rgba(252, 241, 228, 0.92);
+  text-shadow: 0 2px 12px rgba(16, 10, 8, 0.5);
 }
 
 .sand-flow {
@@ -97,15 +110,11 @@ body::before {
   inset: -20% -10%;
   pointer-events: none;
   opacity: 0;
-  transform: translateY(-100%);
+  transform: translateY(-105%);
   background:
-    repeating-linear-gradient(
-      100deg,
-      rgba(227, 197, 163, 0.92) 0 14px,
-      rgba(194, 155, 118, 0.94) 14px 24px,
-      rgba(232, 210, 184, 0.92) 24px 34px
-    );
+    repeating-linear-gradient(98deg, rgba(236, 205, 171, 0.86) 0 14px, rgba(188, 149, 112, 0.9) 14px 26px, rgba(231, 208, 181, 0.88) 26px 37px);
   mix-blend-mode: multiply;
+  filter: blur(1px);
 }
 
 .sand-flow-a { clip-path: polygon(0 0, 100% 0, 100% 35%, 0 62%); }
@@ -113,49 +122,57 @@ body::before {
 .sand-flow-c { clip-path: polygon(0 42%, 100% 28%, 100% 100%, 0 100%); }
 
 body.intro-leaving .sand-flow-a {
-  animation: sandDropA 1.15s cubic-bezier(.2,.9,.2,1) forwards;
+  animation: sandDropA 1.85s cubic-bezier(.18,.85,.2,1) forwards;
 }
 body.intro-leaving .sand-flow-b {
-  animation: sandDropB 1.3s cubic-bezier(.2,.9,.2,1) .08s forwards;
+  animation: sandDropB 2s cubic-bezier(.18,.85,.2,1) .12s forwards;
 }
 body.intro-leaving .sand-flow-c {
-  animation: sandDropC 1.45s cubic-bezier(.2,.9,.2,1) .16s forwards;
+  animation: sandDropC 2.15s cubic-bezier(.18,.85,.2,1) .22s forwards;
 }
 
 body.intro-leaving .intro-core {
-  animation: introFade .5s ease forwards;
+  animation: introFade .95s ease forwards;
 }
 
 body.intro-leaving .landing-intro {
-  animation: introOut 1.6s ease forwards;
+  animation: introOut 2.45s ease forwards;
 }
 
 @keyframes sandDropA {
-  0% { opacity: 0; transform: translateY(-105%); }
-  10% { opacity: .94; }
+  0% { opacity: 0; transform: translateY(-112%); }
+  12% { opacity: .86; }
+  65% { opacity: .96; }
   100% { opacity: 1; transform: translateY(0%); }
 }
 
 @keyframes sandDropB {
-  0% { opacity: 0; transform: translateY(-108%); }
-  14% { opacity: .9; }
-  100% { opacity: .95; transform: translateY(0%); }
+  0% { opacity: 0; transform: translateY(-118%); }
+  14% { opacity: .82; }
+  68% { opacity: .9; }
+  100% { opacity: .95; transform: translateY(-1%); }
 }
 
 @keyframes sandDropC {
-  0% { opacity: 0; transform: translateY(-112%); }
-  16% { opacity: .9; }
-  100% { opacity: .94; transform: translateY(0%); }
+  0% { opacity: 0; transform: translateY(-122%); }
+  18% { opacity: .8; }
+  70% { opacity: .9; }
+  100% { opacity: .94; transform: translateY(-1.4%); }
 }
 
 @keyframes introFade {
   from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(-18px); }
+  to { opacity: 0; transform: translateY(-22px) scale(.98); }
 }
 
 @keyframes introOut {
-  0%, 86% { opacity: 1; visibility: visible; }
+  0%, 88% { opacity: 1; visibility: visible; }
   100% { opacity: 0; visibility: hidden; }
+}
+
+@keyframes breath {
+  0%, 100% { transform: scale(1); box-shadow: 0 18px 38px rgba(58, 37, 26, 0.35); }
+  50% { transform: scale(1.04); box-shadow: 0 24px 44px rgba(58, 37, 26, 0.45); }
 }
 
 main,
