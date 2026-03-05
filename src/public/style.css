@@ -80,10 +80,22 @@ body::before {
   display: grid;
   place-items: center;
   background:
-    radial-gradient(circle at 18% 16%, rgba(255, 224, 190, 0.26), transparent 42%),
-    radial-gradient(circle at 82% 18%, rgba(146, 170, 191, 0.2), transparent 38%),
-    radial-gradient(circle at 50% 84%, rgba(191, 150, 116, 0.22), transparent 45%),
-    linear-gradient(145deg, #2b241f 0%, #3a2c22 36%, #5b4736 100%);
+    linear-gradient(
+      120deg,
+      rgba(232, 232, 230, 0.88) 0%,
+      rgba(216, 210, 198, 0.86) 11%,
+      rgba(179, 171, 155, 0.84) 22%,
+      rgba(152, 109, 79, 0.82) 33%,
+      rgba(95, 69, 46, 0.8) 44%,
+      rgba(63, 63, 59, 0.8) 55%,
+      rgba(130, 125, 91, 0.82) 66%,
+      rgba(106, 115, 70, 0.84) 77%,
+      rgba(66, 65, 48, 0.86) 88%,
+      rgba(130, 138, 145, 0.88) 100%
+    ),
+    radial-gradient(circle at 18% 16%, rgba(255, 239, 224, 0.14), transparent 42%),
+    radial-gradient(circle at 82% 18%, rgba(168, 183, 198, 0.12), transparent 38%),
+    radial-gradient(circle at 50% 84%, rgba(202, 171, 146, 0.14), transparent 45%);
   transform: translateZ(0);
   will-change: transform;
   overflow: hidden;
