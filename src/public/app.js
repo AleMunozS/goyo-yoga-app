@@ -26,14 +26,14 @@
     });
 
     introEnter.addEventListener('click', () => {
-      if (document.body.classList.contains('intro-leaving')) return;
+      if (document.body.classList.contains('intro-pushing')) return;
       intro.style.pointerEvents = 'none';
-      document.body.classList.add('intro-leaving');
+      document.body.classList.add('intro-pushing');
       const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduce) {
         intro.remove();
         document.body.classList.remove('has-landing-intro');
-        document.body.classList.remove('intro-leaving');
+        document.body.classList.remove('intro-pushing');
         return;
       }
 
@@ -43,15 +43,15 @@
         settled = true;
         intro.remove();
         document.body.classList.remove('has-landing-intro');
-        document.body.classList.remove('intro-leaving');
+        document.body.classList.remove('intro-pushing');
       };
 
       intro.addEventListener('animationend', (ev) => {
-        if (ev.animationName === 'introOut') finalize();
+        if (ev.animationName === 'introPushUp') finalize();
       }, { once: true });
 
       // Fallback guard in case animationend is skipped by browser.
-      setTimeout(finalize, 1450);
+      setTimeout(finalize, 1150);
     });
   }
 
