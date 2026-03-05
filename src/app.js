@@ -102,29 +102,125 @@ export function createApp({ prisma }) {
   app.use(express.json());
 
   app.get('/', async (req, res) => {
-    const types = await prisma.class_types.findMany({ orderBy: { name: 'asc' }, take: 4 });
-    const typeCards = types.map((t) => `
-      <article class="card reveal">
+    const [types, upcoming, bundles] = await Promise.all([
+      prisma.class_types.findMany({ orderBy: { name: 'asc' }, take: 4 }),
+      prisma.class_occurrences.findMany({
+        include: { classType: true, trainer: true },
+        orderBy: { startsAt: 'asc' },
+        take: 3,
+        where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
+      }),
+      prisma.ticket_products.findMany({
+        include: { classType: true },
+        orderBy: [{ bundleSize: 'desc' }, { priceCents: 'asc' }],
+        take: 4,
+        where: { active: true },
+      }),
+    ]);
+
+    const typeCards = types
+      .map(
+        (t) => `
+      <article class="card dune-card reveal">
+        <span class="tag">${esc(t.intensity)}</span>
         <h3>${esc(t.name)}</h3>
         <p>${esc(t.description)}</p>
-        <span class="status-pill">${esc(t.intensity)} · ${t.durationMin} min</span>
+        <span class="status-pill">${t.durationMin} min</span>
       </article>
-    `).join('');
+    `
+      )
+      .join('');
 
-    const body = `
-      <section class="hero parallax">
-        <div class="hero-card reveal">
-          <h1>Tu energía, tu ritmo, tu clase.</h1>
-          <p>Compra tickets por tipo de clase, reserva en segundos y llega con tu QR listo.</p>
-          <div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.9rem;">
-            <a class="btn" href="/classes">Explorar clases</a>
-            <a class="btn alt" href="/staff/login">Portal staff</a>
+    const timeline = upcoming.length
+      ? upcoming
+          .map(
+            (c) => `
+        <div class="timeline-row reveal">
+          <div>
+            <strong>${esc(c.classType.name)}</strong>
+            <p>${esc(c.trainer.displayName)}</p>
+          </div>
+          <div class="timeline-right">
+            <span>${dayjs(c.startsAt).format('HH:mm')}</span>
+            <small>${c.availableSlots} cupos</small>
           </div>
         </div>
-      </section>
-      <section class="section">
-        <h2 class="reveal">Experiencias GOYO</h2>
-        <div class="grid">${typeCards}</div>
+      `
+          )
+          .join('')
+      : '<div class="timeline-row"><p>Agenda en actualización</p></div>';
+
+    const bundleCards = bundles
+      .map(
+        (b) => `
+      <article class="card reveal">
+        <h3>${esc(b.classType.name)}</h3>
+        <p>${esc(b.name)}</p>
+        <div class="metric">${b.bundleSize} tickets</div>
+        <p>MXN ${(b.priceCents / 100).toLocaleString('es-MX')}</p>
+        <a class="btn" href="/classes">Comprar y reservar</a>
+      </article>
+    `
+      )
+      .join('');
+
+    const body = `
+      <section class="story-root">
+        <div class="ambient-lights" aria-hidden="true">
+          <span class="light-orb orb-1"></span>
+          <span class="light-orb orb-2"></span>
+          <span class="light-orb orb-3"></span>
+          <span class="light-orb orb-4"></span>
+        </div>
+
+        <section class="hero parallax dune-hero">
+          <div class="hero-card reveal">
+            <p class="eyebrow">ORIGEN · EQUILIBRIO · BIOMODULACIÓN</p>
+            <h1>Encuentra tu equilibrio en el origen.</h1>
+            <p>Compra bundles por tipo de clase, reserva en segundos y llega con QR listo para acceso.</p>
+            <div class="hero-actions">
+              <a class="btn" href="/classes">Agendar experiencia</a>
+              <a class="btn alt" href="/staff/login">Portal staff</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="section split-section reveal">
+          <article class="card split-left">
+            <h2>El equilibrio perfecto</h2>
+            <p>Inspirado por ciclos de luz y sombra, GOYO integra movimiento, respiración y foco mental.</p>
+            <p class="quote">"Una práctica que se siente viva en cada sesión."</p>
+          </article>
+          <article class="card split-right">
+            <div class="clay-shape"></div>
+          </article>
+        </section>
+
+        <section class="section">
+          <h2 class="reveal">Experiencias GOYO</h2>
+          <div class="grid">${typeCards}</div>
+        </section>
+
+        <section class="section schedule-shell reveal">
+          <div class="card schedule-board">
+            <h2>Agenda destacada</h2>
+            <div class="timeline">${timeline}</div>
+            <a class="btn" href="/classes">Ver horarios completos</a>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="reveal">Bundles de tickets</h2>
+          <div class="grid">${bundleCards || '<div class="card">Próximamente bundles activos.</div>'}</div>
+        </section>
+
+        <section class="section reveal">
+          <div class="card final-manifesto">
+            <h2>Al final del recorrido, solo queda enfoque.</h2>
+            <p>Desliza, reserva y entra a clase con una experiencia fluida para cliente, trainer y operación.</p>
+            <a class="btn alt" href="/classes">Comenzar ahora</a>
+          </div>
+        </section>
       </section>
     `;
 
