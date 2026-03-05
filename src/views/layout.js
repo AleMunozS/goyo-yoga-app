@@ -1,6 +1,7 @@
 import { esc } from '../utils.js';
 
 export function renderLayout({ title, body, staff = null, simulationMode = true }) {
+  const isLandingIntro = title === 'Inicio' && !staff;
   const nav = staff
     ? `
       <nav class="top-nav">
@@ -11,6 +12,22 @@ export function renderLayout({ title, body, staff = null, simulationMode = true 
       </nav>
     `
     : '<nav class="top-nav"><a href="/">Inicio</a><a href="/classes">Clases</a><a href="/staff/login">Staff</a></nav>';
+
+  const intro = isLandingIntro
+    ? `
+    <section id="landing-intro" class="landing-intro" aria-label="Introducción GOYO">
+      <div class="intro-core">
+        <div class="intro-logo-mark">GY</div>
+        <h1>GOYO YOGA</h1>
+        <p>Reserva sin cuenta. Tickets por clase. Acceso con QR.</p>
+        <button type="button" class="btn" id="intro-enter">Entrar</button>
+      </div>
+      <div class="sand-flow sand-flow-a" aria-hidden="true"></div>
+      <div class="sand-flow sand-flow-b" aria-hidden="true"></div>
+      <div class="sand-flow sand-flow-c" aria-hidden="true"></div>
+    </section>
+  `
+    : '';
 
   return `<!doctype html>
   <html lang="es">
@@ -23,7 +40,8 @@ export function renderLayout({ title, body, staff = null, simulationMode = true 
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css" />
   </head>
-  <body>
+  <body class="${isLandingIntro ? 'has-landing-intro' : ''}">
+    ${intro}
     ${simulationMode ? '<div class="sim-banner">Modo simulación activo (no producción)</div>' : ''}
     <header class="site-header">
       <div class="brand">GOYO YOGA</div>

@@ -33,6 +33,10 @@ body {
   transition: color 0.2s ease;
 }
 
+body.has-landing-intro {
+  overflow: hidden;
+}
+
 body::before {
   content: '';
   position: fixed;
@@ -40,6 +44,118 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background: rgba(0, 0, 0, calc(var(--night-progress) * 0.95));
+}
+
+.landing-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 18% 15%, rgba(255, 214, 172, 0.22), transparent 40%),
+    radial-gradient(circle at 82% 80%, rgba(131, 139, 146, 0.18), transparent 40%),
+    linear-gradient(150deg, #ece2d5, #d6bea4 62%, #b99474);
+}
+
+.intro-core {
+  text-align: center;
+  width: min(720px, 92vw);
+  padding: 2rem 1rem;
+}
+
+.intro-logo-mark {
+  width: 86px;
+  height: 86px;
+  border-radius: 24px;
+  margin: 0 auto 0.8rem;
+  display: grid;
+  place-items: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem;
+  color: #f8f2ea;
+  background: linear-gradient(135deg, #8f5f43, #5d3f2c);
+  box-shadow: 0 18px 38px rgba(58, 37, 26, 0.35);
+}
+
+.intro-core h1 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.4rem, 8vw, 5rem);
+  letter-spacing: 0.1em;
+  color: #4a3426;
+}
+
+.intro-core p {
+  margin: 0.5rem 0 1rem;
+  font-size: 1rem;
+  color: #5a4638;
+}
+
+.sand-flow {
+  position: absolute;
+  inset: -20% -10%;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-100%);
+  background:
+    repeating-linear-gradient(
+      100deg,
+      rgba(227, 197, 163, 0.92) 0 14px,
+      rgba(194, 155, 118, 0.94) 14px 24px,
+      rgba(232, 210, 184, 0.92) 24px 34px
+    );
+  mix-blend-mode: multiply;
+}
+
+.sand-flow-a { clip-path: polygon(0 0, 100% 0, 100% 35%, 0 62%); }
+.sand-flow-b { clip-path: polygon(0 18%, 100% 2%, 100% 72%, 0 86%); }
+.sand-flow-c { clip-path: polygon(0 42%, 100% 28%, 100% 100%, 0 100%); }
+
+body.intro-leaving .sand-flow-a {
+  animation: sandDropA 1.15s cubic-bezier(.2,.9,.2,1) forwards;
+}
+body.intro-leaving .sand-flow-b {
+  animation: sandDropB 1.3s cubic-bezier(.2,.9,.2,1) .08s forwards;
+}
+body.intro-leaving .sand-flow-c {
+  animation: sandDropC 1.45s cubic-bezier(.2,.9,.2,1) .16s forwards;
+}
+
+body.intro-leaving .intro-core {
+  animation: introFade .5s ease forwards;
+}
+
+body.intro-leaving .landing-intro {
+  animation: introOut 1.6s ease forwards;
+}
+
+@keyframes sandDropA {
+  0% { opacity: 0; transform: translateY(-105%); }
+  10% { opacity: .94; }
+  100% { opacity: 1; transform: translateY(0%); }
+}
+
+@keyframes sandDropB {
+  0% { opacity: 0; transform: translateY(-108%); }
+  14% { opacity: .9; }
+  100% { opacity: .95; transform: translateY(0%); }
+}
+
+@keyframes sandDropC {
+  0% { opacity: 0; transform: translateY(-112%); }
+  16% { opacity: .9; }
+  100% { opacity: .94; transform: translateY(0%); }
+}
+
+@keyframes introFade {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-18px); }
+}
+
+@keyframes introOut {
+  0%, 86% { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
 }
 
 main,

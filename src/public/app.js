@@ -1,4 +1,19 @@
 (() => {
+  const intro = document.getElementById('landing-intro');
+  const introEnter = document.getElementById('intro-enter');
+  if (intro && introEnter) {
+    introEnter.addEventListener('click', () => {
+      document.body.classList.add('intro-leaving');
+      const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const timeout = reduce ? 120 : 1650;
+      setTimeout(() => {
+        intro.remove();
+        document.body.classList.remove('has-landing-intro');
+        document.body.classList.remove('intro-leaving');
+      }, timeout);
+    });
+  }
+
   const revealEls = document.querySelectorAll('.reveal');
   const io = new IntersectionObserver(
     (entries) => {
