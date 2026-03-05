@@ -1,0 +1,50 @@
+name: cd-deploy
+
+on:
+  workflow_run:
+    workflows: ["ci"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-goyo-yoga-app
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          command_timeout: 40m
+          script: |
+            set -euo pipefail
+            PROJECT_DIR="${{ secrets.DEPLOY_PATH }}"
+            if [ -z "$PROJECT_DIR" ]; then PROJECT_DIR="/srv/apps/goyo-yoga-app"; fi
+            BRANCH="${{ github.event_name == 'workflow_dispatch' && github.ref_name || github.event.workflow_run.head_branch }}"
+            if [ -z "$BRANCH" ]; then BRANCH="main"; fi
+            cd "$PROJECT_DIR"
+            git fetch --all --prune
+            git checkout "$BRANCH"
+            git pull --ff-only origin "$BRANCH"
+            docker compose up -d --build
+            for i in $(seq 1 20); do
+              if curl -fsS "http://127.0.0.1:3000/health" >/dev/null; then
+                echo "Health check OK"
+                exit 0
+              fi
+              sleep 3
+            done
+            echo "Health check failed"
+            exit 1

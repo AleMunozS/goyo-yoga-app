@@ -1,0 +1,251 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum StaffRole {
+  ADMIN
+  TRAINER
+  OPS
+}
+
+enum BookingStatus {
+  BOOKED
+  CANCELLED
+  CHECKED_IN
+  NO_SHOW
+}
+
+enum LedgerType {
+  CREDIT
+  DEBIT
+  REFUND
+}
+
+enum PaymentStatus {
+  CREATED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model staff_users {
+  id                String               @id @default(cuid())
+  email             String               @unique
+  passwordHash      String
+  role              StaffRole
+  displayName       String
+  trainerBio        String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  classes           class_occurrences[]  @relation("trainerClasses")
+  scheduleTemplates schedule_templates[]
+  checkins          checkins[]
+}
+
+model locations {
+  id        String               @id @default(cuid())
+  name      String
+  slug      String               @unique
+  address   String
+  timezone  String               @default("America/Mexico_City")
+  isActive  Boolean              @default(true)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  schedules schedule_templates[]
+  classes   class_occurrences[]
+}
+
+model class_types {
+  id             String               @id @default(cuid())
+  name           String               @unique
+  slug           String               @unique
+  description    String
+  durationMin    Int
+  intensity      String
+  colorHex       String
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  ticketProducts ticket_products[]
+  schedules      schedule_templates[]
+  classes        class_occurrences[]
+  wallets        client_wallets[]
+}
+
+model ticket_products {
+  id            String      @id @default(cuid())
+  classTypeId   String
+  name          String
+  bundleSize    Int
+  priceCents    Int
+  currency      String      @default("mxn")
+  active        Boolean     @default(true)
+  stripePriceId String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  classType     class_types @relation(fields: [classTypeId], references: [id])
+  payments      payments[]
+
+  @@unique([classTypeId, name])
+}
+
+model clients {
+  id         String           @id @default(cuid())
+  email      String           @unique
+  fullName   String
+  phone      String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  wallets    client_wallets[]
+  bookings   bookings[]
+  magicLinks magic_links[]
+  payments   payments[]
+}
+
+model client_wallets {
+  id          String          @id @default(cuid())
+  clientId    String
+  classTypeId String
+  credits     Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  client      clients         @relation(fields: [clientId], references: [id])
+  classType   class_types     @relation(fields: [classTypeId], references: [id])
+  ledger      wallet_ledger[]
+
+  @@unique([clientId, classTypeId])
+}
+
+model wallet_ledger {
+  id        String         @id @default(cuid())
+  walletId  String
+  type      LedgerType
+  amount    Int
+  reason    String
+  bookingId String?
+  paymentId String?
+  createdAt DateTime       @default(now())
+  wallet    client_wallets @relation(fields: [walletId], references: [id])
+  booking   bookings?      @relation(fields: [bookingId], references: [id])
+  payment   payments?      @relation(fields: [paymentId], references: [id])
+}
+
+model schedule_templates {
+  id          String      @id @default(cuid())
+  locationId  String
+  classTypeId String
+  trainerId   String
+  weekday     Int
+  startTime   String
+  capacity    Int
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  location    locations   @relation(fields: [locationId], references: [id])
+  classType   class_types @relation(fields: [classTypeId], references: [id])
+  trainer     staff_users @relation(fields: [trainerId], references: [id])
+}
+
+model class_occurrences {
+  id             String      @id @default(cuid())
+  locationId     String
+  classTypeId    String
+  trainerId      String
+  startsAt       DateTime
+  endsAt         DateTime
+  capacity       Int
+  availableSlots Int
+  status         String      @default("SCHEDULED")
+  createdAt      DateTime    @default(now())
+  location       locations   @relation(fields: [locationId], references: [id])
+  classType      class_types @relation(fields: [classTypeId], references: [id])
+  trainer        staff_users @relation("trainerClasses", fields: [trainerId], references: [id])
+  bookings       bookings[]
+
+  @@index([startsAt])
+}
+
+model bookings {
+  id                String            @id @default(cuid())
+  bookingRef        String            @unique
+  clientId          String
+  classOccurrenceId String
+  status            BookingStatus     @default(BOOKED)
+  qrPayload         String
+  qrSignature       String
+  cancelledAt       DateTime?
+  checkedInAt       DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  client            clients           @relation(fields: [clientId], references: [id])
+  classOccurrence   class_occurrences @relation(fields: [classOccurrenceId], references: [id])
+  checkins          checkins[]
+  ledger            wallet_ledger[]
+
+  @@unique([clientId, classOccurrenceId])
+}
+
+model checkins {
+  id        String      @id @default(cuid())
+  bookingId String
+  staffId   String
+  method    String
+  notes     String?
+  createdAt DateTime    @default(now())
+  booking   bookings    @relation(fields: [bookingId], references: [id])
+  staff     staff_users @relation(fields: [staffId], references: [id])
+}
+
+model magic_links {
+  id        String    @id @default(cuid())
+  clientId  String
+  tokenHash String    @unique
+  purpose   String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  client    clients   @relation(fields: [clientId], references: [id])
+}
+
+model payments {
+  id              String             @id @default(cuid())
+  clientId        String
+  ticketProductId String
+  stripeSessionId String?            @unique
+  stripePaymentId String?
+  amountCents     Int
+  currency        String             @default("mxn")
+  status          PaymentStatus      @default(CREATED)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  client          clients            @relation(fields: [clientId], references: [id])
+  ticketProduct   ticket_products    @relation(fields: [ticketProductId], references: [id])
+  webhooks        payment_webhooks[]
+  ledger          wallet_ledger[]
+}
+
+model payment_webhooks {
+  id            String    @id @default(cuid())
+  stripeEventId String    @unique
+  type          String
+  payload       String
+  processed     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  paymentId     String?
+  payment       payments? @relation(fields: [paymentId], references: [id])
+}
+
+model audit_events {
+  id         String   @id @default(cuid())
+  actorType  String
+  actorId    String
+  action     String
+  entityType String
+  entityId   String
+  metadata   String?
+  createdAt  DateTime @default(now())
+}

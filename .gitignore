@@ -1,0 +1,7 @@
+node_modules
+.env
+*.db
+prisma/dev.db
+npm-debug.log
+.DS_Store
+coverage
