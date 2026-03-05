@@ -22,9 +22,9 @@ export function renderLayout({ title, body, staff = null, simulationMode = true 
         <p>Reserva sin cuenta. Tickets por clase. Acceso con QR.</p>
         <button type="button" class="btn" id="intro-enter">Entrar</button>
       </div>
-      <div class="fluid-layer fluid-layer-a" aria-hidden="true"></div>
-      <div class="fluid-layer fluid-layer-b" aria-hidden="true"></div>
-      <div class="fluid-layer fluid-layer-c" aria-hidden="true"></div>
+      <div class="sand-river river-a" aria-hidden="true"></div>
+      <div class="sand-river river-b" aria-hidden="true"></div>
+      <div class="sand-river river-c" aria-hidden="true"></div>
     </section>
   `
     : '';

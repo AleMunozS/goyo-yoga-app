@@ -27,11 +27,13 @@
 
     introEnter.addEventListener('click', () => {
       if (document.body.classList.contains('intro-pushing')) return;
+      window.scrollTo(0, 0);
       intro.style.pointerEvents = 'none';
       document.body.classList.add('intro-pushing');
       const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduce) {
         intro.remove();
+        window.scrollTo(0, 0);
         document.body.classList.remove('has-landing-intro');
         document.body.classList.remove('intro-pushing');
         return;
@@ -42,6 +44,7 @@
         if (settled) return;
         settled = true;
         intro.remove();
+        window.scrollTo(0, 0);
         document.body.classList.remove('has-landing-intro');
         document.body.classList.remove('intro-pushing');
       };

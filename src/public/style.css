@@ -54,6 +54,10 @@ body.intro-pushing .sim-banner {
   transform: translateY(0);
 }
 
+body.intro-pushing {
+  overflow: hidden;
+}
+
 body:not(.has-landing-intro) .site-header,
 body:not(.has-landing-intro) main,
 body:not(.has-landing-intro) .sim-banner {
@@ -151,8 +155,56 @@ body::before {
   text-shadow: 0 2px 12px rgba(16, 10, 8, 0.5);
 }
 
-.fluid-layer {
-  display: none;
+.sand-river {
+  position: absolute;
+  left: -14%;
+  right: -14%;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+
+.river-a {
+  bottom: -18%;
+  height: 26%;
+  border-radius: 60% 40% 0 0 / 100% 100% 0 0;
+  background:
+    linear-gradient(180deg, rgba(255, 228, 196, 0.68), rgba(207, 170, 130, 0.18)),
+    radial-gradient(circle at 26% 24%, rgba(255, 243, 230, 0.52), transparent 45%);
+  filter: blur(3px);
+}
+
+.river-b {
+  bottom: -26%;
+  height: 34%;
+  border-radius: 48% 52% 0 0 / 100% 100% 0 0;
+  background:
+    linear-gradient(180deg, rgba(233, 199, 164, 0.56), rgba(160, 127, 95, 0.14)),
+    radial-gradient(circle at 78% 24%, rgba(255, 232, 206, 0.38), transparent 42%);
+  filter: blur(5px);
+}
+
+.river-c {
+  bottom: -30%;
+  height: 40%;
+  border-radius: 44% 56% 0 0 / 100% 100% 0 0;
+  background:
+    linear-gradient(180deg, rgba(189, 163, 138, 0.34), rgba(118, 100, 82, 0.08)),
+    radial-gradient(circle at 52% 30%, rgba(224, 201, 179, 0.26), transparent 48%);
+  filter: blur(8px);
+}
+
+body.intro-pushing .river-a {
+  animation: riverRiseA 0.95s cubic-bezier(.22,.72,.2,1) forwards;
+}
+
+body.intro-pushing .river-b {
+  animation: riverRiseB 1.02s cubic-bezier(.22,.72,.2,1) .04s forwards;
+}
+
+body.intro-pushing .river-c {
+  animation: riverRiseC 1.08s cubic-bezier(.22,.72,.2,1) .08s forwards;
 }
 
 body.intro-pushing .landing-intro {
@@ -163,6 +215,24 @@ body.intro-pushing .landing-intro {
 @keyframes introPushUp {
   from { transform: translateY(0); }
   to { transform: translateY(-100%); }
+}
+
+@keyframes riverRiseA {
+  0% { opacity: 0; transform: translateY(68%); }
+  24% { opacity: 0.72; }
+  100% { opacity: 0.1; transform: translateY(-58%); }
+}
+
+@keyframes riverRiseB {
+  0% { opacity: 0; transform: translateY(74%); }
+  26% { opacity: 0.62; }
+  100% { opacity: 0.08; transform: translateY(-48%); }
+}
+
+@keyframes riverRiseC {
+  0% { opacity: 0; transform: translateY(82%); }
+  28% { opacity: 0.48; }
+  100% { opacity: 0.06; transform: translateY(-42%); }
 }
 
 @keyframes breath {
