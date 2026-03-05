@@ -26,7 +26,6 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script_stop: true
           command_timeout: 40m
           script: |
             set -euo pipefail
@@ -40,7 +39,7 @@ jobs:
             git pull --ff-only origin "$BRANCH"
             docker compose up -d --build
             for i in $(seq 1 20); do
-              if curl -fsS "http://127.0.0.1:3000/health" >/dev/null; then
+              if curl -fsS "http://127.0.0.1:3100/health" >/dev/null; then
                 echo "Health check OK"
                 exit 0
               fi

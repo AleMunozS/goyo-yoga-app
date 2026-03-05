@@ -67,6 +67,7 @@ Si no, usa fallback simulado para demo de punta a punta.
 ## CI/CD
 - CI: `.github/workflows/ci.yml`
 - CD SSH VPS: `.github/workflows/cd-deploy.yml`
+- En servidor VPS el contenedor publica en puerto `3100` para evitar colisión con apps existentes.
 - Secrets requeridos:
   - `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_PATH`
   - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` (si aplica)
