@@ -27,6 +27,7 @@
 
     introEnter.addEventListener('click', () => {
       if (document.body.classList.contains('intro-leaving')) return;
+      intro.style.pointerEvents = 'none';
       document.body.classList.add('intro-leaving');
       const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduce) {
@@ -50,7 +51,7 @@
       }, { once: true });
 
       // Fallback guard in case animationend is skipped by browser.
-      setTimeout(finalize, 1800);
+      setTimeout(finalize, 2300);
     });
   }
 
