@@ -1750,6 +1750,7 @@ body.is-concept-board::before {
   font-family: 'Cormorant Garamond', serif;
   font-size: clamp(2.2rem, 5vw, 4.2rem);
   line-height: 0.94;
+  color: rgba(64, 52, 40, 0.96);
 }
 
 .page-kicker {
@@ -1769,7 +1770,7 @@ body.is-concept-board::before {
   max-width: 60ch;
   font-size: 1rem;
   line-height: 1.7;
-  color: rgba(60, 50, 42, 0.82);
+  color: rgba(60, 50, 42, 0.9);
 }
 
 .page-hero-side {
@@ -1840,6 +1841,7 @@ body.is-concept-board::before {
 .mini-stat strong {
   font-size: 1rem;
   line-height: 1.35;
+  color: rgba(57, 46, 36, 0.92);
 }
 
 .page-toolbar {
@@ -2883,9 +2885,10 @@ body.is-concept-board::before {
   padding: 0.48rem 0.8rem;
   border: 1px solid rgba(244, 226, 200, 0.14);
   background: #4b382b;
-  color: inherit;
+  color: #f3eadf;
   font: inherit;
   font-size: 0.73rem;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;

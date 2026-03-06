@@ -223,7 +223,7 @@ export function createApp({ prisma }) {
     const proofCards = [
       `${stats.classTypes || 0}+ experiencias activas listas para reservar`,
       `${stats.upcoming || 0} clases destacadas cargadas en agenda`,
-      `${stats.bundles || 0} bundles visibles para compra rápida`,
+      `${stats.bundles || 0} paquetes visibles para compra rápida`,
     ]
       .map((item) => `<div class="proof-chip reveal">${item}</div>`)
       .join('');
@@ -240,8 +240,8 @@ export function createApp({ prisma }) {
         <section class="landing-banner scroll-hero reveal" data-scroll-target="landing-main-hero">
           <div class="landing-banner-card">
             <p class="eyebrow">TISA</p>
-            <h1>Respira. Elige tu práctica. Reserva en segundos.</h1>
-            <p>Toca la pantalla y avanza directo a la experiencia del estudio.</p>
+            <h1>Un estudio sereno para elegir, reservar y entrar sin esfuerzo.</h1>
+            <p>Toca la portada y entra directo al recorrido principal de TISA.</p>
             <span class="landing-banner-hint">Tocar para continuar</span>
           </div>
         </section>
@@ -251,10 +251,10 @@ export function createApp({ prisma }) {
             <div class="hero-grid">
               <div class="hero-copy">
                 <p class="eyebrow">TISA · AGENDA · ACCESOS</p>
-                <h1>Reserva tu clase sin vueltas.</h1>
-                <p>Consulta horarios, usa tus accesos y confirma tu entrada con QR desde una sola experiencia clara.</p>
+                <h1>Reserva tu práctica con claridad y entra con calma.</h1>
+                <p>Consulta horarios, elige tu acceso y confirma tu entrada con QR dentro de una misma experiencia, sobria y precisa.</p>
                 <div class="hero-actions">
-                  <button type="button" class="btn" data-scroll-target="landing-overview">Ver cómo funciona</button>
+                  <button type="button" class="btn" data-scroll-target="landing-overview">Descubrir el recorrido</button>
                   <a class="btn alt" href="/classes">Ir a la agenda</a>
                 </div>
                 <div class="proof-row">${proofCards}</div>
@@ -262,13 +262,13 @@ export function createApp({ prisma }) {
               <div class="hero-aside">
                 <div class="hero-aside-card">
                   <span>Reserva</span>
-                  <strong>Explora horarios y aparta tu lugar.</strong>
-                  <p>La agenda muestra disponibilidad, guía y horario sin pasos innecesarios.</p>
+                  <strong>Explora horarios y elige tu lugar con criterio.</strong>
+                  <p>La agenda presenta disponibilidad, guía y horario dentro de una lectura limpia y directa.</p>
                 </div>
                 <div class="hero-aside-card">
                   <span>Acceso</span>
-                  <strong>Confirma por correo y entra con QR.</strong>
-                  <p>Cliente, staff y operación comparten el mismo flujo visual.</p>
+                  <strong>Confirma por correo y llega con tu QR listo.</strong>
+                  <p>Cliente, staff y operación comparten un mismo sistema visual de principio a fin.</p>
                 </div>
               </div>
             </div>
@@ -279,24 +279,24 @@ export function createApp({ prisma }) {
           <div class="band-shell">
             <div>
               <p class="eyebrow">LANDING · AGENDA · PRODUCTO</p>
-              <h2>Un mismo recorrido para descubrir, reservar y entrar al estudio.</h2>
+              <h2>Un solo recorrido para descubrir, reservar y llegar al estudio.</h2>
             </div>
-            <p>La landing arranca directo en la experiencia principal y baja a una historia clara: agenda, accesos y operación sin rodeos.</p>
+            <p>La home abre con una promesa clara y desciende hacia agenda, accesos y operación con una narrativa más serena, útil y deseable.</p>
           </div>
         </section>
 
         <section class="section split-section reveal">
           <article class="card split-left premium-copy">
-              <h2>El equilibrio entre ritual y producto</h2>
-              <p>Inspirado por ciclos de luz y sombra, TISA integra movimiento, respiración y foco mental sin perder claridad operacional.</p>
-              <p>La propuesta nueva no solo vende una clase; presenta una plataforma con storytelling, agenda robusta y acceso controlado.</p>
-              <p class="quote">"Una practica que se siente exclusiva y una operacion que no se siente pesada."</p>
+              <h2>Donde el ritual y el producto encuentran el mismo tono</h2>
+              <p>TISA toma la calma como punto de partida, pero la traduce a una experiencia digital que también sabe orientar, ordenar y resolver.</p>
+              <p>La propuesta ya no se limita a vender una clase; presenta un sistema completo con relato, agenda legible y acceso cuidado.</p>
+              <p class="quote">"Una experiencia que se siente íntima, exclusiva y sorprendentemente fácil de usar."</p>
           </article>
           <article class="card split-right premium-preview">
             <div class="clay-shape"></div>
             <div class="preview-caption">
-              <strong>Interfaz cálida y clara</strong>
-              <p>Texturas minerales, paneles suaves y contraste suficiente para una reserva real.</p>
+              <strong>Una interfaz sobria, cálida y legible</strong>
+              <p>Texturas minerales, superficies sólidas y un contraste pensado para reservar de verdad, no solo para verse bien.</p>
             </div>
           </article>
         </section>
@@ -304,8 +304,8 @@ export function createApp({ prisma }) {
         <section class="section">
           <div class="section-heading section-heading-surface reveal">
             <p class="eyebrow">CLASES</p>
-            <h2>Experiencias TISA</h2>
-            <p>Las clases dejan de verse como tarjetas genéricas y se presentan como experiencias con tono, duración y promesa clara.</p>
+            <h2>Prácticas pensadas para distintos ritmos</h2>
+            <p>Cada clase se presenta con intención, duración y carácter propio para que elegir se sienta natural desde el primer vistazo.</p>
           </div>
           <div class="grid">${typeCards}</div>
         </section>
@@ -313,8 +313,8 @@ export function createApp({ prisma }) {
         <section class="section">
             <div class="section-heading section-heading-surface reveal">
               <p class="eyebrow">RITUAL DE RESERVA</p>
-              <h2>El flujo principal ya se entiende mejor</h2>
-            <p>Explora la agenda, confirma por correo y llega con tu QR dentro de un mismo recorrido.</p>
+              <h2>El recorrido principal se entiende de inmediato</h2>
+            <p>Explora la agenda, confirma por correo y llega con tu QR dentro de una secuencia continua, clara y confiable.</p>
           </div>
           <div class="grid ritual-grid">${ritualCards}</div>
         </section>
@@ -323,42 +323,42 @@ export function createApp({ prisma }) {
           <div class="card schedule-board">
             <div class="section-heading section-heading-surface compact">
               <p class="eyebrow">AGENDA CLARA</p>
-              <h2>Agenda destacada</h2>
-              <p>Una muestra del calendario pensada para leerse fácil en escritorio y móvil.</p>
+              <h2>Una agenda que invita a decidir con calma</h2>
+              <p>Una lectura limpia del calendario, pensada para conservar claridad en escritorio y en móvil.</p>
             </div>
             <div class="timeline">${timeline}</div>
-            <a class="btn" href="/classes">Ver horarios completos</a>
+            <a class="btn" href="/classes">Explorar horarios</a>
           </div>
         </section>
 
         <section class="section">
           <div class="section-heading section-heading-surface reveal">
             <p class="eyebrow">ACCESOS · PAQUETES</p>
-            <h2>Bundles de tickets</h2>
-            <p>Los accesos quedan visibles desde la landing para entender el valor antes de reservar.</p>
+            <h2>Accesos visibles antes de reservar</h2>
+            <p>Los paquetes aparecen desde la landing para que el valor de cada práctica se entienda antes del clic.</p>
           </div>
-          <div class="grid">${bundleCards || '<div class="card">Próximamente bundles activos.</div>'}</div>
+          <div class="grid">${bundleCards || '<div class="card">Próximamente habrá accesos disponibles.</div>'}</div>
         </section>
 
         <section class="section reveal">
           <div class="card ops-showcase">
             <div class="ops-copy">
-              <p class="eyebrow">STAFF SURFACES</p>
-              <h2>Admin, trainer y ops entran al mismo lenguaje visual.</h2>
-              <p>Tambien faltaba representar la parte operativa. Esta seccion adelanta dashboards, gestion de clases y un check-in pensado para velocidad y certeza.</p>
+              <p class="eyebrow">SUPERFICIES OPERATIVAS</p>
+              <h2>La operación también forma parte de la experiencia TISA.</h2>
+              <p>Administración, trainers y check-in comparten una estética más limpia, para que el backoffice se sienta preciso, rápido y confiable.</p>
             </div>
             <div class="ops-panels">
               <div class="ops-panel">
-                <span>Admin dashboard</span>
-                <strong>KPIs, ocupacion y seguimiento.</strong>
+                <span>Panel admin</span>
+                <strong>Indicadores clave, ocupación y seguimiento diario.</strong>
               </div>
               <div class="ops-panel">
-                <span>Trainer planner</span>
-                <strong>Calendario, roster y control de sesiones.</strong>
+                <span>Agenda trainer</span>
+                <strong>Calendario, roster y control sobrio de sesiones.</strong>
               </div>
               <div class="ops-panel">
                 <span>Ops check-in</span>
-                <strong>QR visible, validacion rapida y errores claros.</strong>
+                <strong>QR visible, validación rápida y respuestas claras.</strong>
               </div>
             </div>
           </div>
@@ -366,9 +366,9 @@ export function createApp({ prisma }) {
 
         <section class="section reveal">
           <div class="card final-manifesto">
-            <h2>Al final del recorrido, solo queda enfoque.</h2>
-            <p>Desliza, reserva y entra a clase con una experiencia mas completa: intro previo, landing reforzado y secciones suficientes para vender el producto entero.</p>
-            <a class="btn alt" href="/classes">Comenzar ahora</a>
+            <h2>Cuando todo se ordena bien, solo queda elegir tu práctica.</h2>
+            <p>La nueva experiencia reduce ruido, eleva la percepción de marca y acompaña la reserva con una sensación de calma, certeza y cuidado.</p>
+            <a class="btn alt" href="/classes">Entrar a la agenda</a>
           </div>
         </section>
       </section>
@@ -409,9 +409,9 @@ export function createApp({ prisma }) {
       : '<article class="concept-schedule-card is-featured"><span>PRONTO</span><h3>Nueva programación</h3><p>La agenda se está preparando.</p></article>';
 
     const ritualCards = [
-      { step: '01', title: 'Discover the rhythm', text: 'Una portada limpia, una voz de marca más precisa y una entrada sin fricción ni overlays frágiles.' },
-      { step: '02', title: 'Book in one gesture', text: 'La agenda se siente más editorial y el booking más dirigido, con mejor jerarquía visual.' },
-      { step: '03', title: 'Arrive with certainty', text: 'Wallet, QR y check-in viven dentro del mismo sistema visual y no como módulos separados.' },
+      { step: '01', title: 'Descubre el ritmo', text: 'Una portada limpia, una voz de marca más precisa y una entrada sin fricción ni overlays frágiles.' },
+      { step: '02', title: 'Reserva en un solo gesto', text: 'La agenda se siente más editorial y la reserva más dirigida, con mejor jerarquía visual.' },
+      { step: '03', title: 'Llega con certeza', text: 'Accesos, QR y check-in viven dentro del mismo sistema visual y no como módulos separados.' },
     ]
       .map(
         (item) => `
@@ -453,9 +453,9 @@ export function createApp({ prisma }) {
           <div class="concept-noise" aria-hidden="true"></div>
           <div class="concept-hero-grid">
             <div class="concept-headline">
-              <p class="concept-label">TISA / CONCEPT 01</p>
-              <h1>A sharper identity for a studio that should feel calm, expensive and immediate.</h1>
-              <p class="concept-copy">Esta propuesta abandona la estética anterior y cambia el tono completo: más contraste, más composición editorial, menos bloques repetidos y una agenda que se siente parte de una marca, no de un panel administrativo.</p>
+              <p class="concept-label">TISA / CONCEPTO 01</p>
+              <h1>Una identidad más precisa para un estudio que debe sentirse sereno, deseable e inmediato.</h1>
+              <p class="concept-copy">Esta propuesta abandona la estética anterior y cambia el tono completo: más contraste, más composición editorial, menos bloques repetidos y una agenda que se siente parte de una marca, no de un panel operativo genérico.</p>
               <div class="concept-actions">
                 <a class="btn" href="/classes">Abrir agenda actual</a>
                 <a class="btn alt" href="/">Comparar con home actual</a>
@@ -464,13 +464,13 @@ export function createApp({ prisma }) {
             <div class="concept-poster">
               <div class="concept-poster-card">
                 <span>TISA Studio System</span>
-                <strong>Breath, heat, focus, reset.</strong>
-                <p>Un sistema visual hecho para convertir mejor y sentirse más premium en móvil.</p>
+                <strong>Respiración, calor, foco y pausa.</strong>
+                <p>Un sistema visual creado para convertir mejor y sentirse más valioso, especialmente en móvil.</p>
               </div>
               <div class="concept-poster-aside">
-                <p>Intentional booking flow</p>
-                <p>Editorial pacing</p>
-                <p>Cleaner operations</p>
+                <p>Reserva con intención</p>
+                <p>Ritmo editorial</p>
+                <p>Operación más clara</p>
               </div>
             </div>
           </div>
@@ -478,12 +478,12 @@ export function createApp({ prisma }) {
 
         <section class="concept-section concept-split">
           <article class="concept-panel dark">
-            <p class="concept-label">WHY THIS IS DIFFERENT</p>
-            <h2>No more intro dependency.</h2>
+            <p class="concept-label">POR QUÉ CAMBIA</p>
+            <h2>La primera impresión ya no depende de una intro frágil.</h2>
             <p>El acceso principal ya no depende de una intro animada que puede fallar. La primera impresión viene de una hero estable con dirección visual más fuerte.</p>
           </article>
           <article class="concept-panel light">
-            <p class="concept-label">VISUAL SYSTEM</p>
+            <p class="concept-label">SISTEMA VISUAL</p>
             <ul class="concept-list">
               <li>Tipografía editorial con más contraste</li>
               <li>Capas oscuras con acentos arena y marfil</li>
@@ -495,8 +495,8 @@ export function createApp({ prisma }) {
 
         <section class="concept-section">
           <div class="concept-section-heading">
-            <p class="concept-label">LIVE SCHEDULE DIRECTION</p>
-            <h2>The booking surface should feel curated, not generic.</h2>
+            <p class="concept-label">DIRECCIÓN DE AGENDA</p>
+            <h2>La reserva debe sentirse curada, no genérica.</h2>
           </div>
           <div class="concept-schedule-grid">
             ${scheduleCards}
@@ -505,8 +505,8 @@ export function createApp({ prisma }) {
 
         <section class="concept-section concept-rituals">
           <div class="concept-section-heading">
-            <p class="concept-label">FLOW</p>
-            <h2>A three-part journey with cleaner intent.</h2>
+            <p class="concept-label">RECORRIDO</p>
+            <h2>Un viaje de tres momentos con una intención más clara.</h2>
           </div>
           <div class="concept-ritual-grid">
             ${ritualCards}
@@ -515,15 +515,15 @@ export function createApp({ prisma }) {
 
         <section class="concept-section concept-dual-grid">
           <article class="concept-panel light">
-            <p class="concept-label">PRACTICE MENU</p>
-            <h2>Programs with a quieter hierarchy.</h2>
+            <p class="concept-label">MENÚ DE PRÁCTICAS</p>
+            <h2>Programas con una jerarquía más serena.</h2>
             <ul class="concept-program-list">
               ${typeList}
             </ul>
           </article>
           <article class="concept-panel accent">
-            <p class="concept-label">BUNDLES</p>
-            <h2>Membership value visible before the click.</h2>
+            <p class="concept-label">ACCESOS</p>
+            <h2>El valor del acceso visible antes del clic.</h2>
             <div class="concept-bundle-grid">
               ${bundleCards}
             </div>
@@ -532,8 +532,8 @@ export function createApp({ prisma }) {
 
         <section class="concept-section">
           <div class="concept-final-card">
-            <p class="concept-label">NEXT STEP</p>
-            <h2>If you approve this direction, I turn this into frames in Figma and then replace the real surfaces.</h2>
+            <p class="concept-label">SIGUIENTE PASO</p>
+            <h2>Si apruebas esta dirección, se traduce a Figma y luego reemplaza las superficies reales.</h2>
           </div>
         </section>
       </section>
@@ -641,7 +641,7 @@ export function createApp({ prisma }) {
             <div class="concept2-wallet-card">
               <span>Disponible ahora</span>
               <strong>08</strong>
-              <p>Créditos Flow Suave</p>
+              <p>Accesos Flow Suave</p>
             </div>
             <div class="concept2-bundle-list">
               ${bundleRows}
@@ -1205,8 +1205,8 @@ export function createApp({ prisma }) {
       <div class="page-hero page-hero-grid reveal scroll-hero" data-scroll-target="classes-calendar">
         <div class="page-hero-copy">
           <p class="page-kicker">TISA · AGENDA · RESERVA CLARA</p>
-          <h1>Agenda viva para reservar sin fricción.</h1>
-          <p class="page-lede">Explora la semana o el mes, detecta disponibilidad al instante y abre la reserva desde el mismo bloque de clase. Todo el flujo está pensado para que el estudio se sienta premium y claro.</p>
+          <h1>Una agenda viva para elegir con calma y reservar sin fricción.</h1>
+          <p class="page-lede">Explora la semana o el mes, detecta disponibilidad al instante y abre la reserva desde el mismo bloque de clase. Todo el flujo está pensado para que el estudio se sienta sobrio, intuitivo y preciso.</p>
           <div class="system-chip-row">
             <button type="button" class="system-chip-button" data-scroll-target="classes-calendar">Ver agenda</button>
             <button type="button" class="system-chip-button" data-scroll-target="classes-toolbar">Cambiar vista</button>
@@ -1219,13 +1219,13 @@ export function createApp({ prisma }) {
         </div>
         <aside class="page-hero-side">
           <div class="spotlight-card">
-            <span>Como funciona</span>
-            <strong>Toca cualquier bloque, deja tu email y sigue el magic link.</strong>
-            <p>Si ya tienes créditos, confirmas en un paso. Si no, compras bundle y vuelves al flujo.</p>
+            <span>Cómo funciona</span>
+            <strong>Elige un bloque, deja tu correo y continúa desde el enlace de acceso.</strong>
+            <p>Si ya tienes créditos, confirmas en un solo paso. Si no, compras tu acceso y vuelves al mismo recorrido.</p>
           </div>
           <div class="spotlight-card muted">
             <span>Ventaja</span>
-            <strong>La disponibilidad, el trainer y la ubicación viven en la misma vista.</strong>
+            <strong>Disponibilidad, guía y sede viven en la misma superficie.</strong>
           </div>
         </aside>
       </div>
@@ -1240,7 +1240,7 @@ export function createApp({ prisma }) {
           <a class="btn ${view === 'month' ? '' : 'alt'}" href="/classes?view=month&start=${periodStart.format('YYYY-MM-DD')}">Mes</a>
         </div>
       </div>
-      <p class="calendar-subtitle">Selecciona cualquier bloque para reservar. Las clases canceladas aparecen bloqueadas.</p>
+      <p class="calendar-subtitle">Selecciona cualquier bloque para reservar. Las clases canceladas aparecen claramente marcadas.</p>
       <div class="calendar-shell reveal" id="classes-calendar">
         ${
           view === 'month'
@@ -1315,8 +1315,8 @@ export function createApp({ prisma }) {
         <div class="system-shell">
           <section class="system-hero scroll-hero" data-scroll-target="magic-link-detail">
             <p class="concept-kicker">TISA / ACCESO</p>
-            <h1>Tu enlace ya está listo.</h1>
-            <p>Generamos un acceso temporal para continuar la reserva sin contraseña. En simulación puedes abrirlo de inmediato y seguir dentro del mismo flujo.</p>
+            <h1>Tu acceso temporal ya está listo.</h1>
+            <p>Generamos un enlace privado para continuar la reserva sin contraseña. En simulación puedes abrirlo ahora mismo y seguir dentro del mismo recorrido.</p>
             <div class="system-chip-row">
               <button type="button" class="system-chip-button" data-scroll-target="magic-link-detail">Abrir detalle</button>
               <button type="button" class="system-chip-button" data-scroll-target="magic-link-actions">Ir a acciones</button>
@@ -1324,18 +1324,18 @@ export function createApp({ prisma }) {
           </section>
           <div class="system-grid" id="magic-link-detail">
             <article class="system-panel system-panel-light">
-              <h2>Acceso temporal</h2>
+              <h2>Acceso privado</h2>
               <div class="system-detail-list">
                 <div><span>Correo</span><strong>${esc(email)}</strong></div>
-                <div><span>Ventana</span><strong>30 minutos</strong></div>
-                <div><span>Propósito</span><strong>Continuar la reserva sin fricción</strong></div>
+                <div><span>Vigencia</span><strong>30 minutos</strong></div>
+                <div><span>Propósito</span><strong>Retomar la reserva con rapidez y calma</strong></div>
               </div>
             </article>
             <article class="system-panel system-panel-dark" id="magic-link-actions">
-              <h2>Continúa el flujo</h2>
+              <h2>Continúa tu recorrido</h2>
               <div class="system-action-stack">
                 <a class="btn" href="${url}">Abrir enlace mágico</a>
-                <a class="btn alt" href="/classes">Volver a agenda</a>
+                <a class="btn alt" href="/classes">Volver a la agenda</a>
               </div>
             </article>
           </div>
@@ -1365,8 +1365,8 @@ export function createApp({ prisma }) {
         <div class="system-shell">
           <section class="system-hero scroll-hero" data-scroll-target="booking-start-grid">
             <p class="concept-kicker">TISA / RESERVA</p>
-            <h1>Confirma tu lugar con calma.</h1>
-            <p>Tu enlace validó la identidad. Desde aquí puedes usar un crédito o comprar un acceso sin salir del mismo flujo.</p>
+            <h1>Confirma tu lugar con serenidad.</h1>
+            <p>Tu acceso ya validó tu identidad. Desde aquí puedes usar un crédito o comprar un acceso sin abandonar el mismo flujo.</p>
             <div class="system-chip-row">
               <button type="button" class="system-chip-button" data-scroll-target="booking-start-grid">Ver opciones</button>
               <button type="button" class="system-chip-button" data-scroll-target="booking-start-class">Clase</button>
@@ -1383,24 +1383,24 @@ export function createApp({ prisma }) {
               </div>
             </article>
             <article class="system-panel system-panel-soft">
-              <h2>Tu saldo</h2>
+              <h2>Tus accesos</h2>
               <div class="system-detail-list">
                 <div><span>Créditos disponibles</span><strong>${wallet?.credits || 0}</strong></div>
-                <div><span>Siguiente paso</span><strong>Usa un crédito y asegura tu espacio</strong></div>
+                <div><span>Siguiente paso</span><strong>Usa un crédito y confirma tu espacio</strong></div>
               </div>
               <form action="/bookings" method="post" class="system-action-stack">
                 <input type="hidden" name="token" value="${esc(token)}" />
                 <input type="hidden" name="occurrenceId" value="${occurrence.id}" />
-                <button class="btn" type="submit">Consumir 1 ticket y reservar</button>
+                <button class="btn" type="submit">Confirmar con 1 acceso</button>
               </form>
             </article>
             <article class="system-panel system-panel-dark">
-              <h2>Sin créditos</h2>
-              <p>Compra un acceso para esta práctica y vuelve al flujo sin perder contexto.</p>
+              <h2>Si necesitas un acceso</h2>
+              <p>Compra el paquete adecuado para esta práctica y vuelve al recorrido sin perder contexto.</p>
               <form action="/checkout/session" method="post" class="system-action-stack">
                 <input type="hidden" name="clientId" value="${found.clientId}" />
                 <input type="hidden" name="classTypeId" value="${occurrence.classTypeId}" />
-                <button class="btn alt" type="submit">Comprar acceso</button>
+                <button class="btn alt" type="submit">Explorar accesos</button>
               </form>
             </article>
           </div>
@@ -1460,13 +1460,13 @@ export function createApp({ prisma }) {
     const body = `<section class="section"><div class="system-shell">
       <section class="system-hero">
         <p class="concept-kicker">TISA / PAGO</p>
-        <h1>Acceso acreditado correctamente.</h1>
-        <p>${esc(payment.client.email)} compró ${esc(payment.ticketProduct.name)} y ya puede volver a la agenda para completar su reserva.</p>
+        <h1>Tu acceso quedó acreditado correctamente.</h1>
+        <p>${esc(payment.client.email)} adquirió ${esc(payment.ticketProduct.name)} y ya puede volver a la agenda para cerrar su reserva.</p>
       </section>
       <div class="system-grid">
         <article class="system-panel system-panel-dark">
           <h2>Compra confirmada</h2>
-          <div class="system-action-stack"><a class="btn" href="/classes">Volver a clases</a></div>
+          <div class="system-action-stack"><a class="btn" href="/classes">Volver a la agenda</a></div>
         </article>
       </div>
     </div></section>`;
@@ -1477,13 +1477,13 @@ export function createApp({ prisma }) {
     const body = `<section class="section"><div class="system-shell">
       <section class="system-hero">
         <p class="concept-kicker">TISA / PAGO</p>
-        <h1>No se aplicaron cambios.</h1>
-        <p>Puedes volver a la agenda y continuar la reserva cuando quieras.</p>
+        <h1>No se realizó ningún cargo.</h1>
+        <p>Puedes volver a la agenda y retomar la reserva cuando te resulte conveniente.</p>
       </section>
       <div class="system-grid">
         <article class="system-panel system-panel-soft">
-          <h2>Reserva pendiente</h2>
-          <div class="system-action-stack"><a class="btn alt" href="/classes">Regresar a agenda</a></div>
+          <h2>Tu reserva sigue pendiente</h2>
+          <div class="system-action-stack"><a class="btn alt" href="/classes">Regresar a la agenda</a></div>
         </article>
       </div>
     </div></section>`;
@@ -1554,16 +1554,16 @@ export function createApp({ prisma }) {
     const body = `<section class="section"><div class="system-shell">
       <section class="system-hero scroll-hero" data-scroll-target="booking-confirm-detail">
         <p class="concept-kicker">TISA / CONFIRMACIÓN</p>
-        <h1>Tu acceso ya está listo.</h1>
-        <p>Referencia <strong>${booking.bookingRef}</strong>. Guarda este QR o abre el detalle de la reserva cuando lo necesites.</p>
+        <h1>Tu reserva ya quedó confirmada.</h1>
+        <p>Referencia <strong>${booking.bookingRef}</strong>. Guarda este QR o abre el detalle de tu reserva cuando quieras consultarlo.</p>
       </section>
       <div class="system-grid" id="booking-confirm-detail">
         <article class="system-panel system-panel-dark">
-          <h2>Ingreso al estudio</h2>
+          <h2>Acceso al estudio</h2>
           <img class="qr" src="${qrDataUrl}" alt="QR" />
           <div class="system-action-stack">
-            <a class="btn" href="${bookingUrl}">Ver detalle de reserva</a>
-            <a class="btn alt" href="/classes">Reservar otra clase</a>
+            <a class="btn" href="${bookingUrl}">Ver detalle de la reserva</a>
+            <a class="btn alt" href="/classes">Reservar otra práctica</a>
           </div>
         </article>
       </div>
@@ -1590,8 +1590,8 @@ export function createApp({ prisma }) {
       <div class="system-shell">
         <section class="system-hero scroll-hero" data-scroll-target="manage-booking-grid">
           <p class="concept-kicker">TISA / RESERVA</p>
-          <h1>Tu reserva sigue a mano.</h1>
-          <p>Consulta el estado, presenta el QR al llegar y cancela si todavía estás dentro de la ventana válida.</p>
+          <h1>Tu reserva permanece contigo hasta el momento de entrar.</h1>
+          <p>Consulta el estado, presenta el QR al llegar y cancela si todavía estás dentro de la ventana permitida.</p>
         </section>
         <div class="system-grid" id="manage-booking-grid">
           <article class="system-panel system-panel-light">
@@ -1600,13 +1600,13 @@ export function createApp({ prisma }) {
               <div><span>Correo</span><strong>${esc(booking.client.email)}</strong></div>
               <div><span>Guía</span><strong>${esc(booking.classOccurrence.trainer.displayName)}</strong></div>
               <div><span>Espacio</span><strong>${esc(booking.classOccurrence.location.name)}</strong></div>
-              <div><span>Estado</span><strong>${booking.status}</strong></div>
+              <div><span>Estado</span><strong>${booking.status === 'BOOKED' ? 'Confirmada' : booking.status === 'CANCELLED' ? 'Cancelada' : booking.status}</strong></div>
             </div>
             ${booking.status === 'BOOKED' ? `<form method="post" action="/bookings/${booking.id}/cancel" class="system-action-stack"><button class="btn alt" type="submit">Cancelar reserva</button></form>` : ''}
           </article>
           <article class="system-panel system-panel-dark">
-            <h2>Acceso QR</h2>
-            <p>Presenta este código al llegar al estudio.</p>
+            <h2>Tu QR de acceso</h2>
+            <p>Presenta este código al llegar al estudio para completar tu entrada.</p>
             <img class="qr" src="${qrDataUrl}" alt="QR" />
           </article>
         </div>
@@ -1643,12 +1643,12 @@ export function createApp({ prisma }) {
       <div class="system-shell">
         <section class="system-hero">
           <p class="concept-kicker">TISA / STAFF</p>
-          <h1>La operación entra por una puerta clara.</h1>
-          <p>Admin, trainer y check-in comparten el mismo lenguaje visual, pero cada rol conserva su flujo operativo.</p>
+          <h1>La operación merece una entrada clara, sobria y confiable.</h1>
+          <p>Administración, trainers y check-in comparten el mismo lenguaje visual, mientras cada rol conserva un flujo preciso.</p>
         </section>
         <div class="system-grid">
           <article class="system-panel system-panel-light">
-            <h2>Ingreso staff</h2>
+            <h2>Acceso staff</h2>
             <form method="post" action="/staff/login" class="admin-login-mock">
               <label class="form-row"><span>Email</span><input class="admin-input" type="email" name="email" required /></label>
               <label class="form-row"><span>Password</span><input class="admin-input" type="password" name="password" required /></label>
@@ -1656,11 +1656,11 @@ export function createApp({ prisma }) {
             </form>
           </article>
           <article class="system-panel system-panel-dark">
-            <h2>Roles disponibles</h2>
+            <h2>Superficies operativas</h2>
             <div class="admin-list">
-              <div class="admin-list-row"><div><strong>Admin</strong><p>Métricas, pagos y ocupación.</p></div></div>
-              <div class="admin-list-row"><div><strong>Trainer</strong><p>Agenda, roster y control de clases.</p></div></div>
-              <div class="admin-list-row"><div><strong>Ops</strong><p>Check-in rápido y validación QR.</p></div></div>
+              <div class="admin-list-row"><div><strong>Admin</strong><p>Indicadores, pagos y lectura diaria del estudio.</p></div></div>
+              <div class="admin-list-row"><div><strong>Trainer</strong><p>Agenda, sesiones y control fino de cada práctica.</p></div></div>
+              <div class="admin-list-row"><div><strong>Ops</strong><p>Check-in ágil y validación QR con certeza.</p></div></div>
             </div>
           </article>
         </div>
@@ -1712,8 +1712,8 @@ export function createApp({ prisma }) {
       <div class="system-shell">
         <section class="system-hero scroll-hero" data-scroll-target="admin-metrics">
           <p class="concept-kicker">TISA / ADMIN</p>
-          <h1>La operación también debe sentirse precisa.</h1>
-          <p>Lectura clara de métricas, seguimiento de ocupación y acceso directo a la agenda activa del estudio.</p>
+          <h1>La operación también debe sentirse precisa, elegante y confiable.</h1>
+          <p>Lectura clara de métricas, seguimiento de ocupación y acceso directo a la agenda activa del estudio dentro de una sola superficie.</p>
           <div class="system-chip-row">
             <button type="button" class="system-chip-button" data-scroll-target="admin-metrics">Métricas</button>
             <button type="button" class="system-chip-button" data-scroll-target="admin-occupancy">Ocupación</button>
@@ -1721,16 +1721,16 @@ export function createApp({ prisma }) {
         </section>
         <div class="system-grid">
           <article class="system-panel system-panel-dark" id="admin-metrics">
-            <h2>Resumen del estudio</h2>
+            <h2>Señales principales del día</h2>
             <div class="admin-metric-grid">
-              <div><span>Bookings activos</span><strong>${bookings}</strong></div>
+              <div><span>Reservas activas</span><strong>${bookings}</strong></div>
               <div><span>Clientes</span><strong>${clients}</strong></div>
               <div><span>Pagos aprobados</span><strong>${paid}</strong></div>
-              <div><span>Clases próximas</span><strong>${classes}</strong></div>
+              <div><span>Prácticas próximas</span><strong>${classes}</strong></div>
             </div>
           </article>
           <article class="system-panel system-panel-light" id="admin-occupancy">
-            <h2>Ocupación</h2>
+            <h2>Lectura de ocupación</h2>
             <div class="admin-list">${topClasses.map((c) => `<div class="admin-list-row"><div><strong>${esc(c.classType.name)}</strong><p>${esc(c.trainer.displayName)}</p></div><strong>${c.capacity - c.availableSlots}/${c.capacity}</strong></div>`).join('')}</div>
           </article>
         </div>
@@ -1850,11 +1850,11 @@ export function createApp({ prisma }) {
       <div class="system-shell">
       <section class="system-hero scroll-hero" data-scroll-target="trainer-calendar">
         <p class="concept-kicker">TISA / TRAINER</p>
-        <h1>Tu agenda se mueve con precisión.</h1>
-        <p>Programa sesiones, revisa reservas y cancela clases desde una vista pensada para leer rápido en semana o mes.</p>
+        <h1>Tu agenda debe sentirse tan clara como tu práctica.</h1>
+        <p>Programa sesiones, revisa reservas y cancela clases desde una vista pensada para leerse con rapidez, en semana o en mes.</p>
       </section>
       <div class="calendar-toolbar" id="trainer-calendar">
-        <h2>Mis clases</h2>
+        <h2>Agenda del trainer</h2>
         <div class="calendar-toolbar-actions">
           <a class="btn alt" href="/trainer/classes?view=${view}&start=${prevStart.format('YYYY-MM-DD')}">Anterior</a>
           <span class="calendar-range">${titleRange}</span>
@@ -1864,7 +1864,7 @@ export function createApp({ prisma }) {
         </div>
       </div>
       <div class="card trainer-create-card">
-        <h3>Crear nueva clase</h3>
+        <h3>Programar nueva práctica</h3>
         <form method="post" action="/trainer/classes">
           <div class="grid">
             <div class="form-row"><label>Tipo de clase</label><select name="classTypeId" required>${classTypeOptions}</select></div>
@@ -1874,7 +1874,7 @@ export function createApp({ prisma }) {
             <div class="form-row"><label>Duración (min)</label><input type="number" name="durationMin" min="30" max="180" value="60" required /></div>
             <div class="form-row"><label>Cupo</label><input type="number" name="capacity" min="1" max="80" value="18" required /></div>
           </div>
-          <button class="btn" type="submit">Crear clase</button>
+          <button class="btn" type="submit">Guardar en agenda</button>
         </form>
       </div>
       <div class="calendar-shell reveal">
@@ -1985,12 +1985,12 @@ export function createApp({ prisma }) {
       <div class="system-shell">
         <section class="system-hero scroll-hero" data-scroll-target="ops-checkin-grid">
           <p class="concept-kicker">TISA / CHECK-IN</p>
-          <h1>Validar accesos debe sentirse inmediato.</h1>
+          <h1>Validar accesos debe sentirse inmediato y seguro.</h1>
           <p>Escanea un QR o pega el payload manual y recibe una respuesta clara dentro de la misma superficie operativa.</p>
         </section>
         <div class="system-grid" id="ops-checkin-grid">
           <article class="system-panel system-panel-dark">
-            <h2>Cámara</h2>
+            <h2>Escáner</h2>
             <div id="reader" class="ops-camera" style="width:100%;max-width:420px">Esperando cámara</div>
           </article>
           <article class="system-panel system-panel-light">
@@ -2056,7 +2056,7 @@ export function createApp({ prisma }) {
       <section class="system-hero">
         <p class="concept-kicker">TISA / CHECK-IN</p>
         <h1>Acceso autorizado.</h1>
-        <p>La referencia ${booking.bookingRef} ya quedó validada para entrar al estudio.</p>
+        <p>La referencia ${booking.bookingRef} ya quedó validada y puede entrar al estudio.</p>
       </section>
       <div class="system-grid"><article class="system-panel system-panel-light"><h2>Siguiente validación</h2><div class="system-action-stack"><a class="btn" href="/ops/checkin">Validar otro acceso</a></div></article></div>
     </div></section>`;
