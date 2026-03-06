@@ -2,6 +2,7 @@ import { esc } from '../utils.js';
 
 export function renderLayout({ title, body, staff = null, simulationMode = true }) {
   const isConceptBoard = title.startsWith('Concept') && !staff;
+  const isHome = title === 'Inicio' && !staff;
   const appName = 'TISA';
   const nav = staff
     ? `
@@ -45,7 +46,7 @@ export function renderLayout({ title, body, staff = null, simulationMode = true 
     <link rel="stylesheet" href="/static/style.css" />
     <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
   </head>
-  <body class="${staff ? 'is-staff' : 'is-public'} ${isConceptBoard ? 'is-concept-board' : ''}">
+  <body class="${staff ? 'is-staff' : 'is-public'} ${isConceptBoard ? 'is-concept-board' : ''} ${isHome ? 'is-home' : ''}">
     ${simulationMode && !isConceptBoard ? '<div class="sim-banner">Modo simulación activo (no producción)</div>' : ''}
     <header class="site-header ${isConceptBoard ? 'concept-header' : ''}">
       <a class="brand" href="/">

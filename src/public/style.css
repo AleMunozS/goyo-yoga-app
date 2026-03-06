@@ -3015,15 +3015,32 @@ body.is-concept-board::before {
 }
 
 @media (max-width: 760px) {
+  .is-home .sim-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 45;
+  }
+
+  .is-home .site-header {
+    position: fixed;
+    top: 32px;
+    left: 0;
+    right: 0;
+    z-index: 44;
+    background: rgba(232, 232, 230, 0.58);
+  }
+
   .landing-banner {
     padding: 0;
     margin-top: 0;
   }
 
   .landing-banner-card {
-    min-height: calc(100svh - 112px);
+    min-height: 100svh;
     border-radius: 0 0 26px 26px;
-    padding: 1.6rem;
+    padding: 8rem 1.6rem 1.6rem;
     display: grid;
     align-content: center;
   }
