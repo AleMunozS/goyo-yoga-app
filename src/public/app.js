@@ -2,7 +2,14 @@
   const scrollToTarget = (id) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const simBanner = document.querySelector('.sim-banner');
+    const siteHeader = document.querySelector('.site-header');
+    const offset =
+      (simBanner ? simBanner.getBoundingClientRect().height : 0) +
+      (siteHeader ? siteHeader.getBoundingClientRect().height : 0) +
+      12;
+    const top = window.scrollY + el.getBoundingClientRect().top - offset;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   };
 
   document.querySelectorAll('[data-scroll-target]').forEach((el) => {
