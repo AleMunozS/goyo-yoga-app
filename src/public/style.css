@@ -824,6 +824,18 @@ main,
   max-width: 46ch;
 }
 
+.split-left h2 {
+  color: rgba(53, 44, 36, 0.96);
+}
+
+.split-left p {
+  color: rgba(63, 54, 45, 0.84);
+}
+
+.split-left .quote {
+  color: rgba(95, 69, 46, 0.8);
+}
+
 .premium-copy p + p {
   margin-top: 0.85rem;
 }
