@@ -553,9 +553,7 @@ main,
   border-radius: 22px;
   padding: 2.2rem;
   color: var(--caliza);
-  background:
-    radial-gradient(circle at 100% 0, rgba(213, 162, 114, 0.18), transparent 32%),
-    linear-gradient(125deg, #2c231d, #4a3528);
+  background: linear-gradient(125deg, #2c231d, #4a3528);
   box-shadow: 0 26px 60px rgba(44, 34, 27, 0.35);
   margin: 0 auto;
 }
@@ -835,6 +833,16 @@ main,
 
 .split-left .quote {
   color: rgba(95, 69, 46, 0.8);
+}
+
+.story-root > .section.split-section .split-left h2 {
+  color: rgba(53, 44, 36, 0.96);
+  text-shadow: none;
+}
+
+.story-root > .section.split-section .split-left p,
+.story-root > .section.split-section .split-left .quote {
+  color: rgba(63, 54, 45, 0.84);
 }
 
 .premium-copy p + p {
