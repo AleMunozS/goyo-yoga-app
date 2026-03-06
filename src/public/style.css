@@ -986,13 +986,15 @@ textarea {
   }
 
   .landing-intro {
-    place-items: start center;
-    padding: 1.2rem 1rem 1.5rem;
+    place-items: stretch;
+    padding: 0;
     overflow-y: auto;
   }
 
   .intro-shell {
-    width: min(640px, 100%);
+    width: 100%;
+    min-height: 100dvh;
+    padding: 0;
     align-items: stretch;
   }
 
@@ -1012,7 +1014,6 @@ textarea {
 
 @media (max-width: 760px) {
   .landing-intro {
-    place-items: stretch;
     padding: 0;
   }
 
@@ -1052,9 +1053,11 @@ textarea {
     flex-direction: column;
     justify-content: center;
     width: 100%;
-    min-height: calc(100dvh - 1.6rem);
-    padding: 1.25rem 1rem;
-    border-radius: 24px;
+    min-height: 100dvh;
+    padding: max(1.1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
   }
 
   .intro-copy h1 {
@@ -1118,17 +1121,27 @@ textarea {
 
   .intro-mobile-points {
     display: flex;
+    flex-direction: column;
   }
 
   .intro-shell {
     width: 100%;
     min-height: 100dvh;
-    padding: 0.8rem;
+    padding: 0;
     gap: 0;
   }
 
   .intro-actions {
     margin-top: 1rem;
+  }
+
+  .intro-text {
+    max-width: none;
+  }
+
+  .intro-mobile-points span {
+    width: 100%;
+    text-align: center;
   }
 
   .dune-card,
@@ -1186,14 +1199,14 @@ textarea {
 
   .intro-shell {
     min-height: 100dvh;
-    padding: 0.55rem;
+    padding: 0;
     gap: 0;
   }
 
   .intro-copy {
-    min-height: calc(100dvh - 1.1rem);
-    padding: 1rem 0.85rem;
-    border-radius: 20px;
+    min-height: 100dvh;
+    padding: max(0.95rem, env(safe-area-inset-top)) 0.85rem max(0.9rem, env(safe-area-inset-bottom));
+    border-radius: 0;
   }
 
   .intro-kicker {
@@ -1203,11 +1216,6 @@ textarea {
   .intro-text {
     font-size: 0.94rem;
     line-height: 1.55;
-  }
-
-  .intro-mobile-points span {
-    width: 100%;
-    text-align: center;
   }
 
   .calendar-month-grid {
