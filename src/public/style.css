@@ -883,11 +883,12 @@ main,
 .preview-caption strong {
   display: block;
   margin-bottom: 0.25rem;
+  color: rgba(54, 41, 31, 0.96);
 }
 
 .preview-caption p {
   margin: 0;
-  color: rgba(244, 238, 231, 0.88);
+  color: rgba(60, 46, 35, 0.92);
 }
 
 .schedule-shell {
@@ -1979,6 +1980,31 @@ body.is-concept-board::before {
 
   .page-hero {
     padding: 1rem;
+    background: #efe3d5;
+  }
+
+  .page-kicker {
+    color: rgba(103, 79, 58, 0.82);
+  }
+
+  .page-lede {
+    color: rgba(78, 63, 49, 0.9);
+  }
+
+  .mini-stat {
+    background: #f4eadf;
+  }
+
+  .mini-stat span {
+    color: rgba(105, 81, 60, 0.74);
+  }
+
+  .ambient-lights {
+    opacity: 0.38;
+  }
+
+  .light-orb {
+    filter: blur(28px);
   }
 
   .action-stack .btn,
@@ -3188,6 +3214,9 @@ body.is-concept-board::before {
     padding: 8rem 1.6rem 1.6rem;
     display: grid;
     align-content: center;
+    background:
+      linear-gradient(165deg, rgba(46, 35, 27, 0.94), rgba(110, 77, 54, 0.96)),
+      linear-gradient(180deg, #2a211c, #77553c);
   }
 
   .landing-banner-card h1 {
@@ -3197,6 +3226,42 @@ body.is-concept-board::before {
 
   .landing-banner-card p:last-child {
     font-size: 1rem;
+    color: rgba(248, 240, 230, 0.94);
+  }
+
+  .landing-banner-hint {
+    background: rgba(115, 83, 59, 0.56);
+    border-color: rgba(245, 228, 206, 0.14);
+    color: rgba(249, 240, 228, 0.96);
+  }
+
+  .hero-card.hero-premium {
+    background:
+      linear-gradient(160deg, rgba(40, 30, 24, 0.97), rgba(103, 72, 49, 0.96)),
+      linear-gradient(180deg, #211916, #6f5038);
+    box-shadow: 0 18px 40px rgba(27, 18, 14, 0.24);
+  }
+
+  .hero-card.hero-premium .hero-copy p:not(.eyebrow) {
+    color: rgba(245, 236, 226, 0.94);
+  }
+
+  .hero-card.hero-premium .hero-aside-card {
+    background: rgba(104, 72, 49, 0.78);
+    border-color: rgba(248, 233, 214, 0.1);
+  }
+
+  .hero-card.hero-premium .hero-aside-card p {
+    color: rgba(245, 236, 226, 0.92);
+  }
+
+  .split-right,
+  .premium-preview {
+    background: linear-gradient(160deg, #b88a62, #a47955);
+  }
+
+  .clay-shape {
+    box-shadow: inset -14px -16px 34px rgba(58, 35, 23, 0.28);
   }
 
   .system-shell {
