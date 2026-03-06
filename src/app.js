@@ -237,7 +237,7 @@ export function createApp({ prisma }) {
           <span class="light-orb orb-4"></span>
         </div>
 
-        <section class="hero parallax dune-hero">
+        <section class="hero parallax dune-hero scroll-hero" data-scroll-target="landing-overview">
           <div class="hero-card hero-premium reveal">
             <div class="hero-grid">
               <div class="hero-copy">
@@ -245,7 +245,7 @@ export function createApp({ prisma }) {
                 <h1>Un estudio vivo desde la primera respiracion.</h1>
                 <p>TISA une landing editorial, agenda responsive, accesos claros, confirmación con QR y operación staff en una sola experiencia pensada para móvil y escritorio.</p>
                 <div class="hero-actions">
-                  <a class="btn" href="/classes">Agendar experiencia</a>
+                  <button type="button" class="btn" data-scroll-target="landing-overview">Descubrir más</button>
                   <a class="btn alt" href="/staff/login">Portal staff</a>
                 </div>
                 <div class="proof-row">${proofCards}</div>
@@ -266,13 +266,13 @@ export function createApp({ prisma }) {
           </div>
         </section>
 
-        <section class="section section-band reveal">
+        <section class="section section-band reveal" id="landing-overview">
           <div class="band-shell">
             <div>
-              <p class="eyebrow">INTRO LAYOUT · LANDING · PRODUCTO</p>
-              <h2>Una entrada narrativa antes del landing, y una home con mas profundidad.</h2>
+              <p class="eyebrow">LANDING · AGENDA · PRODUCTO</p>
+              <h2>Un mismo recorrido para descubrir, reservar y entrar al estudio.</h2>
             </div>
-            <p>Esta version agrega una portada previa, mas jerarquia editorial y nuevas secciones para contar el producto completo: inspiracion, booking, bundles y operacion.</p>
+            <p>La landing ahora arranca directo en el hero principal y baja a una historia clara del producto: inspiración, agenda, accesos y operación.</p>
           </div>
         </section>
 
