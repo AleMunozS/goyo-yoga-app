@@ -134,14 +134,23 @@ export function createApp({ prisma }) {
       }),
     ]);
 
+    const stats = {
+      classTypes: types.length,
+      upcoming: upcoming.length,
+      bundles: bundles.length,
+    };
+
     const typeCards = types
       .map(
         (t) => `
-      <article class="card dune-card reveal">
+      <article class="card dune-card experience-card reveal">
         <span class="tag">${esc(t.intensity)}</span>
         <h3>${esc(t.name)}</h3>
         <p>${esc(t.description)}</p>
-        <span class="status-pill">${t.durationMin} min</span>
+        <div class="experience-meta">
+          <span class="status-pill">${t.durationMin} min</span>
+          <span class="experience-detail">Diseñada para ritmo ${esc(t.intensity.toLowerCase())}</span>
+        </div>
       </article>
     `
       )
@@ -180,6 +189,42 @@ export function createApp({ prisma }) {
       )
       .join('');
 
+    const ritualCards = [
+      {
+        label: 'Explora',
+        title: 'Agenda con lectura clara',
+        text: 'Semana y mes con estados visibles para encontrar rápido una clase disponible.',
+      },
+      {
+        label: 'Reserva',
+        title: 'Magic link sin fricción',
+        text: 'El cliente deja su email, confirma y recupera su acceso sin crear una cuenta compleja.',
+      },
+      {
+        label: 'Entra',
+        title: 'Check-in con QR',
+        text: 'Operación valida acceso en segundos desde una superficie pensada para staff.',
+      },
+    ]
+      .map(
+        (item) => `
+      <article class="card ritual-card reveal">
+        <span class="ritual-step">${item.label}</span>
+        <h3>${item.title}</h3>
+        <p>${item.text}</p>
+      </article>
+    `
+      )
+      .join('');
+
+    const proofCards = [
+      `${stats.classTypes || 0}+ experiencias activas listas para reservar`,
+      `${stats.upcoming || 0} clases destacadas cargadas en agenda`,
+      `${stats.bundles || 0} bundles visibles para compra rápida`,
+    ]
+      .map((item) => `<div class="proof-chip reveal">${item}</div>`)
+      .join('');
+
     const body = `
       <section class="story-root">
         <div class="ambient-lights" aria-hidden="true">
@@ -190,50 +235,127 @@ export function createApp({ prisma }) {
         </div>
 
         <section class="hero parallax dune-hero">
-          <div class="hero-card reveal">
-            <p class="eyebrow">ORIGEN · EQUILIBRIO · BIOMODULACIÓN</p>
-            <h1>Encuentra tu equilibrio en el origen.</h1>
-            <p>Compra bundles por tipo de clase, reserva en segundos y llega con QR listo para acceso.</p>
-            <div class="hero-actions">
-              <a class="btn" href="/classes">Agendar experiencia</a>
-              <a class="btn alt" href="/staff/login">Portal staff</a>
+          <div class="hero-card hero-premium reveal">
+            <div class="hero-grid">
+              <div class="hero-copy">
+                <p class="eyebrow">GOYO EXPERIENCE · RESERVA FLUIDA · OPERACION CONECTADA</p>
+                <h1>Una experiencia premium desde la primera respiracion.</h1>
+                <p>GOYO une landing editorial, agenda responsive, bundles, confirmacion con QR y operacion staff en una sola experiencia pensada para movil y escritorio.</p>
+                <div class="hero-actions">
+                  <a class="btn" href="/classes">Agendar experiencia</a>
+                  <a class="btn alt" href="/staff/login">Portal staff</a>
+                </div>
+                <div class="proof-row">${proofCards}</div>
+              </div>
+              <div class="hero-aside">
+                <div class="hero-aside-card">
+                  <span>Customer Journey</span>
+                  <strong>Explora, reserva, confirma y entra sin friccion.</strong>
+                  <p>El flujo principal mantiene claridad incluso en pantallas pequenas.</p>
+                </div>
+                <div class="hero-aside-card">
+                  <span>Operations</span>
+                  <strong>Admin, trainer y ops con lenguaje compartido.</strong>
+                  <p>La parte operativa deja de sentirse como un backoffice improvisado.</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
+        <section class="section section-band reveal">
+          <div class="band-shell">
+            <div>
+              <p class="eyebrow">INTRO LAYOUT · LANDING · PRODUCTO</p>
+              <h2>Una entrada narrativa antes del landing, y una home con mas profundidad.</h2>
+            </div>
+            <p>Esta version agrega una portada previa, mas jerarquia editorial y nuevas secciones para contar el producto completo: inspiracion, booking, bundles y operacion.</p>
+          </div>
+        </section>
+
         <section class="section split-section reveal">
-          <article class="card split-left">
-            <h2>El equilibrio perfecto</h2>
-            <p>Inspirado por ciclos de luz y sombra, GOYO integra movimiento, respiración y foco mental.</p>
-            <p class="quote">"Una práctica que se siente viva en cada sesión."</p>
+          <article class="card split-left premium-copy">
+            <h2>El equilibrio entre ritual y producto</h2>
+            <p>Inspirado por ciclos de luz y sombra, GOYO integra movimiento, respiración y foco mental sin perder claridad operacional.</p>
+            <p>La propuesta nueva no solo vende una clase; presenta una plataforma con storytelling, agenda robusta y acceso controlado.</p>
+            <p class="quote">"Una practica que se siente exclusiva y una operacion que no se siente pesada."</p>
           </article>
-          <article class="card split-right">
+          <article class="card split-right premium-preview">
             <div class="clay-shape"></div>
+            <div class="preview-caption">
+              <strong>Warm editorial UI</strong>
+              <p>Texturas minerales, paneles suaves y contraste suficiente para booking real.</p>
+            </div>
           </article>
         </section>
 
         <section class="section">
-          <h2 class="reveal">Experiencias GOYO</h2>
+          <div class="section-heading reveal">
+            <p class="eyebrow">CLASES</p>
+            <h2>Experiencias GOYO</h2>
+            <p>Las clases dejan de verse como tarjetas genéricas y se presentan como experiencias con tono, duración y promesa clara.</p>
+          </div>
           <div class="grid">${typeCards}</div>
+        </section>
+
+        <section class="section">
+          <div class="section-heading reveal">
+            <p class="eyebrow">RITUAL DE RESERVA</p>
+            <h2>El flujo principal ya se entiende mejor</h2>
+            <p>Antes faltaban secciones que explicaran como funciona el producto. Ahora la home cuenta la historia completa del usuario.</p>
+          </div>
+          <div class="grid ritual-grid">${ritualCards}</div>
         </section>
 
         <section class="section schedule-shell reveal">
           <div class="card schedule-board">
-            <h2>Agenda destacada</h2>
+            <div class="section-heading compact">
+              <p class="eyebrow">AGENDA RESPONSIVE</p>
+              <h2>Agenda destacada</h2>
+              <p>Una muestra del calendario que debe sentirse util tanto en escritorio como en movil.</p>
+            </div>
             <div class="timeline">${timeline}</div>
             <a class="btn" href="/classes">Ver horarios completos</a>
           </div>
         </section>
 
         <section class="section">
-          <h2 class="reveal">Bundles de tickets</h2>
+          <div class="section-heading reveal">
+            <p class="eyebrow">WALLET · BUNDLES</p>
+            <h2>Bundles de tickets</h2>
+            <p>La home ahora anticipa el wallet del cliente y enmarca mejor el valor de compra antes de reservar.</p>
+          </div>
           <div class="grid">${bundleCards || '<div class="card">Próximamente bundles activos.</div>'}</div>
+        </section>
+
+        <section class="section reveal">
+          <div class="card ops-showcase">
+            <div class="ops-copy">
+              <p class="eyebrow">STAFF SURFACES</p>
+              <h2>Admin, trainer y ops entran al mismo lenguaje visual.</h2>
+              <p>Tambien faltaba representar la parte operativa. Esta seccion adelanta dashboards, gestion de clases y un check-in pensado para velocidad y certeza.</p>
+            </div>
+            <div class="ops-panels">
+              <div class="ops-panel">
+                <span>Admin dashboard</span>
+                <strong>KPIs, ocupacion y seguimiento.</strong>
+              </div>
+              <div class="ops-panel">
+                <span>Trainer planner</span>
+                <strong>Calendario, roster y control de sesiones.</strong>
+              </div>
+              <div class="ops-panel">
+                <span>Ops check-in</span>
+                <strong>QR visible, validacion rapida y errores claros.</strong>
+              </div>
+            </div>
+          </div>
         </section>
 
         <section class="section reveal">
           <div class="card final-manifesto">
             <h2>Al final del recorrido, solo queda enfoque.</h2>
-            <p>Desliza, reserva y entra a clase con una experiencia fluida para cliente, trainer y operación.</p>
+            <p>Desliza, reserva y entra a clase con una experiencia mas completa: intro previo, landing reforzado y secciones suficientes para vender el producto entero.</p>
             <a class="btn alt" href="/classes">Comenzar ahora</a>
           </div>
         </section>

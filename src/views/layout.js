@@ -16,11 +16,31 @@ export function renderLayout({ title, body, staff = null, simulationMode = true 
   const intro = isLandingIntro
     ? `
     <section id="landing-intro" class="landing-intro" aria-label="Introducción GOYO">
-      <div class="intro-core">
-        <div class="intro-logo-mark">GY</div>
-        <h1>GOYO YOGA</h1>
-        <p>Reserva sin cuenta. Tickets por clase. Acceso con QR.</p>
-        <button type="button" class="btn" id="intro-enter">Entrar</button>
+      <div class="intro-shell">
+        <div class="intro-copy">
+          <div class="intro-logo-mark">GY</div>
+          <p class="intro-kicker">RITMO · RESPIRACION · FOCO</p>
+          <h1>GOYO YOGA</h1>
+          <p class="intro-text">Una entrada lenta antes del movimiento. Reserva sin cuenta, vuelve con tus tickets y cruza la puerta con QR listo.</p>
+          <div class="intro-actions">
+            <button type="button" class="btn" id="intro-enter">Entrar</button>
+            <a class="btn alt intro-link" href="/classes">Ver agenda</a>
+          </div>
+        </div>
+        <aside class="intro-panel" aria-label="Resumen de experiencia">
+          <div class="intro-panel-card">
+            <span>Mobile first</span>
+            <strong>Reserva y confirma en segundos.</strong>
+          </div>
+          <div class="intro-panel-card">
+            <span>Tickets</span>
+            <strong>Bundles por tipo de clase y wallet clara.</strong>
+          </div>
+          <div class="intro-panel-card">
+            <span>Operación</span>
+            <strong>Staff, trainer y check-in en el mismo sistema.</strong>
+          </div>
+        </aside>
       </div>
       <div class="sand-river river-a" aria-hidden="true"></div>
       <div class="sand-river river-b" aria-hidden="true"></div>
