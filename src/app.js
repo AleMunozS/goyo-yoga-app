@@ -237,29 +237,37 @@ export function createApp({ prisma }) {
           <span class="light-orb orb-4"></span>
         </div>
 
-        <section class="hero parallax dune-hero scroll-hero" data-scroll-target="landing-overview">
+        <section class="landing-banner scroll-hero reveal" data-scroll-target="landing-main-hero">
+          <div class="landing-banner-card">
+            <p class="eyebrow">TISA</p>
+            <h1>Respira. Elige tu práctica. Reserva en segundos.</h1>
+            <p>Haz click y baja directo a la experiencia del estudio.</p>
+          </div>
+        </section>
+
+        <section class="hero parallax dune-hero scroll-hero" id="landing-main-hero" data-scroll-target="landing-overview">
           <div class="hero-card hero-premium reveal">
             <div class="hero-grid">
               <div class="hero-copy">
-                <p class="eyebrow">TISA · RESERVA SERENA · OPERACION CONECTADA</p>
-                <h1>Un estudio vivo desde la primera respiracion.</h1>
-                <p>TISA une landing editorial, agenda responsive, accesos claros, confirmación con QR y operación staff en una sola experiencia pensada para móvil y escritorio.</p>
+                <p class="eyebrow">TISA · AGENDA · ACCESOS</p>
+                <h1>Reserva tu clase sin vueltas.</h1>
+                <p>Consulta horarios, usa tus accesos y confirma tu entrada con QR desde una sola experiencia clara.</p>
                 <div class="hero-actions">
-                  <button type="button" class="btn" data-scroll-target="landing-overview">Descubrir más</button>
-                  <a class="btn alt" href="/staff/login">Portal staff</a>
+                  <button type="button" class="btn" data-scroll-target="landing-overview">Ver cómo funciona</button>
+                  <a class="btn alt" href="/classes">Ir a la agenda</a>
                 </div>
                 <div class="proof-row">${proofCards}</div>
               </div>
               <div class="hero-aside">
                 <div class="hero-aside-card">
-                  <span>Customer Journey</span>
-                  <strong>Explora, reserva, confirma y entra sin friccion.</strong>
-                  <p>El flujo principal mantiene claridad incluso en pantallas pequenas.</p>
+                  <span>Reserva</span>
+                  <strong>Explora horarios y aparta tu lugar.</strong>
+                  <p>La agenda muestra disponibilidad, guía y horario sin pasos innecesarios.</p>
                 </div>
                 <div class="hero-aside-card">
-                  <span>Operations</span>
-                  <strong>Admin, trainer y ops con lenguaje compartido.</strong>
-                  <p>La parte operativa deja de sentirse como un backoffice improvisado.</p>
+                  <span>Acceso</span>
+                  <strong>Confirma por correo y entra con QR.</strong>
+                  <p>Cliente, staff y operación comparten el mismo flujo visual.</p>
                 </div>
               </div>
             </div>
@@ -280,14 +288,14 @@ export function createApp({ prisma }) {
           <article class="card split-left premium-copy">
               <h2>El equilibrio entre ritual y producto</h2>
               <p>Inspirado por ciclos de luz y sombra, TISA integra movimiento, respiración y foco mental sin perder claridad operacional.</p>
-            <p>La propuesta nueva no solo vende una clase; presenta una plataforma con storytelling, agenda robusta y acceso controlado.</p>
-            <p class="quote">"Una practica que se siente exclusiva y una operacion que no se siente pesada."</p>
+              <p>La propuesta nueva no solo vende una clase; presenta una plataforma con storytelling, agenda robusta y acceso controlado.</p>
+              <p class="quote">"Una practica que se siente exclusiva y una operacion que no se siente pesada."</p>
           </article>
           <article class="card split-right premium-preview">
             <div class="clay-shape"></div>
             <div class="preview-caption">
-              <strong>Warm editorial UI</strong>
-              <p>Texturas minerales, paneles suaves y contraste suficiente para booking real.</p>
+              <strong>Interfaz cálida y clara</strong>
+              <p>Texturas minerales, paneles suaves y contraste suficiente para una reserva real.</p>
             </div>
           </article>
         </section>
