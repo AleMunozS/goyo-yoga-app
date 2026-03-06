@@ -4,10 +4,14 @@
     if (!el) return;
     const simBanner = document.querySelector('.sim-banner');
     const siteHeader = document.querySelector('.site-header');
+    const isMobile = window.innerWidth <= 760;
+    const isLandingTarget = id === 'landing-main-hero' || id === 'landing-overview';
+    const extraOffset = (isMobile ? 28 : 0) + (isLandingTarget ? 18 : 0);
     const offset =
       (simBanner ? simBanner.getBoundingClientRect().height : 0) +
       (siteHeader ? siteHeader.getBoundingClientRect().height : 0) +
-      12;
+      12 +
+      extraOffset;
     const top = window.scrollY + el.getBoundingClientRect().top - offset;
     window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   };
