@@ -15,13 +15,18 @@ export function renderLayout({ title, body, staff = null, simulationMode = true 
 
   const intro = isLandingIntro
     ? `
-    <section id="landing-intro" class="landing-intro" aria-label="Introducción GOYO">
+    <section id="landing-intro" class="landing-intro" aria-label="Introducción Tisa">
       <div class="intro-shell">
         <div class="intro-copy">
-          <div class="intro-logo-mark">GY</div>
+          <div class="intro-logo-mark">TI</div>
           <p class="intro-kicker">RITMO · RESPIRACION · FOCO</p>
-          <h1>GOYO YOGA</h1>
+          <h1>TISA</h1>
           <p class="intro-text">Una entrada lenta antes del movimiento. Reserva sin cuenta, vuelve con tus tickets y cruza la puerta con QR listo.</p>
+          <div class="intro-mobile-points" aria-label="Resumen compacto">
+            <span>Reserva rapida</span>
+            <span>Bundles claros</span>
+            <span>Check-in QR</span>
+          </div>
           <div class="intro-actions">
             <button type="button" class="btn" id="intro-enter">Entrar</button>
             <a class="btn alt intro-link" href="/classes">Ver agenda</a>
@@ -54,7 +59,7 @@ export function renderLayout({ title, body, staff = null, simulationMode = true 
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>${esc(title)} | Goyo Yoga</title>
+    <title>${esc(title)} | Tisa</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -64,7 +69,7 @@ export function renderLayout({ title, body, staff = null, simulationMode = true 
     ${intro}
     ${simulationMode ? '<div class="sim-banner">Modo simulación activo (no producción)</div>' : ''}
     <header class="site-header">
-      <div class="brand">GOYO YOGA</div>
+      <div class="brand">TISA</div>
       ${nav}
     </header>
     <main>${body}</main>

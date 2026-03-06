@@ -238,9 +238,9 @@ export function createApp({ prisma }) {
           <div class="hero-card hero-premium reveal">
             <div class="hero-grid">
               <div class="hero-copy">
-                <p class="eyebrow">GOYO EXPERIENCE · RESERVA FLUIDA · OPERACION CONECTADA</p>
+                <p class="eyebrow">TISA EXPERIENCE · RESERVA FLUIDA · OPERACION CONECTADA</p>
                 <h1>Una experiencia premium desde la primera respiracion.</h1>
-                <p>GOYO une landing editorial, agenda responsive, bundles, confirmacion con QR y operacion staff en una sola experiencia pensada para movil y escritorio.</p>
+                <p>Tisa une landing editorial, agenda responsive, bundles, confirmacion con QR y operacion staff en una sola experiencia pensada para movil y escritorio.</p>
                 <div class="hero-actions">
                   <a class="btn" href="/classes">Agendar experiencia</a>
                   <a class="btn alt" href="/staff/login">Portal staff</a>
@@ -276,7 +276,7 @@ export function createApp({ prisma }) {
         <section class="section split-section reveal">
           <article class="card split-left premium-copy">
             <h2>El equilibrio entre ritual y producto</h2>
-            <p>Inspirado por ciclos de luz y sombra, GOYO integra movimiento, respiración y foco mental sin perder claridad operacional.</p>
+            <p>Inspirado por ciclos de luz y sombra, Tisa integra movimiento, respiración y foco mental sin perder claridad operacional.</p>
             <p>La propuesta nueva no solo vende una clase; presenta una plataforma con storytelling, agenda robusta y acceso controlado.</p>
             <p class="quote">"Una practica que se siente exclusiva y una operacion que no se siente pesada."</p>
           </article>
@@ -292,7 +292,7 @@ export function createApp({ prisma }) {
         <section class="section">
           <div class="section-heading reveal">
             <p class="eyebrow">CLASES</p>
-            <h2>Experiencias GOYO</h2>
+            <h2>Experiencias Tisa</h2>
             <p>Las clases dejan de verse como tarjetas genéricas y se presentan como experiencias con tono, duración y promesa clara.</p>
           </div>
           <div class="grid">${typeCards}</div>
@@ -1149,7 +1149,7 @@ export function createApp({ prisma }) {
     res.send(renderLayout({ title: 'Check-in OK', body, staff: req.session.staffName, simulationMode: config.simulationMode }));
   });
 
-  app.get('/health', (req, res) => res.json({ status: 'ok', app: 'goyo-yoga-app' }));
+  app.get('/health', (req, res) => res.json({ status: 'ok', app: 'tisa' }));
 
   app.use((err, req, res, next) => {
     console.error(err);

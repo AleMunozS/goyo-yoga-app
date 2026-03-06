@@ -5,7 +5,7 @@ import { prisma } from './db.js';
 const app = createApp({ prisma });
 
 const server = app.listen(config.port, () => {
-  console.log(`goyo-yoga-app listening on ${config.appUrl}`);
+  console.log(`tisa listening on ${config.appUrl}`);
 });
 
 const shutdown = async () => {

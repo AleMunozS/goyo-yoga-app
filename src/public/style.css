@@ -165,6 +165,15 @@ body::before {
   min-width: 0;
 }
 
+.intro-copy h1 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.6rem, 7vw, 5rem);
+  letter-spacing: 0.12em;
+  color: #f6ece2;
+  text-shadow: 0 8px 32px rgba(26, 18, 12, 0.45);
+}
+
 .intro-kicker {
   margin: 0 0 0.7rem;
   letter-spacing: 0.34em;
@@ -178,6 +187,22 @@ body::before {
   margin: 0.8rem 0 0;
   font-size: 1.02rem;
   line-height: 1.7;
+}
+
+.intro-mobile-points {
+  display: none;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.intro-mobile-points span {
+  border-radius: 999px;
+  padding: 0.42rem 0.7rem;
+  font-size: 0.76rem;
+  color: rgba(249, 237, 220, 0.92);
+  background: rgba(255, 250, 244, 0.08);
+  border: 1px solid rgba(248, 233, 214, 0.16);
 }
 
 .intro-actions {
@@ -967,7 +992,7 @@ textarea {
   }
 
   .intro-shell {
-    width: min(720px, 100%);
+    width: min(640px, 100%);
     align-items: stretch;
   }
 
@@ -987,7 +1012,7 @@ textarea {
 
 @media (max-width: 760px) {
   .landing-intro {
-    padding: 1rem 0.9rem 1.25rem;
+    padding: 0.85rem 0.8rem 1rem;
   }
 
   .site-header {
@@ -1022,8 +1047,13 @@ textarea {
   }
 
   .intro-copy {
-    padding: 1.35rem 1rem;
+    padding: 1.15rem 0.95rem;
     border-radius: 24px;
+  }
+
+  .intro-copy h1 {
+    font-size: clamp(2.35rem, 12vw, 3.4rem);
+    letter-spacing: 0.08em;
   }
 
   .intro-actions,
@@ -1047,7 +1077,8 @@ textarea {
   }
 
   .hero h1,
-  .intro-core h1 {
+  .intro-core h1,
+  .intro-copy h1 {
     line-height: 1;
   }
 
@@ -1073,6 +1104,14 @@ textarea {
   .ops-panel,
   .intro-panel-card {
     padding: 1rem 0.95rem;
+  }
+
+  .intro-panel {
+    display: none;
+  }
+
+  .intro-mobile-points {
+    display: flex;
   }
 
   .dune-card,
@@ -1121,14 +1160,37 @@ textarea {
   }
 
   .intro-logo-mark {
-    width: 72px;
-    height: 72px;
-    font-size: 1.75rem;
+    width: 64px;
+    height: 64px;
+    font-size: 1.55rem;
+    margin-bottom: 0.7rem;
   }
 
   .hero-aside-card,
   .intro-panel-card {
     border-radius: 18px;
+  }
+
+  .intro-shell {
+    gap: 0.85rem;
+  }
+
+  .intro-copy {
+    padding: 1rem 0.85rem;
+  }
+
+  .intro-kicker {
+    font-size: 0.68rem;
+  }
+
+  .intro-text {
+    font-size: 0.94rem;
+    line-height: 1.55;
+  }
+
+  .intro-mobile-points span {
+    width: 100%;
+    text-align: center;
   }
 
   .calendar-month-grid {
