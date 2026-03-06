@@ -1115,39 +1115,57 @@ textarea {
 }
 
 @media (max-width: 760px) {
-  .landing-intro {
-    padding: 0;
-  }
-
   .site-header {
-    align-items: flex-start;
-    gap: 0.6rem;
+    align-items: stretch;
+    gap: 0.5rem;
     flex-direction: column;
-    padding: 0.9rem 1rem;
+    padding: 0.75rem 0.9rem;
   }
 
   .brand {
-    font-size: 1.45rem;
+    font-size: 1.35rem;
   }
 
   .top-nav {
-    gap: 0.6rem;
-    font-size: 0.9rem;
-    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
+    width: 100%;
+    padding-bottom: 0.2rem;
+    scrollbar-width: none;
+  }
+
+  .top-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .top-nav a,
+  .top-nav button {
+    flex: 0 0 auto;
   }
 
   .hero {
-    min-height: 70vh;
+    min-height: auto;
     padding: 1rem;
   }
 
   .hero-card {
-    padding: 1.1rem;
+    padding: 1rem;
     border-radius: 20px;
   }
 
   .hero-premium {
-    padding: 1.1rem;
+    padding: 1rem;
+  }
+
+  .hero-grid {
+    gap: 0.75rem;
+  }
+
+  .hero-aside {
+    display: none;
   }
 
   .intro-copy {
@@ -1211,6 +1229,11 @@ textarea {
     margin-bottom: 0.85rem;
   }
 
+  .section-heading-surface {
+    padding: 0.9rem 1rem;
+    border-radius: 20px;
+  }
+
   .card,
   .ops-panel,
   .intro-panel-card {
@@ -1251,8 +1274,32 @@ textarea {
     min-height: unset;
   }
 
+  .split-left,
+  .split-right,
+  .band-shell,
+  .schedule-board,
+  .ops-showcase,
+  .final-manifesto {
+    border-radius: 20px;
+  }
+
+  .split-left h2,
+  .ops-showcase h2,
+  .final-manifesto h2 {
+    font-size: clamp(2rem, 10vw, 2.8rem);
+  }
+
+  .split-left p,
+  .band-shell p,
+  .preview-caption p,
+  .ops-copy p,
+  .final-manifesto p {
+    font-size: 0.98rem;
+    line-height: 1.58;
+  }
+
   .clay-shape {
-    width: min(240px, 72vw);
+    width: min(220px, 68vw);
   }
 
   .calendar-toolbar,
@@ -1269,17 +1316,71 @@ textarea {
     width: 100%;
     text-align: center;
   }
+
+  .mobile-concept-shell {
+    padding: 0.8rem 0.8rem 1.5rem;
+  }
+
+  .mobile-device-frame {
+    width: 100%;
+    padding: 10px;
+    border-radius: 30px;
+  }
+
+  .mobile-device-inner {
+    min-height: auto;
+    border-radius: 24px;
+  }
+
+  .mobile-hero-card {
+    padding: 1rem 1rem 1.15rem;
+  }
+
+  .mobile-hero-card h1 {
+    max-width: none;
+    font-size: clamp(2.15rem, 11vw, 3.2rem);
+  }
+
+  .mobile-card-stack {
+    padding: 0 0.7rem 0.7rem;
+    gap: 0.75rem;
+  }
+
+  .mobile-schedule-card,
+  .mobile-booking-card,
+  .mobile-confirm-card {
+    border-radius: 22px;
+    padding: 0.9rem;
+  }
+
+  .mobile-section-head {
+    gap: 0.4rem;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mobile-concept-class {
+    border-radius: 18px;
+  }
+
+  .mobile-booking-meta {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+  }
+
+  .mobile-confirm-row {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 0.75rem;
+  }
 }
 
 @media (max-width: 520px) {
-  .intro-shell,
   .hero-card,
   .band-shell,
   .ops-showcase {
     width: 100%;
   }
 
-  .intro-copy,
   .hero-card,
   .band-shell,
   .ops-showcase,
@@ -1287,40 +1388,16 @@ textarea {
     border-radius: 18px;
   }
 
-  .intro-logo-mark {
-    width: 64px;
-    height: 64px;
-    font-size: 1.55rem;
-    margin-bottom: 0.7rem;
-  }
-
   .hero-aside-card,
   .intro-panel-card {
     border-radius: 18px;
   }
 
-  .intro-shell {
-    min-height: 100dvh;
-    padding: 0;
-    gap: 0;
-  }
-
-  .intro-copy {
-    min-height: 100dvh;
-    padding: max(0.95rem, env(safe-area-inset-top)) 0.85rem max(0.9rem, env(safe-area-inset-bottom));
-    border-radius: 0;
-  }
-
-  .intro-kicker {
-    font-size: 0.68rem;
-  }
-
-  .intro-text {
-    font-size: 0.94rem;
-    line-height: 1.55;
-  }
-
   .calendar-month-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-booking-meta {
     grid-template-columns: 1fr;
   }
 }

@@ -281,7 +281,7 @@ export function createApp({ prisma }) {
               <p class="eyebrow">LANDING · AGENDA · PRODUCTO</p>
               <h2>Un mismo recorrido para descubrir, reservar y entrar al estudio.</h2>
             </div>
-            <p>La landing ahora arranca directo en el hero principal y baja a una historia clara del producto: inspiración, agenda, accesos y operación.</p>
+            <p>La landing arranca directo en la experiencia principal y baja a una historia clara: agenda, accesos y operación sin rodeos.</p>
           </div>
         </section>
 
@@ -311,10 +311,10 @@ export function createApp({ prisma }) {
         </section>
 
         <section class="section">
-          <div class="section-heading section-heading-surface reveal">
-            <p class="eyebrow">RITUAL DE RESERVA</p>
-            <h2>El flujo principal ya se entiende mejor</h2>
-            <p>Antes faltaban secciones que explicaran como funciona el producto. Ahora la home cuenta la historia completa del usuario.</p>
+            <div class="section-heading section-heading-surface reveal">
+              <p class="eyebrow">RITUAL DE RESERVA</p>
+              <h2>El flujo principal ya se entiende mejor</h2>
+            <p>Explora la agenda, confirma por correo y llega con tu QR dentro de un mismo recorrido.</p>
           </div>
           <div class="grid ritual-grid">${ritualCards}</div>
         </section>
@@ -322,9 +322,9 @@ export function createApp({ prisma }) {
         <section class="section schedule-shell reveal">
           <div class="card schedule-board">
             <div class="section-heading section-heading-surface compact">
-              <p class="eyebrow">AGENDA RESPONSIVE</p>
+              <p class="eyebrow">AGENDA CLARA</p>
               <h2>Agenda destacada</h2>
-              <p>Una muestra del calendario que debe sentirse util tanto en escritorio como en movil.</p>
+              <p>Una muestra del calendario pensada para leerse fácil en escritorio y móvil.</p>
             </div>
             <div class="timeline">${timeline}</div>
             <a class="btn" href="/classes">Ver horarios completos</a>
@@ -333,9 +333,9 @@ export function createApp({ prisma }) {
 
         <section class="section">
           <div class="section-heading section-heading-surface reveal">
-            <p class="eyebrow">WALLET · BUNDLES</p>
+            <p class="eyebrow">ACCESOS · PAQUETES</p>
             <h2>Bundles de tickets</h2>
-            <p>La home ahora anticipa el wallet del cliente y enmarca mejor el valor de compra antes de reservar.</p>
+            <p>Los accesos quedan visibles desde la landing para entender el valor antes de reservar.</p>
           </div>
           <div class="grid">${bundleCards || '<div class="card">Próximamente bundles activos.</div>'}</div>
         </section>
