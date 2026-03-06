@@ -241,7 +241,8 @@ export function createApp({ prisma }) {
           <div class="landing-banner-card">
             <p class="eyebrow">TISA</p>
             <h1>Respira. Elige tu práctica. Reserva en segundos.</h1>
-            <p>Haz click y baja directo a la experiencia del estudio.</p>
+            <p>Toca la pantalla y avanza directo a la experiencia del estudio.</p>
+            <span class="landing-banner-hint">Tocar para continuar</span>
           </div>
         </section>
 
