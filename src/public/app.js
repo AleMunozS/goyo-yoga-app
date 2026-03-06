@@ -1,4 +1,25 @@
 (() => {
+  const scrollToTarget = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  document.querySelectorAll('[data-scroll-target]').forEach((el) => {
+    const target = el.dataset.scrollTarget;
+    if (!target) return;
+
+    if (el.classList.contains('scroll-hero')) {
+      el.addEventListener('click', (ev) => {
+        if (ev.target.closest('a, button, input, textarea, select')) return;
+        scrollToTarget(target);
+      });
+      return;
+    }
+
+    el.addEventListener('click', () => scrollToTarget(target));
+  });
+
   const intro = document.getElementById('landing-intro');
   const introEnter = document.getElementById('intro-enter');
   if (intro && introEnter) {

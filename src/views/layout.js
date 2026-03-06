@@ -2,29 +2,50 @@ import { esc } from '../utils.js';
 
 export function renderLayout({ title, body, staff = null, simulationMode = true }) {
   const isLandingIntro = title === 'Inicio' && !staff;
+  const isConceptBoard = title.startsWith('Concept') && !staff;
+  const appName = 'TISA';
   const nav = staff
     ? `
-      <nav class="top-nav">
+      <nav class="top-nav staff-nav">
         <a href="/admin/dashboard">Admin</a>
         <a href="/trainer/classes">Trainer</a>
         <a href="/ops/checkin">Check-in</a>
         <form action="/staff/logout" method="post"><button type="submit">Salir</button></form>
       </nav>
     `
-    : '<nav class="top-nav"><a href="/">Inicio</a><a href="/classes">Clases</a><a href="/staff/login">Staff</a></nav>';
+    : isConceptBoard
+    ? `
+      <nav class="top-nav concept-nav">
+        <a href="/concept-tisa-01">01</a>
+        <a href="/concept-tisa-02">02</a>
+        <a href="/concept-tisa-mobile">Móvil</a>
+        <a href="/concept-tisa-calendar">Calendario</a>
+        <a href="/concept-tisa-access">Acceso</a>
+        <a href="/concept-tisa-admin">Admin</a>
+        <a href="/classes">Agenda</a>
+      </nav>
+    `
+    : `
+      <nav class="top-nav public-nav">
+        <a href="/">Inicio</a>
+        <a href="/classes">Agenda</a>
+        <a href="/staff/login">Staff</a>
+        <a class="nav-cta" href="/classes">Reservar</a>
+      </nav>
+    `;
 
   const intro = isLandingIntro
     ? `
-    <section id="landing-intro" class="landing-intro" aria-label="Introducción Tisa">
+    <section id="landing-intro" class="landing-intro" aria-label="Introducción TISA">
       <div class="intro-shell">
         <div class="intro-copy">
           <div class="intro-logo-mark">TI</div>
-          <p class="intro-kicker">RITMO · RESPIRACION · FOCO</p>
+          <p class="intro-kicker">MOVIMIENTO · RESPIRACION · CALMA</p>
           <h1>TISA</h1>
-          <p class="intro-text">Una entrada lenta antes del movimiento. Reserva sin cuenta, vuelve con tus tickets y cruza la puerta con QR listo.</p>
+          <p class="intro-text">Una llegada serena a un estudio pensado para reservar fluido, comprar accesos claros y entrar con QR sin fricción.</p>
           <div class="intro-mobile-points" aria-label="Resumen compacto">
-            <span>Reserva rapida</span>
-            <span>Bundles claros</span>
+            <span>Agenda viva</span>
+            <span>Wallet simple</span>
             <span>Check-in QR</span>
           </div>
           <div class="intro-actions">
@@ -34,16 +55,16 @@ export function renderLayout({ title, body, staff = null, simulationMode = true 
         </div>
         <aside class="intro-panel" aria-label="Resumen de experiencia">
           <div class="intro-panel-card">
-            <span>Mobile first</span>
+            <span>Studio pulse</span>
             <strong>Reserva y confirma en segundos.</strong>
           </div>
           <div class="intro-panel-card">
-            <span>Tickets</span>
-            <strong>Bundles por tipo de clase y wallet clara.</strong>
+            <span>Wallet</span>
+            <strong>Bundles por tipo de práctica y créditos visibles.</strong>
           </div>
           <div class="intro-panel-card">
-            <span>Operación</span>
-            <strong>Staff, trainer y check-in en el mismo sistema.</strong>
+            <span>Operations</span>
+            <strong>Staff, trainer y check-in bajo el mismo lenguaje visual.</strong>
           </div>
         </aside>
       </div>
@@ -59,17 +80,21 @@ export function renderLayout({ title, body, staff = null, simulationMode = true 
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>${esc(title)} | Tisa</title>
+    <title>${esc(title)} | ${appName}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css" />
+    <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
   </head>
-  <body class="${isLandingIntro ? 'has-landing-intro' : ''}">
+  <body class="${isLandingIntro ? 'has-landing-intro' : ''} ${staff ? 'is-staff' : 'is-public'} ${isConceptBoard ? 'is-concept-board' : ''}">
     ${intro}
-    ${simulationMode ? '<div class="sim-banner">Modo simulación activo (no producción)</div>' : ''}
-    <header class="site-header">
-      <div class="brand">TISA</div>
+    ${simulationMode && !isConceptBoard ? '<div class="sim-banner">Modo simulación activo (no producción)</div>' : ''}
+    <header class="site-header ${isConceptBoard ? 'concept-header' : ''}">
+      <a class="brand" href="/">
+        <span>TISA</span>
+        <small>Studio System</small>
+      </a>
       ${nav}
     </header>
     <main>${body}</main>

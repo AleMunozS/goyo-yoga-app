@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import QRCode from 'qrcode';
 import Stripe from 'stripe';
 import { z } from 'zod';
+import { fileURLToPath } from 'url';
 import { renderLayout } from './views/layout.js';
 import { config } from './config.js';
 import { createToken, esc, hashToken, makeBookingRef, signPayload } from './utils.js';
@@ -46,12 +47,14 @@ function getBaseUrl(req) {
   return `${proto}://${host}`;
 }
 
+const publicDir = fileURLToPath(new URL('./public', import.meta.url));
+
 export function createApp({ prisma }) {
   const app = express();
   const stripe = config.stripeSecretKey ? new Stripe(config.stripeSecretKey) : null;
 
   app.use(morgan('dev'));
-  app.use('/static', express.static(new URL('./public', import.meta.url).pathname));
+  app.use('/static', express.static(publicDir));
   app.use(session({
     secret: config.sessionSecret,
     resave: false,
@@ -238,9 +241,9 @@ export function createApp({ prisma }) {
           <div class="hero-card hero-premium reveal">
             <div class="hero-grid">
               <div class="hero-copy">
-                <p class="eyebrow">TISA EXPERIENCE · RESERVA FLUIDA · OPERACION CONECTADA</p>
-                <h1>Una experiencia premium desde la primera respiracion.</h1>
-                <p>Tisa une landing editorial, agenda responsive, bundles, confirmacion con QR y operacion staff en una sola experiencia pensada para movil y escritorio.</p>
+                <p class="eyebrow">TISA · RESERVA SERENA · OPERACION CONECTADA</p>
+                <h1>Un estudio vivo desde la primera respiracion.</h1>
+                <p>TISA une landing editorial, agenda responsive, accesos claros, confirmación con QR y operación staff en una sola experiencia pensada para móvil y escritorio.</p>
                 <div class="hero-actions">
                   <a class="btn" href="/classes">Agendar experiencia</a>
                   <a class="btn alt" href="/staff/login">Portal staff</a>
@@ -275,8 +278,8 @@ export function createApp({ prisma }) {
 
         <section class="section split-section reveal">
           <article class="card split-left premium-copy">
-            <h2>El equilibrio entre ritual y producto</h2>
-            <p>Inspirado por ciclos de luz y sombra, Tisa integra movimiento, respiración y foco mental sin perder claridad operacional.</p>
+              <h2>El equilibrio entre ritual y producto</h2>
+              <p>Inspirado por ciclos de luz y sombra, TISA integra movimiento, respiración y foco mental sin perder claridad operacional.</p>
             <p>La propuesta nueva no solo vende una clase; presenta una plataforma con storytelling, agenda robusta y acceso controlado.</p>
             <p class="quote">"Una practica que se siente exclusiva y una operacion que no se siente pesada."</p>
           </article>
@@ -292,7 +295,7 @@ export function createApp({ prisma }) {
         <section class="section">
           <div class="section-heading reveal">
             <p class="eyebrow">CLASES</p>
-            <h2>Experiencias Tisa</h2>
+            <h2>Experiencias TISA</h2>
             <p>Las clases dejan de verse como tarjetas genéricas y se presentan como experiencias con tono, duración y promesa clara.</p>
           </div>
           <div class="grid">${typeCards}</div>
@@ -363,6 +366,698 @@ export function createApp({ prisma }) {
     `;
 
     res.send(renderLayout({ title: 'Inicio', body, simulationMode: config.simulationMode }));
+  });
+
+  app.get(['/concept-tisa-01', '/concept-goyo'], async (req, res) => {
+    const [types, upcoming, bundles] = await Promise.all([
+      prisma.class_types.findMany({ orderBy: { name: 'asc' }, take: 3 }),
+      prisma.class_occurrences.findMany({
+        include: { classType: true, trainer: true },
+        orderBy: { startsAt: 'asc' },
+        take: 4,
+        where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
+      }),
+      prisma.ticket_products.findMany({
+        include: { classType: true },
+        orderBy: [{ bundleSize: 'desc' }, { priceCents: 'asc' }],
+        take: 3,
+        where: { active: true },
+      }),
+    ]);
+
+    const scheduleCards = upcoming.length
+      ? upcoming
+          .map(
+            (item, index) => `
+          <article class="concept-schedule-card ${index === 0 ? 'is-featured' : ''}">
+            <span>${dayjs(item.startsAt).format('ddd DD MMM · HH:mm').toUpperCase()}</span>
+            <h3>${esc(item.classType.name)}</h3>
+            <p>${esc(item.trainer.displayName)} · ${item.availableSlots} cupos</p>
+          </article>
+        `
+          )
+          .join('')
+      : '<article class="concept-schedule-card is-featured"><span>PRONTO</span><h3>Nueva programación</h3><p>La agenda se está preparando.</p></article>';
+
+    const ritualCards = [
+      { step: '01', title: 'Discover the rhythm', text: 'Una portada limpia, una voz de marca más precisa y una entrada sin fricción ni overlays frágiles.' },
+      { step: '02', title: 'Book in one gesture', text: 'La agenda se siente más editorial y el booking más dirigido, con mejor jerarquía visual.' },
+      { step: '03', title: 'Arrive with certainty', text: 'Wallet, QR y check-in viven dentro del mismo sistema visual y no como módulos separados.' },
+    ]
+      .map(
+        (item) => `
+        <article class="concept-ritual-card">
+          <span>${item.step}</span>
+          <h3>${item.title}</h3>
+          <p>${item.text}</p>
+        </article>
+      `
+      )
+      .join('');
+
+    const bundleCards = bundles
+      .map(
+        (bundle) => `
+        <article class="concept-bundle-card">
+          <p>${esc(bundle.classType.name)}</p>
+          <strong>${bundle.bundleSize} tickets</strong>
+          <span>MXN ${(bundle.priceCents / 100).toLocaleString('es-MX')}</span>
+        </article>
+      `
+      )
+      .join('');
+
+    const typeList = types
+      .map(
+        (type) => `
+        <li>
+          <strong>${esc(type.name)}</strong>
+          <span>${esc(type.description)}</span>
+        </li>
+      `
+      )
+      .join('');
+
+    const body = `
+      <section class="concept-shell">
+        <section class="concept-hero">
+          <div class="concept-noise" aria-hidden="true"></div>
+          <div class="concept-hero-grid">
+            <div class="concept-headline">
+              <p class="concept-label">TISA / CONCEPT 01</p>
+              <h1>A sharper identity for a studio that should feel calm, expensive and immediate.</h1>
+              <p class="concept-copy">Esta propuesta abandona la estética anterior y cambia el tono completo: más contraste, más composición editorial, menos bloques repetidos y una agenda que se siente parte de una marca, no de un panel administrativo.</p>
+              <div class="concept-actions">
+                <a class="btn" href="/classes">Abrir agenda actual</a>
+                <a class="btn alt" href="/">Comparar con home actual</a>
+              </div>
+            </div>
+            <div class="concept-poster">
+              <div class="concept-poster-card">
+                <span>TISA Studio System</span>
+                <strong>Breath, heat, focus, reset.</strong>
+                <p>Un sistema visual hecho para convertir mejor y sentirse más premium en móvil.</p>
+              </div>
+              <div class="concept-poster-aside">
+                <p>Intentional booking flow</p>
+                <p>Editorial pacing</p>
+                <p>Cleaner operations</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="concept-section concept-split">
+          <article class="concept-panel dark">
+            <p class="concept-label">WHY THIS IS DIFFERENT</p>
+            <h2>No more intro dependency.</h2>
+            <p>El acceso principal ya no depende de una intro animada que puede fallar. La primera impresión viene de una hero estable con dirección visual más fuerte.</p>
+          </article>
+          <article class="concept-panel light">
+            <p class="concept-label">VISUAL SYSTEM</p>
+            <ul class="concept-list">
+              <li>Tipografía editorial con más contraste</li>
+              <li>Capas oscuras con acentos arena y marfil</li>
+              <li>Bloques asimétricos en lugar de tarjetas repetidas</li>
+              <li>Ritmo visual pensado primero para mobile</li>
+            </ul>
+          </article>
+        </section>
+
+        <section class="concept-section">
+          <div class="concept-section-heading">
+            <p class="concept-label">LIVE SCHEDULE DIRECTION</p>
+            <h2>The booking surface should feel curated, not generic.</h2>
+          </div>
+          <div class="concept-schedule-grid">
+            ${scheduleCards}
+          </div>
+        </section>
+
+        <section class="concept-section concept-rituals">
+          <div class="concept-section-heading">
+            <p class="concept-label">FLOW</p>
+            <h2>A three-part journey with cleaner intent.</h2>
+          </div>
+          <div class="concept-ritual-grid">
+            ${ritualCards}
+          </div>
+        </section>
+
+        <section class="concept-section concept-dual-grid">
+          <article class="concept-panel light">
+            <p class="concept-label">PRACTICE MENU</p>
+            <h2>Programs with a quieter hierarchy.</h2>
+            <ul class="concept-program-list">
+              ${typeList}
+            </ul>
+          </article>
+          <article class="concept-panel accent">
+            <p class="concept-label">BUNDLES</p>
+            <h2>Membership value visible before the click.</h2>
+            <div class="concept-bundle-grid">
+              ${bundleCards}
+            </div>
+          </article>
+        </section>
+
+        <section class="concept-section">
+          <div class="concept-final-card">
+            <p class="concept-label">NEXT STEP</p>
+            <h2>If you approve this direction, I turn this into frames in Figma and then replace the real surfaces.</h2>
+          </div>
+        </section>
+      </section>
+    `;
+
+    res.send(renderLayout({ title: 'Concept TISA 01', body, simulationMode: config.simulationMode }));
+  });
+
+  app.get(['/concept-tisa-02', '/concept-goyo-02'], async (req, res) => {
+    const [upcoming, bundles] = await Promise.all([
+      prisma.class_occurrences.findMany({
+        include: { classType: true, trainer: true, location: true },
+        orderBy: { startsAt: 'asc' },
+        take: 6,
+        where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
+      }),
+      prisma.ticket_products.findMany({
+        include: { classType: true },
+        orderBy: [{ bundleSize: 'desc' }, { priceCents: 'asc' }],
+        take: 3,
+        where: { active: true },
+      }),
+    ]);
+
+    const featured = upcoming[0];
+    const scheduleRows = upcoming
+      .map(
+        (item, index) => `
+        <article class="concept2-schedule-row ${index === 0 ? 'is-active' : ''}">
+          <div>
+                    <strong>${esc(item.classType.name)}</strong>
+                    <p>${esc(item.trainer.displayName)} · TISA Central</p>
+          </div>
+          <div class="concept2-row-meta">
+            <span>${dayjs(item.startsAt).format('HH:mm')}</span>
+            <small>${item.availableSlots} cupos</small>
+          </div>
+        </article>
+      `
+      )
+      .join('');
+
+    const bundleRows = bundles
+      .map(
+        (bundle) => `
+        <article class="concept2-bundle-row">
+          <div>
+            <p>${esc(bundle.classType.name)}</p>
+            <strong>${bundle.bundleSize} tickets</strong>
+          </div>
+          <span>MXN ${(bundle.priceCents / 100).toLocaleString('es-MX')}</span>
+        </article>
+      `
+      )
+      .join('');
+
+    const body = `
+      <section class="concept2-shell">
+        <section class="concept2-hero">
+          <div class="concept2-copy">
+            <p class="concept-label">TISA / CONCEPTO 02</p>
+            <h1>La agenda y la reserva como una experiencia serena, clara y deseable.</h1>
+            <p>Este concepto lleva la calma visual de TISA al momento más importante: elegir una práctica, entender el valor de cada acceso y cerrar la reserva dentro de una superficie cálida, simple y precisa.</p>
+          </div>
+          <div class="concept2-chip-row">
+            <span>Agenda contemplativa</span>
+            <span>Reserva sin fricción</span>
+            <span>Créditos visibles</span>
+          </div>
+        </section>
+
+        <section class="concept2-board">
+          <article class="concept2-panel concept2-agenda-panel">
+            <div class="concept2-panel-head">
+              <div>
+                <p class="concept-label">AGENDA</p>
+                <h2>Una vista semanal pensada para decidir con calma.</h2>
+              </div>
+              <span class="concept2-status">Disponibilidad en tiempo real</span>
+            </div>
+            <div class="concept2-schedule-list">
+              ${scheduleRows}
+            </div>
+          </article>
+
+          <article class="concept2-panel concept2-booking-panel">
+            <p class="concept-label">RESERVA</p>
+            <h2>${featured ? esc(featured.classType.name) : 'Práctica seleccionada'}</h2>
+            <div class="concept2-detail-stack">
+              <div><span>Horario</span><strong>${featured ? dayjs(featured.startsAt).format('ddd DD MMM · HH:mm') : 'Por definir'}</strong></div>
+              <div><span>Guía</span><strong>${featured ? esc(featured.trainer.displayName) : 'Por definir'}</strong></div>
+              <div><span>Ubicación</span><strong>TISA Central</strong></div>
+            </div>
+            <div class="concept2-action-box">
+              <button class="btn" type="button">Continuar con créditos</button>
+              <button class="btn alt" type="button">Explorar accesos</button>
+            </div>
+          </article>
+        </section>
+
+        <section class="concept2-secondary-grid">
+          <article class="concept2-panel concept2-wallet-panel">
+            <p class="concept-label">ACCESOS</p>
+            <h2>Los créditos deben sentirse claros, presentes y tranquilos.</h2>
+            <div class="concept2-wallet-card">
+              <span>Disponible ahora</span>
+              <strong>08</strong>
+              <p>Créditos Flow Suave</p>
+            </div>
+            <div class="concept2-bundle-list">
+              ${bundleRows}
+            </div>
+          </article>
+
+          <article class="concept2-panel concept2-qr-panel">
+            <p class="concept-label">CONFIRMACIÓN</p>
+            <h2>La confirmación y el QR viven dentro del mismo lenguaje visual.</h2>
+            <div class="concept2-qr-card">
+              <div class="concept2-qr-mock"></div>
+              <div>
+                <strong>Reserva / TISA-2841</strong>
+                <p>La confirmación deja de sentirse técnica. Ahora acompaña el cierre del recorrido con la misma calma que el resto de la experiencia.</p>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="concept2-final">
+          <p class="concept-label">DIRECCIÓN</p>
+          <h2>Este concepto conserva la sensibilidad editorial de TISA, pero la acerca más al producto real: agenda, accesos y reserva dentro de una experiencia coherente.</h2>
+        </section>
+      </section>
+    `;
+
+    res.send(renderLayout({ title: 'Concept TISA 02', body, simulationMode: config.simulationMode }));
+  });
+
+  app.get('/concept-tisa-mobile', async (req, res) => {
+    const upcoming = await prisma.class_occurrences.findMany({
+      include: { classType: true, trainer: true, location: true },
+      orderBy: { startsAt: 'asc' },
+      take: 4,
+      where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
+    });
+
+    const featured = upcoming[0];
+    const cards = upcoming
+      .map(
+        (item, index) => `
+        <article class="mobile-concept-class ${index === 0 ? 'is-active' : ''}">
+          <div class="mobile-concept-class-top">
+            <span>${dayjs(item.startsAt).format('ddd DD MMM').toUpperCase()}</span>
+            <strong>${dayjs(item.startsAt).format('HH:mm')}</strong>
+          </div>
+          <h3>${esc(item.classType.name)}</h3>
+          <p>${esc(item.trainer.displayName)} · ${item.availableSlots} cupos</p>
+        </article>
+      `
+      )
+      .join('');
+
+    const body = `
+      <section class="mobile-concept-shell">
+        <div class="mobile-device-frame">
+          <div class="mobile-device-inner">
+            <div class="mobile-hero-card">
+              <p class="concept-label">TISA / CONCEPTO MÓVIL</p>
+              <h1>Reservar desde el móvil debe sentirse simple, íntimo y natural.</h1>
+              <p>Este concepto reúne agenda, selección, accesos y confirmación en una experiencia más cálida, pensada para moverse con una mano y decidir sin esfuerzo.</p>
+            </div>
+
+            <div class="mobile-card-stack">
+              <section class="mobile-schedule-card">
+                <div class="mobile-section-head">
+                  <div>
+                    <p class="concept-label">HOY</p>
+                    <h2>Elige tu práctica</h2>
+                  </div>
+                  <span>En vivo</span>
+                </div>
+                <div class="mobile-class-list">
+                  ${cards}
+                </div>
+              </section>
+
+              <section class="mobile-booking-card">
+                <p class="concept-label">RESERVA</p>
+                <h2>${featured ? esc(featured.classType.name) : 'Práctica seleccionada'}</h2>
+                <div class="mobile-booking-meta">
+                  <div><span>Horario</span><strong>${featured ? dayjs(featured.startsAt).format('HH:mm') : '--:--'}</strong></div>
+                  <div><span>Guía</span><strong>${featured ? esc(featured.trainer.displayName) : 'Por definir'}</strong></div>
+                  <div><span>Accesos</span><strong>08 créditos</strong></div>
+                </div>
+                <button class="btn" type="button">Reservar con crédito</button>
+                <button class="btn alt" type="button">Ver accesos</button>
+              </section>
+
+              <section class="mobile-confirm-card">
+                <p class="concept-label">CONFIRMACIÓN</p>
+                <div class="mobile-confirm-row">
+                  <div class="mobile-qr-mock"></div>
+                  <div>
+                    <strong>TISA-2481</strong>
+                    <p>El QR aparece dentro del mismo lenguaje visual, como una continuación natural de la reserva.</p>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+    `;
+
+    res.send(renderLayout({ title: 'Concept TISA Móvil', body, simulationMode: config.simulationMode }));
+  });
+
+  app.get('/concept-tisa-calendar', async (req, res) => {
+    const weekdayShort = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+    const monthShort = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    const shortDayLabel = (d) => weekdayShort[d.day()];
+    const shortDateLabel = (d) => `${String(d.date()).padStart(2, '0')} ${monthShort[d.month()]}`;
+    const detailDateLabel = (d) => `${shortDayLabel(d)} ${shortDateLabel(d)} · ${d.format('HH:mm')}`;
+    const requestedStart = dayjs();
+    const periodStart = startOfWeekMonday(requestedStart);
+    const periodEnd = dayjs(periodStart).add(7, 'day');
+    const classes = await prisma.class_occurrences.findMany({
+      include: { classType: true, trainer: true, location: true },
+      orderBy: { startsAt: 'asc' },
+      take: 18,
+      where: {
+        startsAt: {
+          gte: new Date(periodStart.startOf('day').toISOString()),
+          lt: new Date(periodEnd.endOf('day').toISOString()),
+        },
+      },
+    });
+
+    const days = Array.from({ length: 7 }, (_, i) => startOfWeekMonday(periodStart).add(i, 'day'));
+    const grouped = days
+      .map((d) => {
+        const items = classes
+          .filter((c) => dayjs(c.startsAt).isSame(d, 'day'))
+          .slice(0, 3)
+          .map(
+            (c, index) => `
+            <article class="calendar-concept-event ${index === 0 ? 'is-featured' : ''}">
+              <span>${dayjs(c.startsAt).format('HH:mm')}</span>
+              <strong>${esc(c.classType.name)}</strong>
+              <p>${esc(c.trainer.displayName)} · ${c.availableSlots} cupos</p>
+            </article>
+          `
+          )
+          .join('');
+
+        return `
+          <section class="calendar-concept-day">
+            <header>
+              <span>${shortDayLabel(d)}</span>
+              <strong>${shortDateLabel(d)}</strong>
+            </header>
+            <div class="calendar-concept-events">
+              ${items || '<div class="calendar-concept-empty">Sin prácticas</div>'}
+            </div>
+          </section>
+        `;
+      })
+      .join('');
+
+    const monthStrip = Array.from({ length: 14 }, (_, i) => periodStart.add(i, 'day'))
+      .map(
+        (d, index) => `
+        <article class="calendar-month-card ${index === 4 ? 'is-selected' : ''}">
+          <span>${shortDayLabel(d)}</span>
+          <strong>${d.format('DD')}</strong>
+          <p>${monthShort[d.month()]}</p>
+        </article>
+      `
+      )
+      .join('');
+
+    const featured = classes[0];
+    const body = `
+      <section class="system-shell">
+        <section class="system-hero scroll-hero" data-scroll-target="calendar-week">
+          <div>
+            <p class="concept-label">TISA / CALENDARIO</p>
+            <h1>Un calendario que invita a reservar con claridad, no a descifrar bloques.</h1>
+            <p>Esta versión transforma la agenda en una superficie editorial: semana clara, mes legible y una reserva contextual que no rompe el ritmo visual de TISA.</p>
+          </div>
+          <div class="system-chip-row">
+            <button class="system-chip-button" type="button" data-scroll-target="calendar-week">Semana serena</button>
+            <button class="system-chip-button" type="button" data-scroll-target="calendar-month">Vista mes utilitaria</button>
+            <button class="system-chip-button" type="button" data-scroll-target="calendar-booking">Reserva integrada</button>
+          </div>
+        </section>
+
+        <section class="system-grid calendar-concept-grid">
+          <article class="system-panel system-panel-light" id="calendar-week">
+            <p class="concept-label">SEMANA</p>
+            <h2>Decidir desde una vista semanal limpia.</h2>
+            <div class="calendar-concept-week">
+              ${grouped}
+            </div>
+          </article>
+
+          <article class="system-panel system-panel-dark" id="calendar-booking">
+            <p class="concept-label">RESERVA RÁPIDA</p>
+            <h2>${featured ? esc(featured.classType.name) : 'Práctica seleccionada'}</h2>
+            <div class="system-detail-list">
+              <div><span>Horario</span><strong>${featured ? detailDateLabel(dayjs(featured.startsAt)) : 'Por definir'}</strong></div>
+              <div><span>Guía</span><strong>${featured ? esc(featured.trainer.displayName) : 'Por definir'}</strong></div>
+              <div><span>Estudio</span><strong>TISA Central</strong></div>
+            </div>
+            <div class="system-action-stack">
+              <button class="btn" type="button">Abrir acceso</button>
+              <button class="btn alt" type="button">Ver créditos</button>
+            </div>
+          </article>
+        </section>
+
+        <section class="system-grid calendar-concept-grid">
+          <article class="system-panel system-panel-light" id="calendar-month">
+            <p class="concept-label">MES</p>
+            <h2>Una lectura mensual más compacta y humana.</h2>
+            <div class="calendar-month-strip">
+              ${monthStrip}
+            </div>
+          </article>
+
+          <article class="system-panel system-panel-soft">
+            <p class="concept-label">DETALLE</p>
+            <h2>La clase elegida vive dentro del mismo recorrido.</h2>
+            <div class="calendar-modal-mock">
+              <strong>${featured ? esc(featured.classType.name) : 'Meditación Guiada'}</strong>
+              <p>${featured ? esc(featured.trainer.displayName) : 'Sofía Luna'} · ${featured ? dayjs(featured.startsAt).format('HH:mm') : '07:00'} · ${featured ? featured.availableSlots : 18} cupos</p>
+              <small>No se siente como un modal genérico, sino como una capa natural de la agenda.</small>
+            </div>
+          </article>
+        </section>
+      </section>
+    `;
+
+    res.send(renderLayout({ title: 'Concept TISA Calendario', body, simulationMode: config.simulationMode }));
+  });
+
+  app.get('/concept-tisa-access', async (req, res) => {
+    const weekdayShort = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
+    const monthShort = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    const shortDateLabel = (d) => `${String(d.date()).padStart(2, '0')} ${monthShort[d.month()]} · ${d.format('HH:mm')}`;
+    const occurrence = await prisma.class_occurrences.findFirst({
+      include: { classType: true, trainer: true, location: true },
+      orderBy: { startsAt: 'asc' },
+      where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
+    });
+    const products = await prisma.ticket_products.findMany({
+      include: { classType: true },
+      orderBy: [{ bundleSize: 'desc' }, { priceCents: 'asc' }],
+      take: 3,
+      where: { active: true },
+    });
+
+    const accessCards = products
+      .map(
+        (product) => `
+        <article class="access-product-row">
+          <div>
+            <p>${esc(product.classType.name)}</p>
+            <strong>${product.bundleSize} accesos</strong>
+          </div>
+          <span>MXN ${(product.priceCents / 100).toLocaleString('es-MX')}</span>
+        </article>
+      `
+      )
+      .join('');
+
+    const body = `
+      <section class="system-shell">
+        <section class="system-hero scroll-hero" data-scroll-target="access-entry">
+          <div>
+            <p class="concept-label">TISA / ACCESO Y RESERVA</p>
+            <h1>El acceso por correo, la confirmación y el QR deben sentirse parte del mismo ritual.</h1>
+            <p>Este board ordena el tramo más sensible del producto: entrar desde el correo, decidir con qué acceso reservar y llegar con una confirmación que inspire calma y certeza.</p>
+          </div>
+          <div class="system-chip-row">
+            <button class="system-chip-button" type="button" data-scroll-target="access-entry">Acceso por correo</button>
+            <button class="system-chip-button" type="button" data-scroll-target="access-bundles">Compra contextual</button>
+            <button class="system-chip-button" type="button" data-scroll-target="access-qr">QR sereno</button>
+          </div>
+        </section>
+
+        <section class="system-grid access-grid">
+          <article class="system-panel system-panel-light" id="access-entry">
+            <p class="concept-label">ACCESO POR CORREO</p>
+            <h2>Confirmar tu lugar en menos de un minuto.</h2>
+            <div class="system-detail-list">
+              <div><span>Práctica</span><strong>${occurrence ? esc(occurrence.classType.name) : 'Meditación Guiada'}</strong></div>
+              <div><span>Horario</span><strong>${occurrence ? shortDateLabel(dayjs(occurrence.startsAt)) : '06 MAR · 07:00'}</strong></div>
+              <div><span>Guía</span><strong>${occurrence ? esc(occurrence.trainer.displayName) : 'Sofía Luna'}</strong></div>
+            </div>
+            <div class="mail-chip">alemunozpro80@gmail.com</div>
+            <button class="btn" type="button">Consumir 1 crédito y reservar</button>
+          </article>
+
+          <article class="system-panel system-panel-dark" id="access-bundles">
+            <p class="concept-label">SIN ACCESOS</p>
+            <h2>Comprar sin salir del flujo.</h2>
+            <div class="access-product-list">
+              ${accessCards}
+            </div>
+          </article>
+        </section>
+
+        <section class="system-grid access-grid">
+          <article class="system-panel system-panel-dark" id="access-qr">
+            <p class="concept-label">CONFIRMACIÓN</p>
+            <h2>Reserva lista para abrir la puerta.</h2>
+            <div class="access-qr-card">
+              <div class="concept2-qr-mock"></div>
+              <div>
+                <strong>TISA-2841</strong>
+                <p>Tu reserva queda visible, compartible y alineada con el tono completo de la marca.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="system-panel system-panel-soft">
+            <p class="concept-label">GESTIONAR</p>
+            <h2>Cancelar o revisar sin romper la confianza.</h2>
+            <div class="system-detail-list">
+              <div><span>Correo</span><strong>alemunozpro80@gmail.com</strong></div>
+              <div><span>Estado</span><strong>Confirmada</strong></div>
+              <div><span>Ventana</span><strong>Cancelación válida hasta 2 horas antes</strong></div>
+            </div>
+            <div class="system-action-stack">
+              <button class="btn alt" type="button">Cancelar reserva</button>
+            </div>
+          </article>
+        </section>
+      </section>
+    `;
+
+    res.send(renderLayout({ title: 'Concept TISA Acceso', body, simulationMode: config.simulationMode }));
+  });
+
+  app.get('/concept-tisa-admin', async (req, res) => {
+    const [bookings, clients, paid, classes, trainerClasses] = await Promise.all([
+      prisma.bookings.count({ where: { status: 'BOOKED' } }),
+      prisma.clients.count(),
+      prisma.payments.count({ where: { status: 'PAID' } }),
+      prisma.class_occurrences.count({ where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } } }),
+      prisma.class_occurrences.findMany({
+        include: { classType: true, trainer: true, location: true },
+        orderBy: { startsAt: 'asc' },
+        take: 5,
+        where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
+      }),
+    ]);
+
+    const trainerRows = trainerClasses
+      .map(
+        (item) => `
+        <article class="admin-list-row">
+          <div>
+            <strong>${esc(item.classType.name)}</strong>
+            <p>${esc(item.trainer.displayName)} · TISA Central</p>
+          </div>
+          <span>${dayjs(item.startsAt).format('DD MMM · HH:mm')}</span>
+        </article>
+      `
+      )
+      .join('');
+
+    const body = `
+      <section class="system-shell">
+        <section class="system-hero scroll-hero" data-scroll-target="admin-login">
+          <div>
+            <p class="concept-label">TISA / ADMIN Y STAFF</p>
+            <h1>La operación también debe sentirse precisa, elegante y fácil de usar.</h1>
+            <p>Este board reúne ingreso staff, métricas, agenda de trainers y check-in operativo dentro de una misma familia visual. La meta es quitar sensación de backoffice improvisado.</p>
+          </div>
+          <div class="system-chip-row">
+            <button class="system-chip-button" type="button" data-scroll-target="admin-login">Login limpio</button>
+            <button class="system-chip-button" type="button" data-scroll-target="admin-dashboard">Métricas legibles</button>
+            <button class="system-chip-button" type="button" data-scroll-target="admin-checkin">Check-in veloz</button>
+          </div>
+        </section>
+
+        <section class="system-grid admin-grid">
+          <article class="system-panel system-panel-light" id="admin-login">
+            <p class="concept-label">INGRESO STAFF</p>
+            <h2>Una entrada sobria para administración, trainers y ops.</h2>
+            <div class="admin-login-mock">
+              <div class="admin-input">correo@tisa.mx</div>
+              <div class="admin-input">••••••••••</div>
+              <button class="btn" type="button">Entrar</button>
+            </div>
+          </article>
+
+          <article class="system-panel system-panel-dark" id="admin-dashboard">
+            <p class="concept-label">DASHBOARD</p>
+            <h2>Señales principales del día.</h2>
+            <div class="admin-metric-grid">
+              <div><span>Reservas</span><strong>${bookings}</strong></div>
+              <div><span>Clientes</span><strong>${clients}</strong></div>
+              <div><span>Pagos</span><strong>${paid}</strong></div>
+              <div><span>Clases</span><strong>${classes}</strong></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="system-grid admin-grid">
+          <article class="system-panel system-panel-soft">
+            <p class="concept-label">PLANNER TRAINER</p>
+            <h2>Agenda y control de sesiones.</h2>
+            <div class="admin-list">
+              ${trainerRows}
+            </div>
+          </article>
+
+          <article class="system-panel system-panel-dark" id="admin-checkin">
+            <p class="concept-label">CHECK-IN OPS</p>
+            <h2>Validar acceso con rapidez y certeza.</h2>
+            <div class="ops-mock">
+              <div class="ops-camera">Escáner QR</div>
+              <div class="admin-input tall">Payload QR o JSON</div>
+              <button class="btn" type="button">Validar acceso</button>
+            </div>
+          </article>
+        </section>
+      </section>
+    `;
+
+    res.send(renderLayout({ title: 'Concept TISA Admin', body, simulationMode: config.simulationMode }));
   });
 
   app.get('/classes', async (req, res) => {
@@ -493,8 +1188,40 @@ export function createApp({ prisma }) {
       })
       .join('');
 
-    const body = `<section class="section">
-      <div class="calendar-toolbar">
+    const classCount = classes.length;
+    const availableCount = classes.filter((c) => c.status !== 'CANCELLED' && c.availableSlots > 0).length;
+    const firstClass = classes[0];
+
+    const body = `<section class="section page-shell">
+      <div class="page-hero page-hero-grid reveal scroll-hero" data-scroll-target="classes-calendar">
+        <div class="page-hero-copy">
+          <p class="page-kicker">TISA · AGENDA · RESERVA CLARA</p>
+          <h1>Agenda viva para reservar sin fricción.</h1>
+          <p class="page-lede">Explora la semana o el mes, detecta disponibilidad al instante y abre la reserva desde el mismo bloque de clase. Todo el flujo está pensado para que el estudio se sienta premium y claro.</p>
+          <div class="system-chip-row">
+            <button type="button" class="system-chip-button" data-scroll-target="classes-calendar">Ver agenda</button>
+            <button type="button" class="system-chip-button" data-scroll-target="classes-toolbar">Cambiar vista</button>
+          </div>
+          <div class="mini-stat-grid">
+            <article class="mini-stat"><span>Clases en rango</span><strong>${classCount}</strong></article>
+            <article class="mini-stat"><span>Disponibles</span><strong>${availableCount}</strong></article>
+            <article class="mini-stat"><span>Primera salida</span><strong>${firstClass ? dayjs(firstClass.startsAt).format('DD MMM · HH:mm') : 'Sin clases'}</strong></article>
+          </div>
+        </div>
+        <aside class="page-hero-side">
+          <div class="spotlight-card">
+            <span>Como funciona</span>
+            <strong>Toca cualquier bloque, deja tu email y sigue el magic link.</strong>
+            <p>Si ya tienes créditos, confirmas en un paso. Si no, compras bundle y vuelves al flujo.</p>
+          </div>
+          <div class="spotlight-card muted">
+            <span>Ventaja</span>
+            <strong>La disponibilidad, el trainer y la ubicación viven en la misma vista.</strong>
+          </div>
+        </aside>
+      </div>
+
+      <div class="calendar-toolbar page-toolbar" id="classes-toolbar">
         <h2>Agenda de clases</h2>
         <div class="calendar-toolbar-actions">
           <a class="btn alt" href="/classes?view=${view}&start=${prevStart.format('YYYY-MM-DD')}">Anterior</a>
@@ -505,7 +1232,7 @@ export function createApp({ prisma }) {
         </div>
       </div>
       <p class="calendar-subtitle">Selecciona cualquier bloque para reservar. Las clases canceladas aparecen bloqueadas.</p>
-      <div class="calendar-shell reveal">
+      <div class="calendar-shell reveal" id="classes-calendar">
         ${
           view === 'month'
             ? `<div class="calendar-month-grid">${dayColumns}</div>`
@@ -523,9 +1250,10 @@ export function createApp({ prisma }) {
       <dialog id="booking-modal" class="booking-modal">
         <div class="booking-modal-card">
           <button type="button" class="booking-close" data-close-booking>&times;</button>
+          <p class="page-kicker compact">RESERVA RAPIDA</p>
           <h3 id="booking-title">Reservar clase</h3>
-          <p id="booking-meta"></p>
-          <p id="booking-seats"></p>
+          <p id="booking-meta" class="modal-support"></p>
+          <p id="booking-seats" class="modal-support"></p>
           <form action="/magic-link/request" method="post" id="booking-form">
             <input type="hidden" name="occurrenceId" id="booking-occurrence-id" />
             <div class="form-row">
@@ -575,10 +1303,33 @@ export function createApp({ prisma }) {
 
     const body = `
       <section class="section">
-        <div class="card">
-          <h2>Link enviado</h2>
-          <p>Se generó un magic link. En simulación, úsalo directo:</p>
-          <p><a class="btn" href="${url}">Abrir enlace mágico</a></p>
+        <div class="system-shell">
+          <section class="system-hero scroll-hero" data-scroll-target="magic-link-detail">
+            <p class="concept-kicker">TISA / ACCESO</p>
+            <h1>Tu enlace ya está listo.</h1>
+            <p>Generamos un acceso temporal para continuar la reserva sin contraseña. En simulación puedes abrirlo de inmediato y seguir dentro del mismo flujo.</p>
+            <div class="system-chip-row">
+              <button type="button" class="system-chip-button" data-scroll-target="magic-link-detail">Abrir detalle</button>
+              <button type="button" class="system-chip-button" data-scroll-target="magic-link-actions">Ir a acciones</button>
+            </div>
+          </section>
+          <div class="system-grid" id="magic-link-detail">
+            <article class="system-panel system-panel-light">
+              <h2>Acceso temporal</h2>
+              <div class="system-detail-list">
+                <div><span>Correo</span><strong>${esc(email)}</strong></div>
+                <div><span>Ventana</span><strong>30 minutos</strong></div>
+                <div><span>Propósito</span><strong>Continuar la reserva sin fricción</strong></div>
+              </div>
+            </article>
+            <article class="system-panel system-panel-dark" id="magic-link-actions">
+              <h2>Continúa el flujo</h2>
+              <div class="system-action-stack">
+                <a class="btn" href="${url}">Abrir enlace mágico</a>
+                <a class="btn alt" href="/classes">Volver a agenda</a>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
     `;
@@ -601,24 +1352,51 @@ export function createApp({ prisma }) {
     const wallet = await prisma.client_wallets.findUnique({ where: { clientId_classTypeId: { clientId: found.clientId, classTypeId: occurrence.classTypeId } } });
 
     const body = `
-      <section class="section"><div class="card">
-      <h2>Confirmar reserva</h2>
-      <p>Cliente: ${esc(found.client.email)}</p>
-      <p>Clase: ${esc(occurrence.classType.name)} · ${dayjs(occurrence.startsAt).format('DD MMM HH:mm')}</p>
-      <p>Créditos disponibles: <strong>${wallet?.credits || 0}</strong></p>
-      <form action="/bookings" method="post">
-        <input type="hidden" name="token" value="${esc(token)}" />
-        <input type="hidden" name="occurrenceId" value="${occurrence.id}" />
-        <button class="btn" type="submit">Consumir 1 ticket y reservar</button>
-      </form>
-      <hr />
-      <h3>¿Sin créditos?</h3>
-      <form action="/checkout/session" method="post">
-        <input type="hidden" name="clientId" value="${found.clientId}" />
-        <input type="hidden" name="classTypeId" value="${occurrence.classTypeId}" />
-        <button class="btn alt" type="submit">Comprar bundle</button>
-      </form>
-      </div></section>`;
+      <section class="section">
+        <div class="system-shell">
+          <section class="system-hero scroll-hero" data-scroll-target="booking-start-grid">
+            <p class="concept-kicker">TISA / RESERVA</p>
+            <h1>Confirma tu lugar con calma.</h1>
+            <p>Tu enlace validó la identidad. Desde aquí puedes usar un crédito o comprar un acceso sin salir del mismo flujo.</p>
+            <div class="system-chip-row">
+              <button type="button" class="system-chip-button" data-scroll-target="booking-start-grid">Ver opciones</button>
+              <button type="button" class="system-chip-button" data-scroll-target="booking-start-class">Clase</button>
+            </div>
+          </section>
+          <div class="system-grid" id="booking-start-grid">
+            <article class="system-panel system-panel-light" id="booking-start-class">
+              <h2>${esc(occurrence.classType.name)}</h2>
+              <div class="system-detail-list">
+                <div><span>Horario</span><strong>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')}</strong></div>
+                <div><span>Guía</span><strong>${esc(occurrence.trainer.displayName)}</strong></div>
+                <div><span>Estudio</span><strong>${esc(occurrence.location.name)}</strong></div>
+                <div><span>Cliente</span><strong>${esc(found.client.email)}</strong></div>
+              </div>
+            </article>
+            <article class="system-panel system-panel-soft">
+              <h2>Tu saldo</h2>
+              <div class="system-detail-list">
+                <div><span>Créditos disponibles</span><strong>${wallet?.credits || 0}</strong></div>
+                <div><span>Siguiente paso</span><strong>Usa un crédito y asegura tu espacio</strong></div>
+              </div>
+              <form action="/bookings" method="post" class="system-action-stack">
+                <input type="hidden" name="token" value="${esc(token)}" />
+                <input type="hidden" name="occurrenceId" value="${occurrence.id}" />
+                <button class="btn" type="submit">Consumir 1 ticket y reservar</button>
+              </form>
+            </article>
+            <article class="system-panel system-panel-dark">
+              <h2>Sin créditos</h2>
+              <p>Compra un acceso para esta práctica y vuelve al flujo sin perder contexto.</p>
+              <form action="/checkout/session" method="post" class="system-action-stack">
+                <input type="hidden" name="clientId" value="${found.clientId}" />
+                <input type="hidden" name="classTypeId" value="${occurrence.classTypeId}" />
+                <button class="btn alt" type="submit">Comprar acceso</button>
+              </form>
+            </article>
+          </div>
+        </div>
+      </section>`;
 
     res.send(renderLayout({ title: 'Booking', body, simulationMode: config.simulationMode }));
   });
@@ -670,12 +1448,36 @@ export function createApp({ prisma }) {
     const paymentId = String(req.query.paymentId || '');
     const payment = await prisma.payments.findUnique({ where: { id: paymentId }, include: { ticketProduct: true, client: true } });
     if (!payment) return res.status(404).send(renderError('Pago no encontrado'));
-    const body = `<section class="section"><div class="card"><h2>Pago exitoso</h2><p>${esc(payment.client.email)} compró ${esc(payment.ticketProduct.name)}</p><p><a class="btn" href="/classes">Volver a clases</a></p></div></section>`;
+    const body = `<section class="section"><div class="system-shell">
+      <section class="system-hero">
+        <p class="concept-kicker">TISA / PAGO</p>
+        <h1>Acceso acreditado correctamente.</h1>
+        <p>${esc(payment.client.email)} compró ${esc(payment.ticketProduct.name)} y ya puede volver a la agenda para completar su reserva.</p>
+      </section>
+      <div class="system-grid">
+        <article class="system-panel system-panel-dark">
+          <h2>Compra confirmada</h2>
+          <div class="system-action-stack"><a class="btn" href="/classes">Volver a clases</a></div>
+        </article>
+      </div>
+    </div></section>`;
     res.send(renderLayout({ title: 'Pago exitoso', body, simulationMode: config.simulationMode }));
   });
 
   app.get('/checkout/cancel', (req, res) => {
-    const body = `<section class="section"><div class="card"><h2>Pago cancelado</h2><p>No se aplicaron cambios.</p></div></section>`;
+    const body = `<section class="section"><div class="system-shell">
+      <section class="system-hero">
+        <p class="concept-kicker">TISA / PAGO</p>
+        <h1>No se aplicaron cambios.</h1>
+        <p>Puedes volver a la agenda y continuar la reserva cuando quieras.</p>
+      </section>
+      <div class="system-grid">
+        <article class="system-panel system-panel-soft">
+          <h2>Reserva pendiente</h2>
+          <div class="system-action-stack"><a class="btn alt" href="/classes">Regresar a agenda</a></div>
+        </article>
+      </div>
+    </div></section>`;
     res.send(renderLayout({ title: 'Pago cancelado', body, simulationMode: config.simulationMode }));
   });
 
@@ -740,7 +1542,23 @@ export function createApp({ prisma }) {
 
     const bookingUrl = `${config.appUrl}/booking/manage?token=${bookingUrlToken}&bookingId=${booking.id}`;
 
-    const body = `<section class="section"><div class="card"><h2>Reserva confirmada</h2><p>Referencia: <strong>${booking.bookingRef}</strong></p><img class="qr" src="${qrDataUrl}" alt="QR" /><p><a class="btn" href="${bookingUrl}">Ver detalle de reserva</a></p></div></section>`;
+    const body = `<section class="section"><div class="system-shell">
+      <section class="system-hero scroll-hero" data-scroll-target="booking-confirm-detail">
+        <p class="concept-kicker">TISA / CONFIRMACIÓN</p>
+        <h1>Tu acceso ya está listo.</h1>
+        <p>Referencia <strong>${booking.bookingRef}</strong>. Guarda este QR o abre el detalle de la reserva cuando lo necesites.</p>
+      </section>
+      <div class="system-grid" id="booking-confirm-detail">
+        <article class="system-panel system-panel-dark">
+          <h2>Ingreso al estudio</h2>
+          <img class="qr" src="${qrDataUrl}" alt="QR" />
+          <div class="system-action-stack">
+            <a class="btn" href="${bookingUrl}">Ver detalle de reserva</a>
+            <a class="btn alt" href="/classes">Reservar otra clase</a>
+          </div>
+        </article>
+      </div>
+    </div></section>`;
     res.send(renderLayout({ title: 'Reserva confirmada', body, simulationMode: config.simulationMode }));
   });
 
@@ -759,13 +1577,32 @@ export function createApp({ prisma }) {
     if (!booking) return res.status(404).send(renderError('Reserva no encontrada'));
     const qrDataUrl = await QRCode.toDataURL(JSON.stringify({ ...JSON.parse(booking.qrPayload), signature: booking.qrSignature }));
 
-    const body = `<section class="section"><div class="card"><h2>Tu booking</h2>
-      <p>${esc(booking.client.email)}</p>
-      <p>${esc(booking.classOccurrence.classType.name)} con ${esc(booking.classOccurrence.trainer.displayName)}</p>
-      <p>Estado: ${booking.status}</p>
-      <img class="qr" src="${qrDataUrl}" alt="QR" />
-      ${booking.status === 'BOOKED' ? `<form method="post" action="/bookings/${booking.id}/cancel"><button class="btn alt" type="submit">Cancelar reserva</button></form>` : ''}
-    </div></section>`;
+    const body = `<section class="section">
+      <div class="system-shell">
+        <section class="system-hero scroll-hero" data-scroll-target="manage-booking-grid">
+          <p class="concept-kicker">TISA / RESERVA</p>
+          <h1>Tu reserva sigue a mano.</h1>
+          <p>Consulta el estado, presenta el QR al llegar y cancela si todavía estás dentro de la ventana válida.</p>
+        </section>
+        <div class="system-grid" id="manage-booking-grid">
+          <article class="system-panel system-panel-light">
+            <h2>${esc(booking.classOccurrence.classType.name)}</h2>
+            <div class="system-detail-list">
+              <div><span>Correo</span><strong>${esc(booking.client.email)}</strong></div>
+              <div><span>Guía</span><strong>${esc(booking.classOccurrence.trainer.displayName)}</strong></div>
+              <div><span>Espacio</span><strong>${esc(booking.classOccurrence.location.name)}</strong></div>
+              <div><span>Estado</span><strong>${booking.status}</strong></div>
+            </div>
+            ${booking.status === 'BOOKED' ? `<form method="post" action="/bookings/${booking.id}/cancel" class="system-action-stack"><button class="btn alt" type="submit">Cancelar reserva</button></form>` : ''}
+          </article>
+          <article class="system-panel system-panel-dark">
+            <h2>Acceso QR</h2>
+            <p>Presenta este código al llegar al estudio.</p>
+            <img class="qr" src="${qrDataUrl}" alt="QR" />
+          </article>
+        </div>
+      </div>
+    </section>`;
     res.send(renderLayout({ title: 'Gestionar reserva', body, simulationMode: config.simulationMode }));
   });
 
@@ -793,13 +1630,33 @@ export function createApp({ prisma }) {
   });
 
   app.get('/staff/login', (req, res) => {
-    const body = `<section class="section"><div class="card"><h2>Ingreso staff</h2>
-      <form method="post" action="/staff/login">
-        <div class="form-row"><label>Email</label><input type="email" name="email" required /></div>
-        <div class="form-row"><label>Password</label><input type="password" name="password" required /></div>
-        <button class="btn" type="submit">Entrar</button>
-      </form>
-    </div></section>`;
+    const body = `<section class="section">
+      <div class="system-shell">
+        <section class="system-hero">
+          <p class="concept-kicker">TISA / STAFF</p>
+          <h1>La operación entra por una puerta clara.</h1>
+          <p>Admin, trainer y check-in comparten el mismo lenguaje visual, pero cada rol conserva su flujo operativo.</p>
+        </section>
+        <div class="system-grid">
+          <article class="system-panel system-panel-light">
+            <h2>Ingreso staff</h2>
+            <form method="post" action="/staff/login" class="admin-login-mock">
+              <label class="form-row"><span>Email</span><input class="admin-input" type="email" name="email" required /></label>
+              <label class="form-row"><span>Password</span><input class="admin-input" type="password" name="password" required /></label>
+              <button class="btn" type="submit">Entrar</button>
+            </form>
+          </article>
+          <article class="system-panel system-panel-dark">
+            <h2>Roles disponibles</h2>
+            <div class="admin-list">
+              <div class="admin-list-row"><div><strong>Admin</strong><p>Métricas, pagos y ocupación.</p></div></div>
+              <div class="admin-list-row"><div><strong>Trainer</strong><p>Agenda, roster y control de clases.</p></div></div>
+              <div class="admin-list-row"><div><strong>Ops</strong><p>Check-in rápido y validación QR.</p></div></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>`;
     res.send(renderLayout({ title: 'Staff Login', body, simulationMode: config.simulationMode }));
   });
 
@@ -842,13 +1699,33 @@ export function createApp({ prisma }) {
 
     const rows = topClasses.map((c) => `<tr><td>${esc(c.classType.name)}</td><td>${esc(c.trainer.displayName)}</td><td>${c.capacity - c.availableSlots}/${c.capacity}</td></tr>`).join('');
 
-    const body = `<section class="section"><div class="grid">
-      <div class="card"><h3>Bookings activos</h3><div class="metric">${bookings}</div></div>
-      <div class="card"><h3>Clientes</h3><div class="metric">${clients}</div></div>
-      <div class="card"><h3>Pagos aprobados</h3><div class="metric">${paid}</div></div>
-      <div class="card"><h3>Clases próximas</h3><div class="metric">${classes}</div></div>
-    </div>
-    <div class="card"><h3>Ocupación</h3><table class="table"><thead><tr><th>Clase</th><th>Trainer</th><th>Ocupación</th></tr></thead><tbody>${rows}</tbody></table></div>
+    const body = `<section class="section">
+      <div class="system-shell">
+        <section class="system-hero scroll-hero" data-scroll-target="admin-metrics">
+          <p class="concept-kicker">TISA / ADMIN</p>
+          <h1>La operación también debe sentirse precisa.</h1>
+          <p>Lectura clara de métricas, seguimiento de ocupación y acceso directo a la agenda activa del estudio.</p>
+          <div class="system-chip-row">
+            <button type="button" class="system-chip-button" data-scroll-target="admin-metrics">Métricas</button>
+            <button type="button" class="system-chip-button" data-scroll-target="admin-occupancy">Ocupación</button>
+          </div>
+        </section>
+        <div class="system-grid">
+          <article class="system-panel system-panel-dark" id="admin-metrics">
+            <h2>Resumen del estudio</h2>
+            <div class="admin-metric-grid">
+              <div><span>Bookings activos</span><strong>${bookings}</strong></div>
+              <div><span>Clientes</span><strong>${clients}</strong></div>
+              <div><span>Pagos aprobados</span><strong>${paid}</strong></div>
+              <div><span>Clases próximas</span><strong>${classes}</strong></div>
+            </div>
+          </article>
+          <article class="system-panel system-panel-light" id="admin-occupancy">
+            <h2>Ocupación</h2>
+            <div class="admin-list">${topClasses.map((c) => `<div class="admin-list-row"><div><strong>${esc(c.classType.name)}</strong><p>${esc(c.trainer.displayName)}</p></div><strong>${c.capacity - c.availableSlots}/${c.capacity}</strong></div>`).join('')}</div>
+          </article>
+        </div>
+      </div>
     </section>`;
 
     res.send(renderLayout({ title: 'Admin Dashboard', body, staff: req.session.staffName, simulationMode: config.simulationMode }));
@@ -961,7 +1838,13 @@ export function createApp({ prisma }) {
     const locationOptions = locations.map((l) => `<option value="${l.id}">${esc(l.name)}</option>`).join('');
 
     const body = `<section class="section">
-      <div class="calendar-toolbar">
+      <div class="system-shell">
+      <section class="system-hero scroll-hero" data-scroll-target="trainer-calendar">
+        <p class="concept-kicker">TISA / TRAINER</p>
+        <h1>Tu agenda se mueve con precisión.</h1>
+        <p>Programa sesiones, revisa reservas y cancela clases desde una vista pensada para leer rápido en semana o mes.</p>
+      </section>
+      <div class="calendar-toolbar" id="trainer-calendar">
         <h2>Mis clases</h2>
         <div class="calendar-toolbar-actions">
           <a class="btn alt" href="/trainer/classes?view=${view}&start=${prevStart.format('YYYY-MM-DD')}">Anterior</a>
@@ -1004,6 +1887,7 @@ export function createApp({ prisma }) {
           </form>
         </div>
       </dialog>
+      </div>
     </section>`;
     res.send(renderLayout({ title: 'Trainer', body, staff: req.session.staffName, simulationMode: config.simulationMode }));
   });
@@ -1088,13 +1972,27 @@ export function createApp({ prisma }) {
   });
 
   app.get('/ops/checkin', requireStaff, requireRole('OPS', 'ADMIN'), (req, res) => {
-    const body = `<section class="section"><div class="card"><h2>Check-in operativo</h2>
-      <p>Escanea QR con cámara o pega payload manual.</p>
-      <div id="reader" style="width:100%;max-width:420px"></div>
-      <form method="post" action="/ops/checkin/scan">
-        <div class="form-row"><label>Payload QR o JSON</label><textarea name="payload" rows="5" required></textarea></div>
-        <button class="btn" type="submit">Validar acceso</button>
-      </form>
+    const body = `<section class="section">
+      <div class="system-shell">
+        <section class="system-hero scroll-hero" data-scroll-target="ops-checkin-grid">
+          <p class="concept-kicker">TISA / CHECK-IN</p>
+          <h1>Validar accesos debe sentirse inmediato.</h1>
+          <p>Escanea un QR o pega el payload manual y recibe una respuesta clara dentro de la misma superficie operativa.</p>
+        </section>
+        <div class="system-grid" id="ops-checkin-grid">
+          <article class="system-panel system-panel-dark">
+            <h2>Cámara</h2>
+            <div id="reader" class="ops-camera" style="width:100%;max-width:420px">Esperando cámara</div>
+          </article>
+          <article class="system-panel system-panel-light">
+            <h2>Validación manual</h2>
+            <form method="post" action="/ops/checkin/scan" class="admin-login-mock">
+              <label class="form-row"><span>Payload QR o JSON</span><textarea class="admin-input tall" name="payload" rows="5" required></textarea></label>
+              <button class="btn" type="submit">Validar acceso</button>
+            </form>
+          </article>
+        </div>
+      </div>
       <script src="https://unpkg.com/html5-qrcode"></script>
       <script>
         const out = document.querySelector('textarea[name="payload"]');
@@ -1103,7 +2001,7 @@ export function createApp({ prisma }) {
           scanner.render((text) => { out.value = text; }, () => {});
         }
       </script>
-    </div></section>`;
+    </section>`;
     res.send(renderLayout({ title: 'Ops Check-in', body, staff: req.session.staffName, simulationMode: config.simulationMode }));
   });
 
@@ -1145,11 +2043,18 @@ export function createApp({ prisma }) {
       await tx.checkins.create({ data: { bookingId: booking.id, staffId: req.session.staffId, method: 'QR_CAMERA_OR_MANUAL' } });
     });
 
-    const body = `<section class="section"><div class="card"><h2>Acceso autorizado</h2><p>Ref: ${booking.bookingRef}</p><a class="btn" href="/ops/checkin">Validar otro</a></div></section>`;
+    const body = `<section class="section"><div class="system-shell">
+      <section class="system-hero">
+        <p class="concept-kicker">TISA / CHECK-IN</p>
+        <h1>Acceso autorizado.</h1>
+        <p>La referencia ${booking.bookingRef} ya quedó validada para entrar al estudio.</p>
+      </section>
+      <div class="system-grid"><article class="system-panel system-panel-light"><h2>Siguiente validación</h2><div class="system-action-stack"><a class="btn" href="/ops/checkin">Validar otro acceso</a></div></article></div>
+    </div></section>`;
     res.send(renderLayout({ title: 'Check-in OK', body, staff: req.session.staffName, simulationMode: config.simulationMode }));
   });
 
-  app.get('/health', (req, res) => res.json({ status: 'ok', app: 'tisa' }));
+  app.get('/health', (req, res) => res.json({ status: 'ok', app: 'tisa-studio' }));
 
   app.use((err, req, res, next) => {
     console.error(err);
