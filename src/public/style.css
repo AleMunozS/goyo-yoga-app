@@ -554,8 +554,8 @@ main,
   padding: 2.2rem;
   color: var(--caliza);
   background:
-    linear-gradient(125deg, rgba(66, 65, 48, 0.88), rgba(95, 69, 46, 0.84)),
-    radial-gradient(circle at 100% 0, rgba(255, 217, 175, 0.22), transparent 38%);
+    radial-gradient(circle at 100% 0, rgba(213, 162, 114, 0.18), transparent 32%),
+    linear-gradient(125deg, #2c231d, #4a3528);
   box-shadow: 0 26px 60px rgba(44, 34, 27, 0.35);
   margin: 0 auto;
 }
@@ -585,8 +585,9 @@ main,
 .hero-aside-card {
   border-radius: 22px;
   padding: 1rem 1.1rem;
-  background: linear-gradient(180deg, rgba(255, 250, 244, 0.08), rgba(255, 250, 244, 0.02));
-  border: 1px solid rgba(249, 235, 217, 0.14);
+  background: #f1e7db;
+  border: 1px solid rgba(132, 103, 77, 0.12);
+  color: #3a2e25;
 }
 
 .hero-aside-card span {
@@ -595,7 +596,7 @@ main,
   font-size: 0.72rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(241, 221, 195, 0.62);
+  color: rgba(95, 69, 46, 0.7);
 }
 
 .hero-aside-card strong {
@@ -607,7 +608,7 @@ main,
 .hero-aside-card p {
   margin: 0.45rem 0 0;
   font-size: 0.94rem;
-  color: rgba(241, 231, 220, 0.82);
+  color: rgba(63, 54, 45, 0.82);
 }
 
 .eyebrow {
@@ -648,9 +649,9 @@ main,
   border-radius: 999px;
   padding: 0.55rem 0.85rem;
   font-size: 0.78rem;
-  color: rgba(249, 237, 220, 0.9);
-  background: rgba(255, 250, 244, 0.08);
-  border: 1px solid rgba(248, 233, 214, 0.16);
+  color: #f3eadf;
+  background: #6a4a33;
+  border: 1px solid rgba(248, 233, 214, 0.1);
 }
 
 .section {
@@ -684,7 +685,7 @@ main,
 .section-heading-surface {
   padding: 1rem 1.1rem;
   border-radius: 24px;
-  background: linear-gradient(160deg, rgba(244, 238, 231, 0.92), rgba(222, 209, 195, 0.82));
+  background: #f0e6da;
   border: 1px solid rgba(95, 69, 46, 0.12);
   box-shadow: 0 16px 34px rgba(33, 25, 19, 0.12);
 }
@@ -735,7 +736,7 @@ main,
   align-items: end;
   padding: 1.25rem 1.3rem;
   border-radius: 24px;
-  background: linear-gradient(160deg, rgba(248, 242, 234, 0.76), rgba(227, 215, 201, 0.64));
+  background: #eadfd1;
   border: 1px solid rgba(95, 69, 46, 0.12);
   box-shadow: 0 16px 34px rgba(52, 40, 28, 0.1);
 }
@@ -753,7 +754,7 @@ main,
 }
 
 .card {
-  background: rgba(239, 234, 227, 0.82);
+  background: #f1e8de;
   border: 1px solid rgba(93, 76, 61, 0.12);
   border-radius: 18px;
   padding: 1.1rem;
@@ -851,7 +852,7 @@ main,
   display: grid;
   place-items: center;
   min-height: 260px;
-  background: linear-gradient(145deg, rgba(152, 109, 79, 0.35), rgba(95, 69, 46, 0.5));
+  background: linear-gradient(145deg, #b08a68, #8d694c);
 }
 
 .premium-preview {
@@ -886,7 +887,7 @@ main,
 }
 
 .schedule-board {
-  background: rgba(244, 238, 231, 0.88);
+  background: #f2e8dd;
 }
 
 .timeline {
@@ -924,8 +925,8 @@ main,
   text-align: center;
   padding: 2rem;
   background:
-    linear-gradient(160deg, rgba(66, 65, 48, 0.86), rgba(23, 21, 19, 0.95)),
-    radial-gradient(circle at 50% 0, rgba(207, 158, 113, 0.2), transparent 52%);
+    radial-gradient(circle at 50% 0, rgba(207, 158, 113, 0.16), transparent 46%),
+    linear-gradient(160deg, #2f2620, #171412);
   color: #f0ece5;
 }
 
@@ -935,8 +936,8 @@ main,
   gap: 1rem;
   align-items: stretch;
   background:
-    linear-gradient(155deg, rgba(64, 56, 46, 0.92), rgba(23, 21, 19, 0.96)),
-    radial-gradient(circle at 100% 0, rgba(207, 158, 113, 0.14), transparent 50%);
+    radial-gradient(circle at 100% 0, rgba(207, 158, 113, 0.12), transparent 42%),
+    linear-gradient(155deg, #302720, #171412);
   color: #f4eee7;
 }
 
@@ -953,8 +954,9 @@ main,
 .ops-panel {
   border-radius: 20px;
   padding: 1rem;
-  background: rgba(255, 248, 238, 0.06);
-  border: 1px solid rgba(255, 242, 226, 0.1);
+  background: #f0e6da;
+  border: 1px solid rgba(93, 76, 61, 0.12);
+  color: #372c24;
 }
 
 .ops-panel span {
@@ -963,7 +965,7 @@ main,
   font-size: 0.72rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(237, 210, 173, 0.72);
+  color: rgba(121, 82, 54, 0.74);
 }
 
 .ops-panel strong {
@@ -1425,7 +1427,7 @@ textarea {
 .calendar-range {
   padding: 0.35rem 0.6rem;
   border-radius: 999px;
-  background: rgba(95, 69, 46, 0.1);
+  background: #e7d8c8;
   border: 1px solid rgba(95, 69, 46, 0.24);
   font-size: 0.86rem;
 }
@@ -1434,7 +1436,7 @@ textarea {
   border: 1px solid rgba(66, 50, 37, 0.22);
   border-radius: 16px;
   overflow: auto;
-  background: rgba(246, 241, 234, 0.86);
+  background: #f4ebe1;
   box-shadow: 0 12px 28px rgba(35, 25, 18, 0.14);
 }
 
@@ -1444,7 +1446,7 @@ textarea {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: rgba(241, 233, 223, 0.95);
+  background: #efe4d8;
   border-bottom: 1px solid rgba(80, 62, 48, 0.2);
 }
 
@@ -1478,7 +1480,7 @@ textarea {
 }
 
 .calendar-time-col {
-  background: rgba(232, 221, 208, 0.5);
+  background: #e3d4c3;
 }
 
 .calendar-time-label {
@@ -1543,13 +1545,13 @@ textarea {
   display: grid;
   grid-template-columns: repeat(7, minmax(150px, 1fr));
   gap: 1px;
-  background: rgba(88, 62, 43, 0.12);
+  background: #d7c4b0;
 }
 
 .calendar-month-day {
   min-height: 170px;
   padding: 0.5rem;
-  background: rgba(246, 239, 230, 0.92);
+  background: #f4ebe1;
   display: flex;
   flex-direction: column;
 }
@@ -1617,7 +1619,7 @@ textarea {
   width: min(520px, 92vw);
   border-radius: 16px;
   border: 1px solid rgba(83, 63, 50, 0.22);
-  background: linear-gradient(170deg, rgba(247, 241, 234, 0.98), rgba(225, 212, 198, 0.98));
+  background: linear-gradient(170deg, #f5ece2, #e2d3c1);
   color: #31271f;
   padding: 1rem;
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.38);
@@ -1723,8 +1725,8 @@ body.is-concept-board::before {
   padding: 1.35rem;
   border: 1px solid rgba(95, 69, 46, 0.12);
   background:
-    linear-gradient(155deg, rgba(245, 240, 233, 0.82), rgba(228, 217, 205, 0.7)),
-    radial-gradient(circle at 100% 0, rgba(255, 222, 188, 0.35), transparent 46%);
+    radial-gradient(circle at 100% 0, rgba(255, 222, 188, 0.22), transparent 40%),
+    linear-gradient(155deg, #efe5d8, #dfd0bf);
   box-shadow: 0 18px 38px rgba(52, 40, 28, 0.14);
 }
 
@@ -1770,12 +1772,12 @@ body.is-concept-board::before {
 .spotlight-card {
   border-radius: 22px;
   padding: 1rem 1.05rem;
-  background: rgba(255, 249, 240, 0.7);
+  background: #f5ece1;
   border: 1px solid rgba(95, 69, 46, 0.12);
 }
 
 .spotlight-card.muted {
-  background: linear-gradient(160deg, rgba(77, 68, 58, 0.92), rgba(35, 31, 27, 0.94));
+  background: linear-gradient(160deg, #2e241d, #171412);
   color: #f2ebe2;
   border-color: rgba(244, 230, 210, 0.08);
 }
@@ -1814,7 +1816,7 @@ body.is-concept-board::before {
 .mini-stat {
   border-radius: 18px;
   padding: 0.9rem;
-  background: rgba(255, 250, 245, 0.7);
+  background: #f5ece1;
   border: 1px solid rgba(95, 69, 46, 0.12);
 }
 
@@ -1859,8 +1861,8 @@ body.is-concept-board::before {
 
 .accent-card {
   background:
-    linear-gradient(160deg, rgba(71, 59, 47, 0.93), rgba(29, 24, 20, 0.96)),
-    radial-gradient(circle at 100% 0, rgba(210, 169, 127, 0.16), transparent 55%);
+    radial-gradient(circle at 100% 0, rgba(210, 169, 127, 0.14), transparent 46%),
+    linear-gradient(160deg, #342821, #171412);
   color: #f4eee7;
 }
 
@@ -2858,7 +2860,7 @@ body.is-concept-board::before {
   border-radius: 999px;
   padding: 0.48rem 0.8rem;
   border: 1px solid rgba(244, 226, 200, 0.14);
-  background: rgba(255, 246, 235, 0.06);
+  background: #4b382b;
   font-size: 0.73rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -2872,7 +2874,7 @@ body.is-concept-board::before {
   border-radius: 999px;
   padding: 0.48rem 0.8rem;
   border: 1px solid rgba(244, 226, 200, 0.14);
-  background: rgba(255, 246, 235, 0.06);
+  background: #4b382b;
   color: inherit;
   font: inherit;
   font-size: 0.73rem;
@@ -2882,7 +2884,7 @@ body.is-concept-board::before {
 }
 
 .system-chip-button:hover {
-  background: rgba(255, 246, 235, 0.12);
+  background: #614736;
 }
 
 .system-grid {
@@ -2896,17 +2898,17 @@ body.is-concept-board::before {
 }
 
 .system-panel-light {
-  background: linear-gradient(160deg, rgba(245, 239, 232, 0.95), rgba(227, 217, 204, 0.9));
+  background: #f2e8dd;
 }
 
 .system-panel-soft {
-  background: linear-gradient(160deg, rgba(236, 227, 216, 0.92), rgba(219, 207, 191, 0.88));
+  background: #e8dbcc;
 }
 
 .system-panel-dark {
   background:
-    radial-gradient(circle at 100% 0, rgba(215, 171, 129, 0.16), transparent 38%),
-    linear-gradient(160deg, rgba(30, 23, 19, 0.98), rgba(13, 12, 12, 0.98));
+    radial-gradient(circle at 100% 0, rgba(215, 171, 129, 0.12), transparent 30%),
+    linear-gradient(160deg, #221a16, #100f0f);
   color: #f7efe5;
 }
 
@@ -2959,7 +2961,7 @@ body.is-concept-board::before {
 }
 
 .calendar-concept-day {
-  background: rgba(255, 251, 246, 0.62);
+  background: #f7efe6;
   padding: 0.8rem;
 }
 
@@ -2986,7 +2988,7 @@ body.is-concept-board::before {
 .calendar-concept-event {
   border-radius: 18px;
   padding: 0.7rem;
-  background: rgba(243, 235, 225, 0.82);
+  background: #efe4d8;
 }
 
 .calendar-concept-event.is-featured {
@@ -3022,7 +3024,7 @@ body.is-concept-board::before {
 
 .calendar-month-card {
   padding: 0.85rem;
-  background: rgba(255, 252, 249, 0.62);
+  background: #f7efe7;
   text-align: center;
 }
 
@@ -3039,7 +3041,7 @@ body.is-concept-board::before {
 .calendar-modal-mock {
   margin-top: 1rem;
   padding: 1rem;
-  background: rgba(255, 250, 245, 0.45);
+  background: #f4eade;
 }
 
 .calendar-modal-mock p,
@@ -3063,13 +3065,13 @@ body.is-concept-board::before {
   gap: 1rem;
   align-items: center;
   padding: 0.85rem 0.9rem;
-  background: rgba(255, 248, 237, 0.05);
+  background: #f0e5d7;
 }
 
 .mail-chip {
   margin-top: 1rem;
   padding: 0.8rem 0.9rem;
-  background: rgba(255, 250, 245, 0.55);
+  background: #f4eade;
   width: fit-content;
 }
 
@@ -3091,7 +3093,7 @@ body.is-concept-board::before {
 .admin-input,
 .ops-camera {
   padding: 0.9rem 1rem;
-  background: rgba(255, 251, 246, 0.56);
+  background: #f7efe6;
 }
 
 .admin-input.tall {
@@ -3118,8 +3120,8 @@ body.is-concept-board::before {
 .admin-metric-grid div {
   border-radius: 22px;
   padding: 1rem;
-  background: rgba(255, 248, 237, 0.05);
-  border: 1px solid rgba(255, 237, 217, 0.1);
+  background: #2a211b;
+  border: 1px solid rgba(255, 237, 217, 0.06);
 }
 
 .admin-metric-grid span {
