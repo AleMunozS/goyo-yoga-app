@@ -86,6 +86,7 @@ body::before {
   z-index: 120;
   display: grid;
   place-items: center;
+  padding: 1rem;
   background:
     linear-gradient(
       120deg,
@@ -150,6 +151,7 @@ body::before {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, 360px);
   gap: 1.2rem;
+  margin: 0 auto;
   align-items: end;
 }
 
@@ -160,6 +162,7 @@ body::before {
   background: linear-gradient(160deg, rgba(32, 26, 23, 0.52), rgba(38, 30, 24, 0.24));
   border-radius: 28px;
   box-shadow: 0 34px 80px rgba(14, 10, 9, 0.35);
+  min-width: 0;
 }
 
 .intro-kicker {
@@ -191,6 +194,7 @@ body::before {
 .intro-panel {
   display: grid;
   gap: 0.8rem;
+  min-width: 0;
 }
 
 .intro-panel-card {
@@ -481,6 +485,7 @@ main,
     linear-gradient(125deg, rgba(66, 65, 48, 0.88), rgba(95, 69, 46, 0.84)),
     radial-gradient(circle at 100% 0, rgba(255, 217, 175, 0.22), transparent 38%);
   box-shadow: 0 26px 60px rgba(44, 34, 27, 0.35);
+  margin: 0 auto;
 }
 
 .hero-premium {
@@ -955,16 +960,41 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  .landing-intro {
+    place-items: start center;
+    padding: 1.2rem 1rem 1.5rem;
+    overflow-y: auto;
+  }
+
+  .intro-shell {
+    width: min(720px, 100%);
+    align-items: stretch;
+  }
+
   .split-section {
     grid-template-columns: 1fr;
+  }
+
+  .timeline-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .timeline-right {
+    text-align: left;
   }
 }
 
 @media (max-width: 760px) {
+  .landing-intro {
+    padding: 1rem 0.9rem 1.25rem;
+  }
+
   .site-header {
     align-items: flex-start;
     gap: 0.6rem;
     flex-direction: column;
+    padding: 0.9rem 1rem;
   }
 
   .brand {
@@ -979,19 +1009,21 @@ textarea {
 
   .hero {
     min-height: 70vh;
-    padding: 1.2rem;
+    padding: 1rem;
   }
 
   .hero-card {
-    padding: 1.25rem;
+    padding: 1.1rem;
+    border-radius: 20px;
   }
 
   .hero-premium {
-    padding: 1.25rem;
+    padding: 1.1rem;
   }
 
   .intro-copy {
-    padding: 1.4rem 1rem;
+    padding: 1.35rem 1rem;
+    border-radius: 24px;
   }
 
   .intro-actions,
@@ -999,8 +1031,108 @@ textarea {
     gap: 0.5rem;
   }
 
+  .intro-kicker,
+  .eyebrow,
+  .hero-aside-card span,
+  .intro-panel-card span {
+    letter-spacing: 0.14em;
+  }
+
+  .intro-text,
+  .hero p,
+  .section-heading p:not(.eyebrow),
+  .ops-copy p:not(.eyebrow) {
+    font-size: 0.98rem;
+    line-height: 1.6;
+  }
+
+  .hero h1,
+  .intro-core h1 {
+    line-height: 1;
+  }
+
+  .intro-actions .btn,
+  .hero-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+
   .proof-chip {
     width: 100%;
+  }
+
+  .section {
+    padding: 1rem;
+  }
+
+  .section-heading {
+    margin-bottom: 0.85rem;
+  }
+
+  .card,
+  .ops-panel,
+  .intro-panel-card {
+    padding: 1rem 0.95rem;
+  }
+
+  .dune-card,
+  .ritual-card {
+    min-height: unset;
+  }
+
+  .clay-shape {
+    width: min(240px, 72vw);
+  }
+
+  .calendar-toolbar,
+  .calendar-toolbar-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .calendar-toolbar-actions > * {
+    width: 100%;
+  }
+
+  .calendar-range {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .landing-intro {
+    padding-inline: 0.75rem;
+  }
+
+  .intro-shell,
+  .hero-card,
+  .band-shell,
+  .ops-showcase {
+    width: 100%;
+  }
+
+  .intro-copy,
+  .hero-card,
+  .band-shell,
+  .ops-showcase,
+  .final-manifesto {
+    border-radius: 18px;
+  }
+
+  .intro-logo-mark {
+    width: 72px;
+    height: 72px;
+    font-size: 1.75rem;
+  }
+
+  .hero-aside-card,
+  .intro-panel-card {
+    border-radius: 18px;
+  }
+
+  .calendar-month-grid {
+    grid-template-columns: 1fr;
   }
 }
 
