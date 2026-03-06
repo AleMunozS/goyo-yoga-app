@@ -3255,6 +3255,18 @@ body.is-concept-board::before {
     color: rgba(245, 236, 226, 0.92);
   }
 
+  .hero {
+    padding-bottom: 1.25rem;
+  }
+
+  .section-band {
+    padding-top: 1.1rem;
+  }
+
+  .band-shell {
+    margin-top: 0.35rem;
+  }
+
   .split-right,
   .premium-preview {
     background: linear-gradient(160deg, #b88a62, #a47955);
