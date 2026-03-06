@@ -681,6 +681,21 @@ main,
   margin-bottom: 0.8rem;
 }
 
+.section-heading-surface {
+  padding: 1rem 1.1rem;
+  border-radius: 24px;
+  background: linear-gradient(160deg, rgba(244, 238, 231, 0.92), rgba(222, 209, 195, 0.82));
+  border: 1px solid rgba(95, 69, 46, 0.12);
+  box-shadow: 0 16px 34px rgba(33, 25, 19, 0.12);
+}
+
+.section-heading-surface h2,
+.section-heading-surface p:not(.eyebrow),
+.section-heading-surface .eyebrow {
+  color: inherit;
+  text-shadow: none;
+}
+
 .story-root > .section .eyebrow {
   color: rgba(238, 223, 204, 0.74);
 }
@@ -695,6 +710,18 @@ main,
 .story-root > .section.split-section .split-left p,
 .story-root > .section.split-section .quote {
   color: rgba(237, 227, 216, 0.82);
+}
+
+.story-root > .section .section-heading.section-heading-surface .eyebrow {
+  color: rgba(95, 69, 46, 0.74);
+}
+
+.story-root > .section .section-heading.section-heading-surface h2 {
+  color: rgba(53, 44, 36, 0.96);
+}
+
+.story-root > .section .section-heading.section-heading-surface p:not(.eyebrow) {
+  color: rgba(63, 54, 45, 0.84);
 }
 
 .section-band {

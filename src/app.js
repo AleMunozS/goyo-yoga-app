@@ -302,7 +302,7 @@ export function createApp({ prisma }) {
         </section>
 
         <section class="section">
-          <div class="section-heading reveal">
+          <div class="section-heading section-heading-surface reveal">
             <p class="eyebrow">CLASES</p>
             <h2>Experiencias TISA</h2>
             <p>Las clases dejan de verse como tarjetas genéricas y se presentan como experiencias con tono, duración y promesa clara.</p>
@@ -311,7 +311,7 @@ export function createApp({ prisma }) {
         </section>
 
         <section class="section">
-          <div class="section-heading reveal">
+          <div class="section-heading section-heading-surface reveal">
             <p class="eyebrow">RITUAL DE RESERVA</p>
             <h2>El flujo principal ya se entiende mejor</h2>
             <p>Antes faltaban secciones que explicaran como funciona el producto. Ahora la home cuenta la historia completa del usuario.</p>
@@ -321,7 +321,7 @@ export function createApp({ prisma }) {
 
         <section class="section schedule-shell reveal">
           <div class="card schedule-board">
-            <div class="section-heading compact">
+            <div class="section-heading section-heading-surface compact">
               <p class="eyebrow">AGENDA RESPONSIVE</p>
               <h2>Agenda destacada</h2>
               <p>Una muestra del calendario que debe sentirse util tanto en escritorio como en movil.</p>
@@ -332,7 +332,7 @@ export function createApp({ prisma }) {
         </section>
 
         <section class="section">
-          <div class="section-heading reveal">
+          <div class="section-heading section-heading-surface reveal">
             <p class="eyebrow">WALLET · BUNDLES</p>
             <h2>Bundles de tickets</h2>
             <p>La home ahora anticipa el wallet del cliente y enmarca mejor el valor de compra antes de reservar.</p>
