@@ -38,7 +38,7 @@ body.has-landing-intro {
 }
 
 body.has-landing-intro .site-header,
-body.has-landing-intro main,
+body.has-landing-intro .story-root,
 body.has-landing-intro .sim-banner {
   transform: translateY(100vh);
   opacity: 0;
@@ -52,7 +52,7 @@ body.has-landing-intro .sim-banner {
 }
 
 body.intro-pushing .site-header,
-body.intro-pushing main,
+body.intro-pushing .story-root,
 body.intro-pushing .sim-banner {
   transform: translateY(0);
   opacity: 1;
@@ -64,7 +64,7 @@ body.intro-pushing {
 }
 
 body:not(.has-landing-intro) .site-header,
-body:not(.has-landing-intro) main,
+body:not(.has-landing-intro) .story-root,
 body:not(.has-landing-intro) .sim-banner {
   opacity: 1;
   visibility: visible;
