@@ -33,7 +33,7 @@
 
   const intro = document.getElementById('landing-intro');
   const introEnter = document.getElementById('intro-enter');
-  if (intro && introEnter) {
+  if (intro) {
     const state = { tx: 0, ty: 0, x: 0, y: 0 };
     const tick = () => {
       state.x += (state.tx - state.x) * 0.08;
@@ -57,7 +57,7 @@
       state.ty = 0;
     });
 
-    introEnter.addEventListener('click', () => {
+    const startIntroTransition = () => {
       if (document.body.classList.contains('intro-pushing')) return;
       window.scrollTo(0, 0);
       intro.style.pointerEvents = 'none';
@@ -87,7 +87,20 @@
 
       // Fallback guard in case animationend is skipped by browser.
       setTimeout(finalize, 1150);
+    };
+
+    intro.addEventListener('click', (ev) => {
+      if (ev.target.closest('a, input, textarea, select')) return;
+      startIntroTransition();
     });
+
+    if (introEnter) {
+      introEnter.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        startIntroTransition();
+      });
+    }
   }
 
   const revealEls = document.querySelectorAll('.reveal');

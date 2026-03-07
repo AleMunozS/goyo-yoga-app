@@ -87,6 +87,7 @@ body::before {
   display: grid;
   place-items: center;
   padding: 1rem;
+  cursor: pointer;
   background:
     linear-gradient(
       120deg,
@@ -1101,7 +1102,7 @@ textarea {
   .landing-intro {
     place-items: stretch;
     padding: 0;
-    overflow-y: auto;
+    overflow: hidden;
   }
 
   .intro-shell {

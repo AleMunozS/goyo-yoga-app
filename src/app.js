@@ -229,6 +229,38 @@ export function createApp({ prisma }) {
       .join('');
 
     const body = `
+      <section class="landing-intro" id="landing-intro" aria-label="Pantalla de bienvenida de TISA">
+        <div class="intro-shell">
+          <div class="intro-copy">
+            <p class="intro-kicker">TISA · BIENVENIDA</p>
+            <h1>Haz click en cualquier parte para entrar al recorrido de TISA.</h1>
+            <p class="intro-text">Esta portada es una pausa inicial. No hay scroll aquí: el acceso a la experiencia empieza con un gesto claro y deliberado.</p>
+            <div class="intro-mobile-points">
+              <span>Agenda clara</span>
+              <span>Reserva serena</span>
+              <span>Check-in con QR</span>
+            </div>
+            <div class="intro-actions">
+              <button type="button" class="btn" id="intro-enter">Entrar a TISA</button>
+              <span class="landing-banner-hint">Click en cualquier parte de la pantalla</span>
+            </div>
+          </div>
+          <div class="intro-panel" aria-hidden="true">
+            <article class="intro-panel-card">
+              <span>Explora</span>
+              <strong>Agenda, accesos y operación dentro de un mismo recorrido visual.</strong>
+            </article>
+            <article class="intro-panel-card">
+              <span>Ritual</span>
+              <strong>Una entrada estática que pide acción antes de mostrar el resto del sitio.</strong>
+            </article>
+          </div>
+        </div>
+        <span class="sand-river river-a"></span>
+        <span class="sand-river river-b"></span>
+        <span class="sand-river river-c"></span>
+      </section>
+
       <section class="story-root">
         <div class="ambient-lights" aria-hidden="true">
           <span class="light-orb orb-1"></span>
@@ -237,16 +269,7 @@ export function createApp({ prisma }) {
           <span class="light-orb orb-4"></span>
         </div>
 
-        <section class="landing-banner scroll-hero reveal" data-scroll-target="landing-main-hero">
-          <div class="landing-banner-card">
-            <p class="eyebrow">TISA</p>
-            <h1>Un estudio sereno para elegir, reservar y entrar sin esfuerzo.</h1>
-            <p>Toca la portada y entra directo al recorrido principal de TISA.</p>
-            <span class="landing-banner-hint">Tocar para continuar</span>
-          </div>
-        </section>
-
-        <section class="hero parallax dune-hero scroll-hero" id="landing-main-hero" data-scroll-target="landing-overview">
+        <section class="hero parallax dune-hero" id="landing-main-hero">
           <div class="hero-card hero-premium reveal">
             <div class="hero-grid">
               <div class="hero-copy">
