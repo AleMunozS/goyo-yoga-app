@@ -232,28 +232,14 @@ export function createApp({ prisma }) {
       <section class="landing-intro" id="landing-intro" aria-label="Pantalla de bienvenida de TISA">
         <div class="intro-shell">
           <div class="intro-copy">
-            <p class="intro-kicker">TISA · BIENVENIDA</p>
-            <h1>Haz click en cualquier parte para entrar al recorrido de TISA.</h1>
-            <p class="intro-text">Esta portada es una pausa inicial. No hay scroll aquí: el acceso a la experiencia empieza con un gesto claro y deliberado.</p>
-            <div class="intro-mobile-points">
-              <span>Agenda clara</span>
-              <span>Reserva serena</span>
-              <span>Check-in con QR</span>
+            <div class="intro-wordmark" aria-hidden="true">Tisa</div>
+            <div class="intro-logo-frame" aria-hidden="true">
+              <span class="intro-logo-stroke"></span>
             </div>
+            <p class="intro-manifesto">La calma como necesidad, no como lujo.</p>
             <div class="intro-actions">
               <button type="button" class="btn" id="intro-enter">Entrar a TISA</button>
-              <span class="landing-banner-hint">Click en cualquier parte de la pantalla</span>
             </div>
-          </div>
-          <div class="intro-panel" aria-hidden="true">
-            <article class="intro-panel-card">
-              <span>Explora</span>
-              <strong>Agenda, accesos y operación dentro de un mismo recorrido visual.</strong>
-            </article>
-            <article class="intro-panel-card">
-              <span>Ritual</span>
-              <strong>Una entrada estática que pide acción antes de mostrar el resto del sitio.</strong>
-            </article>
           </div>
         </div>
         <span class="sand-river river-a"></span>
