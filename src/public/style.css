@@ -1321,6 +1321,13 @@ textarea {
     text-align: center;
   }
 
+  .intro-manifesto {
+    max-width: none;
+    font-size: clamp(1.15rem, 3.9vw, 1.35rem);
+    line-height: 1.15;
+    white-space: nowrap;
+  }
+
   .intro-actions,
   .proof-row {
     gap: 0.5rem;
