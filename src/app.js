@@ -232,25 +232,8 @@ export function createApp({ prisma }) {
       <section class="landing-intro" id="landing-intro" aria-label="Pantalla de bienvenida de TISA">
         <div class="intro-shell">
           <div class="intro-copy">
-            <div class="intro-copy-header">
-              <div class="intro-brand">
-                <img class="intro-wordmark" src="/static/logo2.png" alt="Tisa" />
-                <div class="intro-wordmark-text" aria-hidden="true">Tisa</div>
-              </div>
-              <p class="intro-logo-caption">Origen &middot; Equilibrio &middot; Biomodulacion</p>
-            </div>
-            <div class="intro-body">
-              <div class="intro-emblem" aria-hidden="true">
-                <div class="intro-logo-frame">
-                  <img class="intro-logo-image" src="/static/logo1.png" alt="" />
-                </div>
-              </div>
-              <div class="intro-copy-block">
-                <p class="intro-manifesto">La calma como necesidad, no como lujo.</p>
-                <div class="intro-actions">
-                  <button type="button" class="btn" id="intro-enter">Entrar a TISA</button>
-                </div>
-              </div>
+            <div class="intro-actions">
+              <button type="button" class="btn" id="intro-enter">Entrar a TISA</button>
             </div>
           </div>
         </div>
