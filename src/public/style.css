@@ -159,12 +159,13 @@ body::before {
   gap: 0;
   text-align: center;
   background: url('/static/intro-embedded-desktop.png') center center / cover no-repeat;
-  border-radius: 0;
-  box-shadow: none;
-  min-width: 0;
 }
 
 .intro-copy::before {
+  display: none;
+}
+
+.intro-mobile-stage {
   display: none;
 }
 
@@ -204,97 +205,23 @@ body::before {
 }
 
 .intro-composite-art {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: min(1340px, 100%);
-  max-width: 100%;
-  max-height: min(78dvh, 980px);
-  object-fit: contain;
-  filter: none;
+  display: none;
 }
 
 .intro-logo-mark {
-  width: 86px;
-  height: 86px;
-  border-radius: 24px;
-  margin: 0 auto 0.8rem;
-  display: grid;
-  place-items: center;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 2rem;
-  color: #f8f2ea;
-  background: linear-gradient(135deg, rgba(148, 98, 66, 0.94), rgba(93, 63, 44, 0.96));
-  box-shadow: 0 18px 38px rgba(58, 37, 26, 0.35);
-  animation: breath 4.8s ease-in-out infinite;
+  display: none;
 }
 
 .intro-core h1 {
-  margin: 0;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(2.4rem, 8vw, 5rem);
-  letter-spacing: 0.1em;
-  color: #f6ece2;
-  text-shadow: 0 8px 32px rgba(26, 18, 12, 0.45);
+  display: none;
 }
 
 .intro-core p {
-  margin: 0.5rem 0 1rem;
-  font-size: 1rem;
-  color: rgba(252, 241, 228, 0.92);
-  text-shadow: 0 2px 12px rgba(16, 10, 8, 0.5);
+  display: none;
 }
 
 .sand-river {
-  position: absolute;
-  left: -14%;
-  right: -14%;
-  pointer-events: none;
-  opacity: 0;
-  mix-blend-mode: screen;
-  will-change: transform, opacity;
-}
-
-.river-a {
-  bottom: -18%;
-  height: 26%;
-  border-radius: 60% 40% 0 0 / 100% 100% 0 0;
-  background:
-    linear-gradient(180deg, rgba(255, 228, 196, 0.68), rgba(207, 170, 130, 0.18)),
-    radial-gradient(circle at 26% 24%, rgba(255, 243, 230, 0.52), transparent 45%);
-  filter: blur(2px);
-}
-
-.river-b {
-  bottom: -26%;
-  height: 34%;
-  border-radius: 48% 52% 0 0 / 100% 100% 0 0;
-  background:
-    linear-gradient(180deg, rgba(233, 199, 164, 0.56), rgba(160, 127, 95, 0.14)),
-    radial-gradient(circle at 78% 24%, rgba(255, 232, 206, 0.38), transparent 42%);
-  filter: blur(3px);
-}
-
-.river-c {
-  bottom: -30%;
-  height: 40%;
-  border-radius: 44% 56% 0 0 / 100% 100% 0 0;
-  background:
-    linear-gradient(180deg, rgba(189, 163, 138, 0.34), rgba(118, 100, 82, 0.08)),
-    radial-gradient(circle at 52% 30%, rgba(224, 201, 179, 0.26), transparent 48%);
-  filter: blur(4px);
-}
-
-body.intro-pushing .river-a {
-  animation: riverRiseA 0.95s cubic-bezier(.22,.72,.2,1) forwards;
-}
-
-body.intro-pushing .river-b {
-  animation: riverRiseB 1.02s cubic-bezier(.22,.72,.2,1) .04s forwards;
-}
-
-body.intro-pushing .river-c {
-  animation: riverRiseC 1.08s cubic-bezier(.22,.72,.2,1) .08s forwards;
+  display: none;
 }
 
 body.intro-pushing .landing-intro {
@@ -307,63 +234,21 @@ body.intro-pushing .landing-intro {
   to { transform: translateY(-100%); }
 }
 
-@keyframes riverRiseA {
-  0% { opacity: 0; transform: translateY(68%); }
-  24% { opacity: 0.62; }
-  100% { opacity: 0.1; transform: translateY(-58%); }
-}
-
-@keyframes riverRiseB {
-  0% { opacity: 0; transform: translateY(74%); }
-  26% { opacity: 0.54; }
-  100% { opacity: 0.08; transform: translateY(-48%); }
-}
-
-@keyframes riverRiseC {
-  0% { opacity: 0; transform: translateY(82%); }
-  28% { opacity: 0.42; }
-  100% { opacity: 0.06; transform: translateY(-42%); }
-}
-
 @media (max-width: 760px) {
-  .sand-river {
-    filter: none;
-  }
-
-  .river-c {
-    display: none;
-  }
-
   .intro-copy {
     min-height: 100dvh;
-    padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
-    background-image: url('/static/intro-embedded-mobile.png');
-    background-position: center top;
-    background-size: cover;
-  }
-
-  .intro-poster-wrap {
-    display: none;
-  }
-
-  .intro-composite-art {
-    width: 100%;
-    max-height: none;
+    padding: max(0.75rem, env(safe-area-inset-top)) 0.9rem max(1.2rem, env(safe-area-inset-bottom));
   }
 
   .intro-actions {
     width: 100%;
-    margin-top: 0;
     margin-bottom: 0.75rem;
   }
 
   .intro-actions .btn {
     width: 100%;
     min-width: 0;
-    background: rgba(33, 25, 20, 0.72);
-    border-color: rgba(249, 242, 232, 0.98);
-    box-shadow: 0 14px 34px rgba(10, 8, 7, 0.22);
-    backdrop-filter: blur(10px);
+    background: #3b2d25;
   }
 }
 
@@ -1117,6 +1002,15 @@ textarea {
 }
 
 @media (max-width: 760px) {
+  .landing-intro {
+    background: #d7c1ab;
+  }
+
+  .landing-intro::before,
+  .landing-intro::after {
+    display: none;
+  }
+
   .site-header {
     align-items: stretch;
     gap: 0.5rem;
@@ -1173,12 +1067,71 @@ textarea {
   .intro-copy {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: flex-end;
     width: 100%;
     min-height: 100dvh;
-    padding: max(1.25rem, env(safe-area-inset-top)) 1.15rem max(1.2rem, env(safe-area-inset-bottom));
+    padding: max(1.25rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
     border-radius: 0;
     box-shadow: none;
+    background:
+      linear-gradient(180deg, rgba(17, 13, 11, 0.02), rgba(17, 13, 11, 0.12)),
+      url('/static/intro-background-plate.png') center 56% / cover no-repeat;
+    overflow: hidden;
+  }
+
+  .intro-copy::before {
+    display: none;
+  }
+
+  .intro-mobile-stage {
+    position: absolute;
+    inset: 0 auto auto 0;
+    display: block;
+    z-index: 1;
+    height: min(58svh, 35rem);
+    width: 100%;
+    background:
+      radial-gradient(circle at 18% 16%, rgba(255, 248, 239, 0.28), transparent 22%),
+      radial-gradient(circle at 84% 18%, rgba(202, 214, 224, 0.16), transparent 18%),
+      url('/static/logo2-cropped.png') center 7rem / 46% auto no-repeat,
+      url('/static/logo1.png') center 2.25rem / 84% auto no-repeat;
+    filter: drop-shadow(0 18px 42px rgba(18, 12, 10, 0.1));
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 78%, rgba(0, 0, 0, 0.92) 86%, rgba(0, 0, 0, 0.54) 94%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 0%, #000 78%, rgba(0, 0, 0, 0.92) 86%, rgba(0, 0, 0, 0.54) 94%, transparent 100%);
+    pointer-events: none;
+  }
+
+  .intro-mobile-stage::before,
+  .intro-mobile-stage::after {
+    position: absolute;
+    left: 50%;
+    text-align: center;
+    color: #f7eee4;
+    transform: translateX(-50%);
+    text-shadow: 0 10px 24px rgba(22, 15, 12, 0.16);
+  }
+
+  .intro-mobile-stage::before {
+    content: 'La calma como necesidad,\A no como lujo.';
+    top: clamp(19.15rem, 43svh, 23.25rem);
+    width: min(86%, 19.5rem);
+    white-space: pre-line;
+    font-size: clamp(1.72rem, 5.6vw, 2.02rem);
+    line-height: 1.18;
+    letter-spacing: -0.035em;
+    font-weight: 400;
+  }
+
+  .intro-mobile-stage::after {
+    content: 'Origen • Equilibrio • Biomodulación';
+    top: clamp(25.8rem, 56svh, 28rem);
+    width: min(88%, 18.5rem);
+    font-size: clamp(0.9rem, 3.15vw, 0.98rem);
+    line-height: 1.35;
+    letter-spacing: 0.005em;
+    font-weight: 400;
+    opacity: 0.92;
   }
 
   .intro-body {
@@ -1260,8 +1213,29 @@ textarea {
   }
 
   .intro-actions {
-    margin-top: 1.8rem;
+    margin-top: auto;
+    margin-bottom: max(0.75rem, env(safe-area-inset-bottom));
     justify-content: center;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+
+  .intro-actions .btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 3.9rem;
+    border: 1px solid rgba(248, 235, 220, 0.18);
+    border-radius: 999px;
+    background: rgba(45, 32, 24, 0.82);
+    color: #f7eee4;
+    box-shadow:
+      0 18px 40px rgba(10, 8, 7, 0.22),
+      inset 0 1px 0 rgba(255, 247, 236, 0.08);
+    font-size: 1.04rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    backdrop-filter: blur(6px);
   }
 
   .dune-card,

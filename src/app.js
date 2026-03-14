@@ -232,6 +232,7 @@ export function createApp({ prisma }) {
       <section class="landing-intro" id="landing-intro" aria-label="Pantalla de bienvenida de TISA">
         <div class="intro-shell">
           <div class="intro-copy">
+            <div class="intro-mobile-stage" aria-hidden="true"></div>
             <div class="intro-actions">
               <button type="button" class="btn" id="intro-enter">Entrar a TISA</button>
             </div>
