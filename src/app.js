@@ -233,6 +233,25 @@ export function createApp({ prisma }) {
         <div class="intro-shell">
           <div class="intro-copy">
             <div class="intro-mobile-stage" aria-hidden="true"></div>
+            <div class="intro-breathing" aria-label="Ritual de respiración guiada">
+              <p class="intro-breathing-kicker">Respira con TISA</p>
+              <div class="intro-breathing-core" aria-hidden="true">
+                <span class="intro-breathing-aura intro-breathing-aura-primary"></span>
+                <span class="intro-breathing-aura intro-breathing-aura-secondary"></span>
+                <span class="intro-breathing-orb"></span>
+              </div>
+              <div class="intro-breathing-steps" aria-hidden="true">
+                <span class="is-inhale">Inhala</span>
+                <span class="is-hold">Sostén</span>
+                <span class="is-exhale">Exhala</span>
+              </div>
+              <div class="intro-breathing-copy">
+                <p class="is-inhale">Inhala calma</p>
+                <p class="is-hold">Sostén presencia</p>
+                <p class="is-exhale">Exhala tensión</p>
+                <p class="is-center">Vuelve a tu centro</p>
+              </div>
+            </div>
             <div class="intro-actions">
               <button type="button" class="btn" id="intro-enter">Entrar a TISA</button>
             </div>
