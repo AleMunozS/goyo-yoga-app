@@ -103,7 +103,6 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
 
       return `
         <section class="seat-zone-section" data-seat-zone="${zone}">
-          <p class="seat-zone-kicker">${zone === 'near' ? 'Frente' : zone === 'middle' ? 'Centro' : 'Parte trasera'}</p>
           ${zoneRows
             .map(
               ({ row, seats }) => `
@@ -174,8 +173,10 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
               <input type="hidden" name="occurrenceId" value="${occurrence.id}" />
               <div class="seat-stage">
                 <div class="seat-stage-guide">Instructora</div>
-                <div class="seat-map">
-                  ${zoneSections}
+                <div class="seat-map-viewport">
+                  <div class="seat-map">
+                    ${zoneSections}
+                  </div>
                 </div>
               </div>
               <div class="ui-status-banner ${message ? `is-${messageType === 'success' ? 'success' : 'cancel'}` : 'is-muted'} seat-status-banner">
