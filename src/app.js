@@ -95,37 +95,50 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
   const enabledSeats = layout.seats.filter((seat) => seat.enabled);
   const availableCount = enabledSeats.filter((seat) => !occupiedSet.has(seat.code)).length;
   const selectedSummary = formatSeatLabels(selectedSeatCodes, occurrence.capacity);
-  const rows = layout.rows
-    .map(
-      ({ row, seats }) => `
-        <div class="seat-row" data-seat-row="${row}" data-seat-count="${seats.length}" data-seat-zone="${seats[0]?.zone || ''}">
-          <span class="seat-row-label">${row}</span>
-          <div class="seat-row-seats">
-            ${seats
-              .map((seat) => {
-                const isOccupied = occupiedSet.has(seat.code);
-                const isSelected = selectedSet.has(seat.code);
-                const disabled = isOccupied || !seat.enabled;
-                const stateClass = isOccupied ? 'is-occupied' : !seat.enabled ? 'is-disabled' : isSelected ? 'is-selected' : 'is-available';
-                return `
-                  <label class="seat-pill ${stateClass}" data-seat-option="${seat.code}">
-                    <input
-                      type="checkbox"
-                      name="seatCodes"
-                      value="${seat.code}"
-                      data-seat-zone="${seat.zone}"
-                      ${isSelected ? 'checked' : ''}
-                      ${disabled ? 'disabled' : ''}
-                    />
-                    <span>${seat.label}</span>
-                  </label>
-                `;
-              })
-              .join('')}
-          </div>
-        </div>
-      `
-    )
+  const zoneOrder = ['near', 'middle', 'back'];
+  const zoneSections = zoneOrder
+    .map((zone) => {
+      const zoneRows = layout.rows.filter(({ seats }) => seats[0]?.zone === zone);
+      if (!zoneRows.length) return '';
+
+      return `
+        <section class="seat-zone-section" data-seat-zone="${zone}">
+          <p class="seat-zone-kicker">${zone === 'near' ? 'Frente' : zone === 'middle' ? 'Centro' : 'Parte trasera'}</p>
+          ${zoneRows
+            .map(
+              ({ row, seats }) => `
+                <div class="seat-row" data-seat-row="${row}" data-seat-count="${seats.length}" data-seat-zone="${zone}">
+                  <span class="seat-row-label">${row}</span>
+                  <div class="seat-row-seats">
+                    ${seats
+                      .map((seat) => {
+                        const isOccupied = occupiedSet.has(seat.code);
+                        const isSelected = selectedSet.has(seat.code);
+                        const disabled = isOccupied || !seat.enabled;
+                        const stateClass = isOccupied ? 'is-occupied' : !seat.enabled ? 'is-disabled' : isSelected ? 'is-selected' : 'is-available';
+                        return `
+                          <label class="seat-pill ${stateClass}" data-seat-option="${seat.code}">
+                            <input
+                              type="checkbox"
+                              name="seatCodes"
+                              value="${seat.code}"
+                              data-seat-zone="${seat.zone}"
+                              ${isSelected ? 'checked' : ''}
+                              ${disabled ? 'disabled' : ''}
+                            />
+                            <span>${seat.label}</span>
+                          </label>
+                        `;
+                      })
+                      .join('')}
+                  </div>
+                </div>
+              `
+            )
+            .join('')}
+        </section>
+      `;
+    })
     .join('');
 
   return `
@@ -162,7 +175,7 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
               <div class="seat-stage">
                 <div class="seat-stage-guide">Instructora</div>
                 <div class="seat-map">
-                  ${rows}
+                  ${zoneSections}
                 </div>
               </div>
               <div class="ui-status-banner ${message ? `is-${messageType === 'success' ? 'success' : 'cancel'}` : 'is-muted'} seat-status-banner">
