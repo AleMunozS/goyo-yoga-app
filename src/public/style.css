@@ -2210,23 +2210,6 @@ textarea {
   justify-items: center;
 }
 
-.seat-map-viewport {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 0.35rem;
-  -webkit-overflow-scrolling: touch;
-}
-
-.seat-map-viewport::-webkit-scrollbar {
-  height: 0.45rem;
-}
-
-.seat-map-viewport::-webkit-scrollbar-thumb {
-  background: rgba(255, 237, 217, 0.22);
-  border-radius: 999px;
-}
-
 .seat-stage-guide {
   justify-self: center;
   padding: 0.5rem 1.1rem;
@@ -2333,8 +2316,7 @@ textarea {
   cursor: not-allowed;
 }
 
-.seat-legend,
-.seat-zone-copy {
+.seat-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
@@ -2363,11 +2345,6 @@ textarea {
 
 .seat-occupied {
   background: #caa38f;
-}
-
-.seat-zone-copy span {
-  font-size: 0.82rem;
-  color: rgba(95, 69, 46, 0.74);
 }
 
 .seat-status-banner {
@@ -2740,10 +2717,6 @@ body.is-concept-board::before {
 
   .seat-selection-grid > .system-panel-dark {
     grid-column: auto;
-  }
-
-  .seat-map-viewport {
-    justify-self: stretch;
   }
 
   .seat-map {

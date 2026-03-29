@@ -95,18 +95,18 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
   const enabledSeats = layout.seats.filter((seat) => seat.enabled);
   const availableCount = enabledSeats.filter((seat) => !occupiedSet.has(seat.code)).length;
   const selectedSummary = formatSeatLabels(selectedSeatCodes, occurrence.capacity);
-  const zoneOrder = ['near', 'middle', 'back'];
-  const zoneSections = zoneOrder
-    .map((zone) => {
-      const zoneRows = layout.rows.filter(({ seats }) => seats[0]?.zone === zone);
-      if (!zoneRows.length) return '';
+  const rowGroups = [['A', 'B'], ['C', 'D'], ['E', 'F']];
+  const seatColumns = rowGroups
+    .map((groupRows, index) => {
+      const groupedRows = layout.rows.filter(({ row }) => groupRows.includes(row));
+      if (!groupedRows.length) return '';
 
       return `
-        <section class="seat-zone-section" data-seat-zone="${zone}">
-          ${zoneRows
+        <section class="seat-zone-section" data-seat-column="${index + 1}">
+          ${groupedRows
             .map(
               ({ row, seats }) => `
-                <div class="seat-row" data-seat-row="${row}" data-seat-count="${seats.length}" data-seat-zone="${zone}">
+                <div class="seat-row" data-seat-row="${row}" data-seat-count="${seats.length}">
                   <span class="seat-row-label">${row}</span>
                   <div class="seat-row-seats">
                     ${seats
@@ -162,21 +162,14 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
               <span class="legend seat-selected">Seleccionado</span>
               <span class="legend seat-occupied">Ocupado</span>
             </div>
-            <div class="seat-zone-copy">
-              <span>Cerca de la instructora</span>
-              <span>Zona media</span>
-              <span>Parte trasera</span>
-            </div>
           </article>
           <article class="system-panel system-panel-dark">
             <form action="/magic-link/request" method="post" id="seat-selection-form" class="seat-selection-form">
               <input type="hidden" name="occurrenceId" value="${occurrence.id}" />
               <div class="seat-stage">
                 <div class="seat-stage-guide">Instructora</div>
-                <div class="seat-map-viewport">
-                  <div class="seat-map">
-                    ${zoneSections}
-                  </div>
+                <div class="seat-map">
+                  ${seatColumns}
                 </div>
               </div>
               <div class="ui-status-banner ${message ? `is-${messageType === 'success' ? 'success' : 'cancel'}` : 'is-muted'} seat-status-banner">
