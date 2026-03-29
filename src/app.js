@@ -110,7 +110,7 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
                 const disabled = isOccupied || !seat.enabled;
                 const stateClass = isOccupied ? 'is-occupied' : !seat.enabled ? 'is-disabled' : isSelected ? 'is-selected' : 'is-available';
                 return `
-                  <label class="seat-pill ${stateClass}" data-seat-option="${seat.code}">
+                  <label class="seat-pill panzoom-exclude ${stateClass}" data-seat-option="${seat.code}">
                     <input
                       type="checkbox"
                       name="seatCodes"
@@ -195,6 +195,7 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
 }
 
 const publicDir = fileURLToPath(new URL('./public', import.meta.url));
+const panzoomDir = fileURLToPath(new URL('../node_modules/@panzoom/panzoom/dist', import.meta.url));
 
 export function createApp({ prisma }) {
   const app = express();
@@ -202,6 +203,7 @@ export function createApp({ prisma }) {
 
   app.use(morgan('dev'));
   app.use('/static', express.static(publicDir));
+  app.use('/vendor/panzoom', express.static(panzoomDir));
   app.use(session({
     secret: config.sessionSecret,
     resave: false,

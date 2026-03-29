@@ -44,6 +44,7 @@ export function renderLayout({ title, body, staff = null, simulationMode = true 
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css" />
+    <script src="/vendor/panzoom/panzoom.min.js"></script>
     <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
   </head>
   <body class="${staff ? 'is-staff' : 'is-public'} ${isConceptBoard ? 'is-concept-board' : ''} ${isHome ? 'is-home has-landing-intro' : ''}">
