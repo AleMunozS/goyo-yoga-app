@@ -98,7 +98,7 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
   const rows = layout.rows
     .map(
       ({ row, seats }) => `
-        <div class="seat-row">
+        <div class="seat-row" data-seat-row="${row}" data-seat-count="${seats.length}" data-seat-zone="${seats[0]?.zone || ''}">
           <span class="seat-row-label">${row}</span>
           <div class="seat-row-seats">
             ${seats
