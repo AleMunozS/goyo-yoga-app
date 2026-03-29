@@ -14,16 +14,10 @@
     "db:init": "prisma db execute --file prisma/init.sql --schema prisma/schema.prisma",
     "seed": "node prisma/seed.js"
   },
-  "keywords": [
-    "fitness",
-    "booking",
-    "qr",
-    "stripe"
-  ],
+  "keywords": ["fitness", "booking", "qr", "stripe"],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@panzoom/panzoom": "^4.6.1",
     "@prisma/client": "^6.4.1",
     "bcryptjs": "^3.0.3",
     "dayjs": "^1.11.19",

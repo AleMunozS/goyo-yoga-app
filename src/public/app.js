@@ -186,61 +186,136 @@
       });
     });
 
-    if (seatViewport && seatCanvas && typeof window.Panzoom === 'function') {
-      const panzoom = window.Panzoom(seatCanvas, {
-        canvas: true,
-        cursor: 'grab',
-        maxScale: 2.8,
-        minScale: 0.35,
-        step: 0.12,
-        animate: false,
-        excludeClass: 'panzoom-exclude',
-        panOnlyWhenZoomed: true,
-        setTransform: (elem, { x, y, scale }) => {
-          elem.style.transformOrigin = '0 0';
-          elem.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
-        },
-      });
+    if (seatViewport && seatCanvas) {
+      const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+      const pointers = new Map();
+      let scale = 1;
+      let minScale = 1;
+      let maxScale = 2.4;
+      let x = 0;
+      let y = 0;
+      let panPointerId = null;
+      let lastPoint = null;
+      let pinchDistance = 0;
+
+      const clampPosition = () => {
+        const scaledWidth = seatCanvas.offsetWidth * scale;
+        const scaledHeight = seatCanvas.offsetHeight * scale;
+        const minX = Math.min(0, seatViewport.clientWidth - scaledWidth);
+        const minY = Math.min(0, seatViewport.clientHeight - scaledHeight);
+        const maxX = scaledWidth < seatViewport.clientWidth ? (seatViewport.clientWidth - scaledWidth) / 2 : 0;
+        const maxY = scaledHeight < seatViewport.clientHeight ? (seatViewport.clientHeight - scaledHeight) / 2 : 0;
+        x = clamp(x, minX, maxX);
+        y = clamp(y, minY, maxY);
+      };
+
+      const applyTransform = () => {
+        clampPosition();
+        seatCanvas.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+      };
 
       const fitCanvas = () => {
         const widthScale = seatViewport.clientWidth / seatCanvas.offsetWidth;
         const heightScale = seatViewport.clientHeight / seatCanvas.offsetHeight;
-        const fitScale = Math.min(widthScale, heightScale, 1);
-        const limitScale = Math.max(fitScale * 2.8, 1.8);
+        minScale = Math.min(widthScale, heightScale, 1);
+        maxScale = Math.max(minScale * 2.8, 1.8);
+        scale = minScale;
+        x = (seatViewport.clientWidth - seatCanvas.offsetWidth * scale) / 2;
+        y = (seatViewport.clientHeight - seatCanvas.offsetHeight * scale) / 2;
+        applyTransform();
+      };
 
-        panzoom.setOptions({
-          minScale: fitScale,
-          maxScale: limitScale,
-        });
+      const zoomAt = (nextScale, clientX, clientY) => {
+        const boundedScale = clamp(nextScale, minScale, maxScale);
+        if (boundedScale === scale) return;
+        const rect = seatViewport.getBoundingClientRect();
+        const localX = clientX - rect.left;
+        const localY = clientY - rect.top;
+        const worldX = (localX - x) / scale;
+        const worldY = (localY - y) / scale;
+        scale = boundedScale;
+        x = localX - worldX * scale;
+        y = localY - worldY * scale;
+        applyTransform();
+      };
 
-        panzoom.zoom(fitScale, { force: true });
-
-        requestAnimationFrame(() => {
-          const scaledWidth = seatCanvas.getBoundingClientRect().width;
-          const scaledHeight = seatCanvas.getBoundingClientRect().height;
-          const x = (seatViewport.clientWidth - scaledWidth) / 2;
-          const y = (seatViewport.clientHeight - scaledHeight) / 2;
-          panzoom.pan(x, y, { force: true });
-        });
+      const getPinchMetrics = () => {
+        const values = Array.from(pointers.values());
+        if (values.length < 2) return null;
+        const [first, second] = values;
+        return {
+          distance: Math.hypot(second.x - first.x, second.y - first.y),
+          centerX: (first.x + second.x) / 2,
+          centerY: (first.y + second.y) / 2,
+        };
       };
 
       seatViewport.addEventListener(
         'wheel',
         (event) => {
           event.preventDefault();
-          panzoom.zoomWithWheel(event);
+          const factor = event.deltaY < 0 ? 1.12 : 0.9;
+          zoomAt(scale * factor, event.clientX, event.clientY);
         },
         { passive: false },
       );
 
-      seatCanvas.addEventListener('panzoomstart', () => {
+      seatViewport.addEventListener('pointerdown', (event) => {
+        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        seatViewport.setPointerCapture?.(event.pointerId);
+        if (pointers.size === 2) {
+          const metrics = getPinchMetrics();
+          pinchDistance = metrics ? metrics.distance : 0;
+          panPointerId = null;
+          lastPoint = null;
+          seatViewport.classList.remove('is-panning');
+          return;
+        }
+
+        if (event.target.closest('[data-seat-option]')) return;
+        panPointerId = event.pointerId;
+        lastPoint = { x: event.clientX, y: event.clientY };
         seatViewport.classList.add('is-panning');
       });
 
-      seatCanvas.addEventListener('panzoomend', () => {
-        seatViewport.classList.remove('is-panning');
+      seatViewport.addEventListener('pointermove', (event) => {
+        if (!pointers.has(event.pointerId)) return;
+        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+        if (pointers.size === 2) {
+          const metrics = getPinchMetrics();
+          if (!metrics) return;
+          if (!pinchDistance) {
+            pinchDistance = metrics.distance;
+            return;
+          }
+          if (metrics.distance > 0) {
+            zoomAt(scale * (metrics.distance / pinchDistance), metrics.centerX, metrics.centerY);
+            pinchDistance = metrics.distance;
+          }
+          return;
+        }
+
+        if (panPointerId !== event.pointerId || !lastPoint) return;
+        x += event.clientX - lastPoint.x;
+        y += event.clientY - lastPoint.y;
+        lastPoint = { x: event.clientX, y: event.clientY };
+        applyTransform();
       });
 
+      const stopPointer = (event) => {
+        pointers.delete(event.pointerId);
+        if (pointers.size < 2) pinchDistance = 0;
+        if (panPointerId === event.pointerId) {
+          panPointerId = null;
+          lastPoint = null;
+          seatViewport.classList.remove('is-panning');
+        }
+      };
+
+      seatViewport.addEventListener('pointerup', stopPointer);
+      seatViewport.addEventListener('pointercancel', stopPointer);
+      seatViewport.addEventListener('lostpointercapture', stopPointer);
       window.addEventListener('resize', fitCanvas);
       fitCanvas();
     }
