@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import dayjs from 'dayjs';
 import { PrismaClient } from '@prisma/client';
 import { signPayload, makeBookingRef } from '../src/utils.js';
+import { describeSeatCodes } from '../src/seats.js';
 
 const prisma = new PrismaClient();
 const QR_SECRET = process.env.QR_SECRET || 'local-qr-secret';
@@ -11,6 +12,7 @@ async function main() {
   await prisma.payment_webhooks.deleteMany();
   await prisma.checkins.deleteMany();
   await prisma.wallet_ledger.deleteMany();
+  await prisma.reserved_seats.deleteMany();
   await prisma.bookings.deleteMany();
   await prisma.magic_links.deleteMany();
   await prisma.class_occurrences.deleteMany();
@@ -108,6 +110,17 @@ async function main() {
       status: 'BOOKED',
       qrPayload,
       qrSignature,
+      quantity: 1,
+      seatSummaryJson: JSON.stringify(describeSeatCodes(['A1'], classForAna.capacity)),
+    },
+  });
+
+  await prisma.reserved_seats.create({
+    data: {
+      bookingId: booking.id,
+      classOccurrenceId: classForAna.id,
+      seatCode: 'A1',
+      zone: 'near',
     },
   });
 

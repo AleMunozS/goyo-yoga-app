@@ -130,12 +130,26 @@ CREATE TABLE "bookings" (
     "status" TEXT NOT NULL DEFAULT 'BOOKED',
     "qrPayload" TEXT NOT NULL,
     "qrSignature" TEXT NOT NULL,
+    "quantity" INTEGER NOT NULL DEFAULT 1,
+    "seatSummaryJson" TEXT,
     "cancelledAt" DATETIME,
     "checkedInAt" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     CONSTRAINT "bookings_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "clients" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "bookings_classOccurrenceId_fkey" FOREIGN KEY ("classOccurrenceId") REFERENCES "class_occurrences" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "reserved_seats" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "bookingId" TEXT NOT NULL,
+    "classOccurrenceId" TEXT NOT NULL,
+    "seatCode" TEXT NOT NULL,
+    "zone" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "reserved_seats_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "bookings" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "reserved_seats_classOccurrenceId_fkey" FOREIGN KEY ("classOccurrenceId") REFERENCES "class_occurrences" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -156,6 +170,7 @@ CREATE TABLE "magic_links" (
     "clientId" TEXT NOT NULL,
     "tokenHash" TEXT NOT NULL,
     "purpose" TEXT NOT NULL,
+    "contextJson" TEXT,
     "expiresAt" DATETIME NOT NULL,
     "usedAt" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -230,10 +245,13 @@ CREATE INDEX "class_occurrences_startsAt_idx" ON "class_occurrences"("startsAt")
 CREATE UNIQUE INDEX "bookings_bookingRef_key" ON "bookings"("bookingRef");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "bookings_clientId_classOccurrenceId_key" ON "bookings"("clientId", "classOccurrenceId");
+CREATE UNIQUE INDEX "magic_links_tokenHash_key" ON "magic_links"("tokenHash");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "magic_links_tokenHash_key" ON "magic_links"("tokenHash");
+CREATE UNIQUE INDEX "reserved_seats_classOccurrenceId_seatCode_key" ON "reserved_seats"("classOccurrenceId", "seatCode");
+
+-- CreateIndex
+CREATE INDEX "reserved_seats_bookingId_idx" ON "reserved_seats"("bookingId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "payments_stripeSessionId_key" ON "payments"("stripeSessionId");

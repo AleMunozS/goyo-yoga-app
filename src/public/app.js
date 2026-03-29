@@ -151,28 +151,41 @@
     document.documentElement.style.setProperty('--glow-dim', dim.toFixed(3));
   }, 160);
 
-  const modal = document.getElementById('booking-modal');
-  const title = document.getElementById('booking-title');
-  const meta = document.getElementById('booking-meta');
-  const seats = document.getElementById('booking-seats');
-  const occInput = document.getElementById('booking-occurrence-id');
+  const seatForm = document.getElementById('seat-selection-form');
+  if (seatForm) {
+    const seatInputs = Array.from(seatForm.querySelectorAll('input[name="seatCodes"]'));
+    const countLabel = document.getElementById('seat-selection-count');
+    const summaryLabel = document.getElementById('seat-selection-summary');
 
-  document.querySelectorAll('.calendar-class-block:not(.trainer-chip), .month-class-chip:not(.trainer-chip)').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (!modal || !title || !meta || !seats || !occInput) return;
-      occInput.value = btn.dataset.occurrenceId || '';
-      title.textContent = btn.dataset.className || 'Reservar clase';
-      meta.textContent = `${btn.dataset.start || ''} · ${btn.dataset.trainer || ''} · ${btn.dataset.location || ''}`;
-      seats.textContent = `Cupos disponibles: ${btn.dataset.cupos || '0'}`;
-      if (typeof modal.showModal === 'function') modal.showModal();
-    });
-  });
+    const updateSeatSummary = () => {
+      const selected = seatInputs.filter((input) => input.checked);
+      const labels = selected.map((input) => input.value);
+      seatInputs.forEach((input) => {
+        const option = input.closest('[data-seat-option]');
+        if (!option || option.classList.contains('is-occupied') || option.classList.contains('is-disabled')) return;
+        option.classList.toggle('is-selected', input.checked);
+        option.classList.toggle('is-available', !input.checked);
+      });
+      if (countLabel) {
+        countLabel.textContent = `${selected.length} de 2 lugares elegidos`;
+      }
+      if (summaryLabel) {
+        summaryLabel.textContent = labels.length ? `Lugares elegidos: ${labels.join(', ')}` : 'Selecciona uno o dos lugares para continuar.';
+      }
+    };
 
-  document.querySelectorAll('[data-close-booking]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (modal && typeof modal.close === 'function') modal.close();
+    seatInputs.forEach((input) => {
+      input.addEventListener('change', () => {
+        const selected = seatInputs.filter((item) => item.checked);
+        if (selected.length > 2) {
+          input.checked = false;
+        }
+        updateSeatSummary();
+      });
     });
-  });
+
+    updateSeatSummary();
+  }
 
   const trainerModal = document.getElementById('trainer-class-modal');
   const trainerTitle = document.getElementById('trainer-modal-title');

@@ -165,6 +165,7 @@ model class_occurrences {
   classType      class_types @relation(fields: [classTypeId], references: [id])
   trainer        staff_users @relation("trainerClasses", fields: [trainerId], references: [id])
   bookings       bookings[]
+  reservedSeats  reserved_seats[]
 
   @@index([startsAt])
 }
@@ -177,6 +178,8 @@ model bookings {
   status            BookingStatus     @default(BOOKED)
   qrPayload         String
   qrSignature       String
+  quantity          Int               @default(1)
+  seatSummaryJson   String?
   cancelledAt       DateTime?
   checkedInAt       DateTime?
   createdAt         DateTime          @default(now())
@@ -185,8 +188,21 @@ model bookings {
   classOccurrence   class_occurrences @relation(fields: [classOccurrenceId], references: [id])
   checkins          checkins[]
   ledger            wallet_ledger[]
+  reservedSeats     reserved_seats[]
+}
 
-  @@unique([clientId, classOccurrenceId])
+model reserved_seats {
+  id                String            @id @default(cuid())
+  bookingId         String
+  classOccurrenceId String
+  seatCode          String
+  zone              String
+  createdAt         DateTime          @default(now())
+  booking           bookings          @relation(fields: [bookingId], references: [id])
+  classOccurrence   class_occurrences @relation(fields: [classOccurrenceId], references: [id])
+
+  @@unique([classOccurrenceId, seatCode])
+  @@index([bookingId])
 }
 
 model checkins {
@@ -205,6 +221,7 @@ model magic_links {
   clientId  String
   tokenHash String    @unique
   purpose   String
+  contextJson String?
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
