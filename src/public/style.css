@@ -2192,6 +2192,11 @@ textarea {
 
 .seat-selection-grid {
   align-items: start;
+  grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+}
+
+.seat-selection-grid > .system-panel-dark {
+  grid-column: 1 / -1;
 }
 
 .seat-selection-form {
@@ -2220,7 +2225,7 @@ textarea {
   display: grid;
   gap: 1rem;
   padding: 1.1rem 1.15rem 1.2rem;
-  width: min(100%, 34rem);
+  width: min(100%, 38rem);
   border-radius: 26px;
   background:
     radial-gradient(circle at 50% 0, rgba(215, 171, 129, 0.12), transparent 38%),
@@ -2243,30 +2248,24 @@ textarea {
 
 .seat-row-seats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.7rem;
 }
 
-.seat-row[data-seat-row="A"],
-.seat-row[data-seat-row="B"] {
-  width: min(100%, 18rem);
-  margin-inline: auto;
+.seat-row[data-seat-count="3"] .seat-pill:nth-child(1),
+.seat-row[data-seat-count="4"] .seat-pill:nth-child(1),
+.seat-row[data-seat-count="4"] .seat-pill:nth-child(3) {
+  grid-column: 1 / span 2;
 }
 
-.seat-row[data-seat-row="C"],
-.seat-row[data-seat-row="D"] {
-  width: min(100%, 22rem);
-  margin-inline: auto;
+.seat-row[data-seat-count="3"] .seat-pill:nth-child(2),
+.seat-row[data-seat-count="4"] .seat-pill:nth-child(2),
+.seat-row[data-seat-count="4"] .seat-pill:nth-child(4) {
+  grid-column: 3 / span 2;
 }
 
-.seat-row[data-seat-row="E"] {
-  width: min(100%, 18rem);
-  margin-left: 12%;
-}
-
-.seat-row[data-seat-row="F"] {
-  width: min(100%, 16rem);
-  margin-left: 18%;
+.seat-row[data-seat-count="3"] .seat-pill:nth-child(3) {
+  grid-column: 1 / span 2;
 }
 
 .seat-pill {
@@ -2720,20 +2719,18 @@ body.is-concept-board::before {
     grid-template-columns: 1fr;
   }
 
-  .seat-map {
-    width: min(100%, 21rem);
-    padding: 0.95rem;
-    gap: 0.9rem;
+  .seat-selection-grid {
+    grid-template-columns: 1fr;
   }
 
-  .seat-row[data-seat-row="A"],
-  .seat-row[data-seat-row="B"],
-  .seat-row[data-seat-row="C"],
-  .seat-row[data-seat-row="D"],
-  .seat-row[data-seat-row="E"],
-  .seat-row[data-seat-row="F"] {
-    width: 100%;
-    margin-left: 0;
+  .seat-selection-grid > .system-panel-dark {
+    grid-column: auto;
+  }
+
+  .seat-map {
+    width: min(100%, 24rem);
+    padding: 0.95rem;
+    gap: 0.9rem;
   }
 }
 
