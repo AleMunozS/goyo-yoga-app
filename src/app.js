@@ -95,47 +95,37 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
   const enabledSeats = layout.seats.filter((seat) => seat.enabled);
   const availableCount = enabledSeats.filter((seat) => !occupiedSet.has(seat.code)).length;
   const selectedSummary = formatSeatLabels(selectedSeatCodes, occurrence.capacity);
-  const rowGroups = [['A', 'B'], ['C', 'D'], ['E', 'F']];
-  const seatColumns = rowGroups
-    .map((groupRows, index) => {
-      const groupedRows = layout.rows.filter(({ row }) => groupRows.includes(row));
-      if (!groupedRows.length) return '';
+  const seatRows = layout.rows
+    .map(({ row, seats }, index) => {
+      const rowClass = seats.length === 4 ? 'is-wide' : seats.length === 3 ? 'is-compact' : 'is-standard';
 
       return `
-        <section class="seat-zone-section" data-seat-column="${index + 1}">
-          ${groupedRows
-            .map(
-              ({ row, seats }) => `
-                <div class="seat-row" data-seat-row="${row}" data-seat-count="${seats.length}">
-                  <span class="seat-row-label">${row}</span>
-                  <div class="seat-row-seats">
-                    ${seats
-                      .map((seat) => {
-                        const isOccupied = occupiedSet.has(seat.code);
-                        const isSelected = selectedSet.has(seat.code);
-                        const disabled = isOccupied || !seat.enabled;
-                        const stateClass = isOccupied ? 'is-occupied' : !seat.enabled ? 'is-disabled' : isSelected ? 'is-selected' : 'is-available';
-                        return `
-                          <label class="seat-pill ${stateClass}" data-seat-option="${seat.code}">
-                            <input
-                              type="checkbox"
-                              name="seatCodes"
-                              value="${seat.code}"
-                              data-seat-zone="${seat.zone}"
-                              ${isSelected ? 'checked' : ''}
-                              ${disabled ? 'disabled' : ''}
-                            />
-                            <span>${seat.label}</span>
-                          </label>
-                        `;
-                      })
-                      .join('')}
-                  </div>
-                </div>
-              `
-            )
-            .join('')}
-        </section>
+        <div class="seat-map-row ${rowClass}" data-seat-row="${row}" data-seat-count="${seats.length}" style="--seat-row-index:${index};">
+          <span class="seat-map-row-label">${row}</span>
+          <div class="seat-map-row-track">
+            ${seats
+              .map((seat) => {
+                const isOccupied = occupiedSet.has(seat.code);
+                const isSelected = selectedSet.has(seat.code);
+                const disabled = isOccupied || !seat.enabled;
+                const stateClass = isOccupied ? 'is-occupied' : !seat.enabled ? 'is-disabled' : isSelected ? 'is-selected' : 'is-available';
+                return `
+                  <label class="seat-pill ${stateClass}" data-seat-option="${seat.code}">
+                    <input
+                      type="checkbox"
+                      name="seatCodes"
+                      value="${seat.code}"
+                      data-seat-zone="${seat.zone}"
+                      ${isSelected ? 'checked' : ''}
+                      ${disabled ? 'disabled' : ''}
+                    />
+                    <span>${seat.label}</span>
+                  </label>
+                `;
+              })
+              .join('')}
+          </div>
+        </div>
       `;
     })
     .join('');
@@ -157,19 +147,29 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
               <div><span>Estudio</span><strong>${esc(occurrence.location.name)}</strong></div>
               <div><span>Mapa</span><strong>${enabledSeats.length} lugares habilitados · ${availableCount} disponibles</strong></div>
             </div>
-            <div class="seat-legend">
-              <span class="legend seat-available">Disponible</span>
-              <span class="legend seat-selected">Seleccionado</span>
-              <span class="legend seat-occupied">Ocupado</span>
-            </div>
+            <p class="system-inline-note">El mapa vive dentro de este módulo. Puedes explorar los lugares sin mover el resto de la página.</p>
           </article>
           <article class="system-panel system-panel-dark">
             <form action="/magic-link/request" method="post" id="seat-selection-form" class="seat-selection-form">
               <input type="hidden" name="occurrenceId" value="${occurrence.id}" />
-              <div class="seat-stage">
-                <div class="seat-stage-guide">Instructora</div>
-                <div class="seat-map">
-                  ${seatColumns}
+              <div class="seat-map-module">
+                <div class="seat-map-module-header">
+                  <div class="seat-legend">
+                    <span class="legend seat-available">Disponible</span>
+                    <span class="legend seat-selected">Seleccionado</span>
+                    <span class="legend seat-occupied">Ocupado</span>
+                  </div>
+                </div>
+                <div class="seat-stage">
+                  <div class="seat-stage-guide">Instructora</div>
+                  <div class="seat-stage-screen" aria-hidden="true"></div>
+                  <div class="seat-map-viewport" data-seat-viewport>
+                    <div class="seat-map-canvas" data-seat-canvas>
+                      <div class="seat-map">
+                        ${seatRows}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div class="ui-status-banner ${message ? `is-${messageType === 'success' ? 'success' : 'cancel'}` : 'is-muted'} seat-status-banner">
