@@ -1,20 +1,25 @@
 {
   "name": "goyo-yoga-app",
   "version": "1.0.0",
-  "description": "Fitness booking app with ticket wallets, QR check-in, and staff operations",
+  "description": "Direct paid reservation app with Stripe Checkout, QR check-in, and staff operations",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "test": "node --test tests/*.test.js",
+    "test": "npm run db:init && node --test tests/*.test.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:push": "prisma db push",
-    "db:init": "prisma db execute --file prisma/init.sql --schema prisma/schema.prisma",
+    "db:init": "prisma db push --force-reset --skip-generate && node prisma/seed.js",
     "seed": "node prisma/seed.js"
   },
-  "keywords": ["fitness", "booking", "qr", "stripe"],
+  "keywords": [
+    "fitness",
+    "booking",
+    "qr",
+    "stripe"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -22,6 +27,7 @@
     "bcryptjs": "^3.0.3",
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
+    "ejs": "^5.0.1",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "morgan": "^1.10.1",

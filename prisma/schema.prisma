@@ -14,7 +14,11 @@ enum StaffRole {
 }
 
 enum BookingStatus {
-  BOOKED
+  DRAFT
+  PENDING_PAYMENT
+  PAYMENT_PENDING_ASYNC
+  PAID
+  EXPIRED
   CANCELLED
   CHECKED_IN
   NO_SHOW
@@ -28,9 +32,11 @@ enum LedgerType {
 
 enum PaymentStatus {
   CREATED
+  PENDING_ASYNC
   PAID
   FAILED
   REFUNDED
+  EXPIRED
 }
 
 model staff_users {
@@ -98,6 +104,7 @@ model clients {
   email      String           @unique
   fullName   String
   phone      String?
+  stripeCustomerId String?    @unique
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
   wallets    client_wallets[]
@@ -159,6 +166,7 @@ model class_occurrences {
   endsAt         DateTime
   capacity       Int
   availableSlots Int
+  unitPriceCents Int         @default(35000)
   status         String      @default("SCHEDULED")
   createdAt      DateTime    @default(now())
   location       locations   @relation(fields: [locationId], references: [id])
@@ -175,11 +183,22 @@ model bookings {
   bookingRef        String            @unique
   clientId          String
   classOccurrenceId String
-  status            BookingStatus     @default(BOOKED)
-  qrPayload         String
-  qrSignature       String
+  status            BookingStatus     @default(DRAFT)
+  qrPayload         String?
+  qrSignature       String?
   quantity          Int               @default(1)
   seatSummaryJson   String?
+  expiresAt         DateTime?
+  salesChannel      String?
+  customerNameSnapshot  String
+  customerEmailSnapshot String
+  customerPhoneSnapshot String?
+  unitPriceCents    Int               @default(0)
+  subtotalCents     Int               @default(0)
+  feesCents         Int               @default(0)
+  totalCents        Int               @default(0)
+  paidAt            DateTime?
+  qrIssuedAt        DateTime?
   cancelledAt       DateTime?
   checkedInAt       DateTime?
   createdAt         DateTime          @default(now())
@@ -188,6 +207,7 @@ model bookings {
   classOccurrence   class_occurrences @relation(fields: [classOccurrenceId], references: [id])
   checkins          checkins[]
   ledger            wallet_ledger[]
+  payments          payments[]
   reservedSeats     reserved_seats[]
 }
 
@@ -231,18 +251,25 @@ model magic_links {
 model payments {
   id              String             @id @default(cuid())
   clientId        String
-  ticketProductId String
+  bookingId       String?
+  ticketProductId String?
   stripeSessionId String?            @unique
   stripePaymentId String?
   amountCents     Int
   currency        String             @default("mxn")
+  paymentMethodType String?
+  salesChannel    String?
   status          PaymentStatus      @default(CREATED)
+  paidAt          DateTime?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   client          clients            @relation(fields: [clientId], references: [id])
-  ticketProduct   ticket_products    @relation(fields: [ticketProductId], references: [id])
+  booking         bookings?          @relation(fields: [bookingId], references: [id])
+  ticketProduct   ticket_products?   @relation(fields: [ticketProductId], references: [id])
   webhooks        payment_webhooks[]
   ledger          wallet_ledger[]
+
+  @@index([bookingId])
 }
 
 model payment_webhooks {

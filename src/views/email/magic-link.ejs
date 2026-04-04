@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+</head>
+<body style="margin:0;padding:0;background:#efe3d7;font-family:Georgia,'Times New Roman',serif;color:#342a24;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;"><%= previewText %></div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:linear-gradient(180deg,#efe3d7 0%,#d5b293 100%);margin:0;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="width:640px;max-width:92%;background:#fdf8f3;border-radius:28px;overflow:hidden;box-shadow:0 24px 60px rgba(69,41,20,0.18);">
+          <tr>
+            <td style="padding:30px 34px 22px;background:radial-gradient(circle at top left,#f6dfc8 0%,#e5c3a4 42%,#d4b195 100%);">
+              <div style="font-size:18px;letter-spacing:6px;text-transform:uppercase;color:#6f5747;">TISA</div>
+              <div style="font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#8f7562;margin-top:4px;">Studio System</div>
+              <span style="display:inline-block;margin-top:18px;padding:10px 16px;border-radius:999px;background:rgba(66,42,28,0.08);font-family:Arial,sans-serif;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#5f4638;"><%= accentLabel %></span>
+              <h1 style="margin:22px 0 12px;font-size:42px;line-height:1;color:#34261f;font-weight:600;"><%= title %></h1>
+              <p style="margin:0;max-width:470px;font-family:Arial,sans-serif;font-size:16px;line-height:1.7;color:#5d4a3f;"><%= intro %></p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 34px 10px;">
+              <div style="padding:24px;border-radius:24px;background:#fff;border:1px solid rgba(101,72,53,0.08);">
+                <div style="font-family:Arial,sans-serif;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#9c7c67;margin-bottom:14px;">Detalle de tu selección</div>
+                <% details.forEach((item) => { %>
+                  <div style="padding:12px 0;border-bottom:1px solid rgba(109,77,57,0.08);">
+                    <div style="font-family:Arial,sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#9f8677;"><%= item.label %></div>
+                    <div style="margin-top:4px;font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#3d312b;"><%= item.value %></div>
+                  </div>
+                <% }) %>
+                <div style="margin-top:22px;">
+                  <a href="<%= bookingUrl %>" style="display:inline-block;padding:16px 24px;border-radius:999px;background:#3a2b24;color:#fff7f0;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;letter-spacing:1.2px;text-transform:uppercase;"><%= ctaLabel %></a>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 34px 30px;">
+              <div>
+                <% chips.forEach((chip) => { %>
+                  <span style="display:inline-block;margin:0 10px 10px 0;padding:8px 13px;border-radius:999px;background:#fff6ed;font-family:Arial,sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#866752;"><%= chip %></span>
+                <% }) %>
+              </div>
+              <div style="margin-top:8px;padding:18px 20px;border-radius:20px;background:rgba(255,255,255,0.65);font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#6f5a4b;">
+                <strong style="color:#49372d;">Nota:</strong> <%= note %>
+              </div>
+              <div style="margin-top:22px;font-family:Arial,sans-serif;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:#9a7f6f;text-align:center;"><%= footerText %></div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

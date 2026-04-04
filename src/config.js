@@ -10,6 +10,6 @@ export const config = {
   smtpPort: Number(process.env.SMTP_PORT || 587),
   smtpUser: process.env.SMTP_USER || '',
   smtpPass: process.env.SMTP_PASS || '',
-  smtpFrom: process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@goyo.local',
+  smtpFrom: process.env.SMTP_FROM || process.env.SMTP_USER || 'no-reply@tisa.local',
   simulationMode: process.env.SIMULATION_MODE !== 'false',
 };

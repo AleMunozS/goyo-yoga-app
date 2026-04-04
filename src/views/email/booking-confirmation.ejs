@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+</head>
+<body style="margin:0;padding:0;background:#f2e6d9;font-family:Georgia,'Times New Roman',serif;color:#342a24;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;"><%= previewText %></div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:linear-gradient(180deg,#f2e6d9 0%,#d7b596 100%);margin:0;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="width:640px;max-width:92%;background:#fbf5ef;border-radius:28px;overflow:hidden;box-shadow:0 24px 60px rgba(69,41,20,0.18);">
+          <tr>
+            <td style="padding:28px 34px 20px;background:radial-gradient(circle at top right,#f1d8bf 0%,#e8c9ab 35%,#dac0a7 100%);">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td>
+                    <div style="font-size:18px;letter-spacing:6px;text-transform:uppercase;color:#6f5747;">TISA</div>
+                    <div style="font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#8f7562;margin-top:4px;">Studio System</div>
+                  </td>
+                  <td align="right">
+                    <span style="display:inline-block;padding:10px 16px;border-radius:999px;background:rgba(66,42,28,0.08);font-family:Arial,sans-serif;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#5f4638;"><%= accentLabel %></span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="margin:28px 0 10px;font-size:44px;line-height:1;color:#34261f;font-weight:600;"><%= title %></h1>
+              <p style="margin:0;max-width:470px;font-family:Arial,sans-serif;font-size:16px;line-height:1.7;color:#5d4a3f;"><%= intro %></p>
+              <div style="margin-top:22px;">
+                <% chips.forEach((chip) => { %>
+                  <span style="display:inline-block;margin:0 10px 10px 0;padding:8px 13px;border-radius:999px;background:#fff6ed;font-family:Arial,sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#866752;"><%= chip %></span>
+                <% }) %>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 34px 10px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td valign="top" style="width:58%;padding-right:18px;">
+                    <div style="padding:22px 24px;border-radius:24px;background:#fff;border:1px solid rgba(101,72,53,0.08);">
+                      <div style="font-family:Arial,sans-serif;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#9c7c67;margin-bottom:14px;">Resumen de tu acceso</div>
+                      <% details.forEach((item) => { %>
+                        <div style="padding:12px 0;border-bottom:1px solid rgba(109,77,57,0.08);">
+                          <div style="font-family:Arial,sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#9f8677;"><%= item.label %></div>
+                          <div style="margin-top:4px;font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#3d312b;"><%= item.value %></div>
+                        </div>
+                      <% }) %>
+                    </div>
+                    <div style="margin-top:22px;">
+                      <a href="<%= bookingUrl %>" style="display:inline-block;padding:16px 24px;border-radius:999px;background:#3a2b24;color:#fff7f0;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;letter-spacing:1.2px;text-transform:uppercase;"><%= ctaLabel %></a>
+                    </div>
+                  </td>
+                  <td valign="top" style="width:42%;">
+                    <div style="padding:22px 20px;border-radius:24px;background:linear-gradient(180deg,#3a2a23 0%,#564135 100%);text-align:center;">
+                      <div style="font-family:Arial,sans-serif;font-size:12px;letter-spacing:1.8px;text-transform:uppercase;color:#d8bda8;">QR de acceso</div>
+                      <div style="margin:18px auto 14px;padding:14px;border-radius:22px;background:#fff;display:inline-block;">
+                        <% if (qrImageSrc) { %>
+                          <img alt="QR de acceso" src="<%= qrImageSrc %>" style="display:block;width:190px;height:190px;" />
+                        <% } else { %>
+                          <div style="width:190px;height:190px;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;font-size:12px;line-height:1.6;color:#7d6658;">Tu QR estara disponible en el detalle de la reservacion.</div>
+                        <% } %>
+                      </div>
+                      <p style="margin:0;font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#f0e2d5;"><%= qrCaption %></p>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 34px 30px;">
+              <div style="padding:18px 20px;border-radius:20px;background:rgba(255,255,255,0.65);font-family:Arial,sans-serif;font-size:14px;line-height:1.7;color:#6f5a4b;">
+                <strong style="color:#49372d;">Nota:</strong> <%= note %>
+              </div>
+              <div style="margin-top:22px;font-family:Arial,sans-serif;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;color:#9a7f6f;text-align:center;"><%= footerText %></div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

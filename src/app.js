@@ -4,23 +4,37 @@ import morgan from 'morgan';
 import dayjs from 'dayjs';
 import bcrypt from 'bcryptjs';
 import QRCode from 'qrcode';
-import Stripe from 'stripe';
 import { z } from 'zod';
 import { fileURLToPath } from 'url';
 import { renderLayout } from './views/layout.js';
 import { config } from './config.js';
-import { createToken, esc, hashToken, makeBookingRef, signPayload } from './utils.js';
-import { sendBookingConfirmationEmail, sendMagicLinkEmail } from './mailer.js';
+import { esc, hashToken, isWithinCheckinWindow, signPayload } from './utils.js';
 import {
   MAX_LAYOUT_CAPACITY,
   MAX_SEATS_PER_BOOKING,
   describeSeatCodes,
   formatSeatLabels,
   getSeatLayout,
-  validateSeatSelection,
 } from './seats.js';
+import {
+  ReservationError,
+  createDraftReservation,
+  createCheckoutSessionForReservation,
+  expireStaleReservations,
+  fulfillCheckout,
+  getActiveSeatCodes,
+  getBookingStateLabel,
+  getReservationResponse,
+  isAsyncMethodEligible,
+  markChargeRefunded,
+  markPaymentIntentFailed,
+  stripeClient,
+} from './reservation-service.js';
 
 const QR_SECRET = process.env.QR_SECRET || 'local-qr-secret';
+const ACTIVE_RESERVATION_STATUSES = ['PENDING_PAYMENT', 'PAYMENT_PENDING_ASYNC', 'PAID', 'CHECKED_IN'];
+const CONFIRMED_RESERVATION_STATUSES = ['PAID', 'CHECKED_IN'];
+const OPEN_RESERVATION_STATUSES = ['PENDING_PAYMENT', 'PAYMENT_PENDING_ASYNC'];
 
 function requireStaff(req, res, next) {
   if (!req.session.staffId) return res.redirect('/staff/login');
@@ -65,17 +79,6 @@ function parseJson(value, fallback = null) {
   }
 }
 
-function getMagicLinkContext(link) {
-  return parseJson(link?.contextJson, {}) || {};
-}
-
-function getBookingStateLabel(status) {
-  if (status === 'BOOKED') return 'Confirmada';
-  if (status === 'CANCELLED') return 'Cancelada';
-  if (status === 'CHECKED_IN') return 'Check-in completo';
-  return status;
-}
-
 function buildSeatSelectionUrl(occurrenceId, params = {}) {
   const search = new URLSearchParams({ occurrenceId });
   for (const [key, value] of Object.entries(params)) {
@@ -84,7 +87,31 @@ function buildSeatSelectionUrl(occurrenceId, params = {}) {
   return `/booking/seats?${search.toString()}`;
 }
 
-function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCodes = [], email = '', message = '', messageType = 'error' }) {
+function formatCurrency(cents, currency = 'MXN') {
+  return `${String(currency || 'MXN').toUpperCase()} ${(Number(cents || 0) / 100).toLocaleString('es-MX')}`;
+}
+
+function parseSeatCodesInput(value) {
+  return Array.from(
+    new Set(
+      String(value || '')
+        .split(/[\s,]+/)
+        .map((item) => item.trim().toUpperCase())
+        .filter(Boolean),
+    ),
+  ).slice(0, MAX_SEATS_PER_BOOKING);
+}
+
+function renderSeatSelectionBody({
+  occurrence,
+  occupiedSeatCodes,
+  selectedSeatCodes = [],
+  customerName = '',
+  customerEmail = '',
+  customerPhone = '',
+  message = '',
+  messageType = 'error',
+}) {
   const layout = getSeatLayout(occurrence.capacity);
   if (!layout.supported) {
     return `<section class="section"><div class="system-shell">${renderError(layout.error)}</div></section>`;
@@ -135,8 +162,8 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
       <div class="system-shell">
         <section class="system-hero scroll-hero" data-scroll-target="seat-selection-grid">
           <p class="concept-kicker">TISA / LUGARES</p>
-          <h1>Elige tu lugar antes de pedir el acceso.</h1>
-          <p>Selecciona uno o dos lugares exactos, revisa cuáles ya están ocupados y después deja tu correo para recibir el enlace privado y cerrar la reserva.</p>
+          <h1>Elige tu lugar y confirma tu pago en el mismo flujo.</h1>
+          <p>Selecciona uno o dos lugares exactos, deja tus datos y pasa directo a Stripe Checkout. El QR solo se emite cuando el pago queda confirmado.</p>
         </section>
         <div class="system-grid seat-selection-grid" id="seat-selection-grid">
           <article class="system-panel system-panel-light">
@@ -146,12 +173,14 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
               <div><span>Guía</span><strong>${esc(occurrence.trainer.displayName)}</strong></div>
               <div><span>Estudio</span><strong>${esc(occurrence.location.name)}</strong></div>
               <div><span>Mapa</span><strong>${enabledSeats.length} lugares habilitados · ${availableCount} disponibles</strong></div>
+              <div><span>Precio por lugar</span><strong>MXN ${(occurrence.unitPriceCents / 100).toLocaleString('es-MX')}</strong></div>
             </div>
-            <p class="system-inline-note">El mapa vive dentro de este módulo. Puedes explorar los lugares sin mover el resto de la página.</p>
+            <p class="system-inline-note">Tu apartado se mantiene por 10 minutos mientras completas el checkout.</p>
           </article>
           <article class="system-panel system-panel-dark">
-            <form action="/magic-link/request" method="post" id="seat-selection-form" class="seat-selection-form">
+            <form action="/reservations/web-checkout" method="post" id="seat-selection-form" class="seat-selection-form">
               <input type="hidden" name="occurrenceId" value="${occurrence.id}" />
+              <input type="hidden" name="salesChannel" value="web" />
               <div class="seat-map-module">
                 <div class="seat-map-module-header">
                   <div class="seat-legend">
@@ -181,10 +210,18 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
                 </div>
               </div>
               <div class="form-row">
-                <label>Correo para recibir tu acceso</label>
-                <input type="email" name="email" value="${esc(email)}" placeholder="tu@correo.com" required />
+                <label>Nombre</label>
+                <input type="text" name="customerName" value="${esc(customerName)}" placeholder="Tu nombre" required />
               </div>
-              <button class="btn" type="submit">Enviar enlace mágico</button>
+              <div class="form-row">
+                <label>Correo</label>
+                <input type="email" name="customerEmail" value="${esc(customerEmail)}" placeholder="tu@correo.com" required />
+              </div>
+              <div class="form-row">
+                <label>Teléfono</label>
+                <input type="tel" name="customerPhone" value="${esc(customerPhone)}" placeholder="+52..." />
+              </div>
+              <button class="btn" type="submit">Apartar y pagar ahora</button>
               <a class="btn alt" href="/classes">Volver a la agenda</a>
             </form>
           </article>
@@ -194,11 +231,97 @@ function renderSeatSelectionBody({ occurrence, occupiedSeatCodes, selectedSeatCo
   `;
 }
 
+function renderAssistedSalesBody({
+  occurrences,
+  form = {},
+  result = null,
+  error = '',
+}) {
+  const upcomingOptions = occurrences
+    .map((occurrence) => {
+      const start = dayjs(occurrence.startsAt);
+      return `<option value="${occurrence.id}" ${form.occurrenceId === occurrence.id ? 'selected' : ''}>${esc(occurrence.classType.name)} · ${start.format('DD MMM HH:mm')} · ${esc(occurrence.location.name)} · ${occurrence.availableSlots} libres · ${formatCurrency(occurrence.unitPriceCents)}</option>`;
+    })
+    .join('');
+  const selectedOccurrence = occurrences.find((occurrence) => occurrence.id === form.occurrenceId) || occurrences[0] || null;
+  const selectedSeatCodes = parseSeatCodesInput(form.seatCodesText || '');
+
+  return `<section class="section">
+    <div class="system-shell">
+      <section class="system-hero scroll-hero" data-scroll-target="staff-assisted-sales-grid">
+        <p class="concept-kicker">TISA / VENTAS ASISTIDAS</p>
+        <h1>Crea una reservación y comparte el Checkout por WhatsApp.</h1>
+        <p>El staff genera primero la reservación interna, conserva el amarre a lugares concretos y luego comparte una URL única de Stripe Checkout para cerrar el pago asistido.</p>
+      </section>
+      <div class="system-grid" id="staff-assisted-sales-grid">
+        <article class="system-panel system-panel-light">
+          <h2>Nueva reservación asistida</h2>
+          <form method="post" action="/admin/assisted-sales" class="admin-login-mock">
+            <label class="form-row">
+              <span>Clase</span>
+              <select class="admin-input" name="occurrenceId" required>${upcomingOptions}</select>
+            </label>
+            <label class="form-row">
+              <span>Lugares</span>
+              <input class="admin-input" type="text" name="seatCodesText" value="${esc(form.seatCodesText || '')}" placeholder="A1, A2" required />
+            </label>
+            <label class="form-row">
+              <span>Nombre</span>
+              <input class="admin-input" type="text" name="customerName" value="${esc(form.customerName || '')}" required />
+            </label>
+            <label class="form-row">
+              <span>Correo</span>
+              <input class="admin-input" type="email" name="customerEmail" value="${esc(form.customerEmail || '')}" required />
+            </label>
+            <label class="form-row">
+              <span>Teléfono</span>
+              <input class="admin-input" type="tel" name="customerPhone" value="${esc(form.customerPhone || '')}" />
+            </label>
+            <p class="system-inline-note">Captura uno o dos lugares exactos. La reserva se crea con canal <strong>whatsapp</strong> y el apartado dura 10 minutos hasta que Stripe confirme el pago.</p>
+            ${error ? `<p class="seat-inline-message">${esc(error)}</p>` : ''}
+            <button class="btn" type="submit">Generar checkout compartible</button>
+          </form>
+        </article>
+        <article class="system-panel system-panel-dark">
+          <h2>Contexto operativo</h2>
+          ${
+            selectedOccurrence
+              ? `<div class="system-detail-list">
+                  <div><span>Clase</span><strong>${esc(selectedOccurrence.classType.name)}</strong></div>
+                  <div><span>Horario</span><strong>${dayjs(selectedOccurrence.startsAt).format('DD MMM YYYY · HH:mm')}</strong></div>
+                  <div><span>Sede</span><strong>${esc(selectedOccurrence.location.name)}</strong></div>
+                  <div><span>Precio</span><strong>${formatCurrency(selectedOccurrence.unitPriceCents)}</strong></div>
+                  <div><span>Lugares elegidos</span><strong>${esc(selectedSeatCodes.join(', ') || 'Pendientes')}</strong></div>
+                  <div><span>Métodos</span><strong>${isAsyncMethodEligible(selectedOccurrence.startsAt) ? 'Tarjeta y SPEI' : 'Tarjeta y wallets'}</strong></div>
+                </div>`
+              : '<p class="system-inline-note">No hay clases próximas para ventas asistidas.</p>'
+          }
+          ${
+            result
+              ? `<div class="system-action-stack">
+                  <p class="system-inline-note">Reservación ${esc(result.bookingRef)} creada para ${esc(result.customerEmail)}.</p>
+                  <a class="btn" href="${result.checkoutUrl}" target="_blank" rel="noreferrer">Abrir Checkout</a>
+                  <label class="form-row">
+                    <span>URL para WhatsApp</span>
+                    <input class="admin-input" type="text" value="${esc(result.checkoutUrl)}" readonly />
+                  </label>
+                  <div class="system-detail-list">
+                    <div><span>Estado</span><strong>${esc(getBookingStateLabel(result.status))}</strong></div>
+                    <div><span>Expira</span><strong>${result.expiresAt ? dayjs(result.expiresAt).format('DD MMM HH:mm') : 'Sin hold'}</strong></div>
+                  </div>
+                </div>`
+              : '<p class="system-inline-note">Cuando generes la reservación aquí aparecerá la URL única para compartir por WhatsApp o Instagram.</p>'
+          }
+        </article>
+      </div>
+    </div>
+  </section>`;
+}
+
 const publicDir = fileURLToPath(new URL('./public', import.meta.url));
 
 export function createApp({ prisma }) {
   const app = express();
-  const stripe = config.stripeSecretKey ? new Stripe(config.stripeSecretKey) : null;
 
   app.use(morgan('dev'));
   app.use('/static', express.static(publicDir));
@@ -209,12 +332,12 @@ export function createApp({ prisma }) {
     cookie: { httpOnly: true, sameSite: 'lax' },
   }));
 
-  app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  const handleStripeWebhook = async (req, res) => {
     try {
       let event;
-      if (stripe && config.stripeWebhookSecret) {
+      if (stripeClient && config.stripeWebhookSecret) {
         const sig = req.headers['stripe-signature'];
-        event = stripe.webhooks.constructEvent(req.body, sig, config.stripeWebhookSecret);
+        event = stripeClient.webhooks.constructEvent(req.body, sig, config.stripeWebhookSecret);
       } else {
         event = JSON.parse(req.body.toString('utf8'));
       }
@@ -223,30 +346,26 @@ export function createApp({ prisma }) {
       if (existing) return res.json({ received: true, duplicate: true });
 
       let paymentId = null;
-      if (event.type === 'checkout.session.completed') {
+      if (
+        event.type === 'checkout.session.completed'
+        || event.type === 'checkout.session.async_payment_succeeded'
+        || event.type === 'checkout.session.async_payment_failed'
+      ) {
         const sessionObj = event.data.object;
-        const payment = await prisma.payments.findFirst({ where: { stripeSessionId: sessionObj.id } });
-        if (payment) {
-          paymentId = payment.id;
-          await prisma.payments.update({ where: { id: payment.id }, data: { status: 'PAID', stripePaymentId: sessionObj.payment_intent ? String(sessionObj.payment_intent) : null } });
+        const result = await fulfillCheckout(prisma, {
+          sessionId: sessionObj.id,
+          eventType: event.type,
+          baseUrl: config.appUrl,
+        });
+        paymentId = result.payment?.id || null;
+      }
 
-          const product = await prisma.ticket_products.findUnique({ where: { id: payment.ticketProductId } });
-          const wallet = await prisma.client_wallets.upsert({
-            where: { clientId_classTypeId: { clientId: payment.clientId, classTypeId: product.classTypeId } },
-            update: { credits: { increment: product.bundleSize } },
-            create: { clientId: payment.clientId, classTypeId: product.classTypeId, credits: product.bundleSize },
-          });
+      if (event.type === 'payment_intent.payment_failed') {
+        await markPaymentIntentFailed(prisma, event.data.object.id);
+      }
 
-          await prisma.wallet_ledger.create({
-            data: {
-              walletId: wallet.id,
-              type: 'CREDIT',
-              amount: product.bundleSize,
-              reason: 'Compra Stripe checkout.session.completed',
-              paymentId: payment.id,
-            },
-          });
-        }
+      if (event.type === 'charge.refunded') {
+        await markChargeRefunded(prisma, event.data.object);
       }
 
       await prisma.payment_webhooks.create({
@@ -262,32 +381,38 @@ export function createApp({ prisma }) {
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
-  });
+  };
+
+  app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), handleStripeWebhook);
+  app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), handleStripeWebhook);
 
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
 
+  if (process.env.NODE_ENV !== 'test') {
+    const expiryTimer = setInterval(() => {
+      expireStaleReservations(prisma).catch((error) => {
+        console.error('[reservations] stale cleanup failed', error);
+      });
+    }, 60_000);
+    expiryTimer.unref?.();
+  }
+
   app.get('/', async (req, res) => {
-    const [types, upcoming, bundles] = await Promise.all([
+    const [types, upcoming] = await Promise.all([
       prisma.class_types.findMany({ orderBy: { name: 'asc' }, take: 4 }),
       prisma.class_occurrences.findMany({
         include: { classType: true, trainer: true },
         orderBy: { startsAt: 'asc' },
-        take: 3,
-        where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
-      }),
-      prisma.ticket_products.findMany({
-        include: { classType: true },
-        orderBy: [{ bundleSize: 'desc' }, { priceCents: 'asc' }],
         take: 4,
-        where: { active: true },
+        where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
       }),
     ]);
 
     const stats = {
       classTypes: types.length,
       upcoming: upcoming.length,
-      bundles: bundles.length,
+      pricing: upcoming.length,
     };
 
     const typeCards = types
@@ -325,15 +450,15 @@ export function createApp({ prisma }) {
           .join('')
       : '<div class="timeline-row"><p>Agenda en actualización</p></div>';
 
-    const bundleCards = bundles
+    const pricingCards = upcoming
       .map(
-        (b) => `
+        (occurrence) => `
       <article class="card reveal">
-        <h3>${esc(b.classType.name)}</h3>
-        <p>${esc(b.name)}</p>
-        <div class="metric">${b.bundleSize} tickets</div>
-        <p>MXN ${(b.priceCents / 100).toLocaleString('es-MX')}</p>
-        <a class="btn" href="/classes">Comprar y reservar</a>
+        <h3>${esc(occurrence.classType.name)}</h3>
+        <p>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')} · ${esc(occurrence.trainer.displayName)}</p>
+        <div class="metric">${formatCurrency(occurrence.unitPriceCents)}</div>
+        <p>${occurrence.availableSlots} lugares listos para reservar con Checkout.</p>
+        <a class="btn" href="${buildSeatSelectionUrl(occurrence.id)}">Reservar ahora</a>
       </article>
     `
       )
@@ -347,8 +472,8 @@ export function createApp({ prisma }) {
       },
       {
         label: 'Reserva',
-        title: 'Magic link sin fricción',
-        text: 'El cliente deja su email, confirma y recupera su acceso sin crear una cuenta compleja.',
+        title: 'Checkout directo',
+        text: 'El cliente elige lugares, deja nombre y correo, y pasa directo a Stripe Checkout sin pasos intermedios.',
       },
       {
         label: 'Entra',
@@ -370,7 +495,7 @@ export function createApp({ prisma }) {
     const proofCards = [
       `${stats.classTypes || 0}+ experiencias activas listas para reservar`,
       `${stats.upcoming || 0} clases destacadas cargadas en agenda`,
-      `${stats.bundles || 0} paquetes visibles para compra rápida`,
+      `${stats.pricing || 0} horarios con precio visible para pago inmediato`,
     ]
       .map((item) => `<div class="proof-chip reveal">${item}</div>`)
       .join('');
@@ -421,9 +546,9 @@ export function createApp({ prisma }) {
           <div class="hero-card hero-premium reveal">
             <div class="hero-grid">
               <div class="hero-copy">
-                <p class="eyebrow">TISA · AGENDA · ACCESOS</p>
+                <p class="eyebrow">TISA · AGENDA · RESERVAS</p>
                 <h1>Reserva tu práctica con claridad y entra con calma.</h1>
-                <p>Consulta horarios, elige tu acceso y confirma tu entrada con QR dentro de una misma experiencia, sobria y precisa.</p>
+                <p>Consulta horarios, elige lugares y confirma tu pago con Stripe Checkout dentro de una misma experiencia, sobria y precisa.</p>
                 <div class="hero-actions">
                   <button type="button" class="btn" data-scroll-target="landing-overview">Descubrir el recorrido</button>
                   <a class="btn alt" href="/classes">Ir a la agenda</a>
@@ -437,9 +562,9 @@ export function createApp({ prisma }) {
                   <p>La agenda presenta disponibilidad, guía y horario dentro de una lectura limpia y directa.</p>
                 </div>
                 <div class="hero-aside-card">
-                  <span>Acceso</span>
-                  <strong>Confirma por correo y llega con tu QR listo.</strong>
-                  <p>Cliente, staff y operación comparten un mismo sistema visual de principio a fin.</p>
+                  <span>Pago</span>
+                  <strong>Paga al instante y recibe tu QR solo cuando Stripe confirma.</strong>
+                  <p>Cliente, staff y operación comparten el mismo estado real de la reservación de principio a fin.</p>
                 </div>
               </div>
             </div>
@@ -449,10 +574,10 @@ export function createApp({ prisma }) {
         <section class="section section-band reveal" id="landing-overview">
           <div class="band-shell">
             <div>
-              <p class="eyebrow">LANDING · AGENDA · PRODUCTO</p>
-              <h2>Un solo recorrido para descubrir, reservar y llegar al estudio.</h2>
+              <p class="eyebrow">LANDING · AGENDA · CHECKOUT</p>
+              <h2>Un solo recorrido para descubrir, pagar y llegar al estudio.</h2>
             </div>
-            <p>La home abre con una promesa clara y desciende hacia agenda, accesos y operación con una narrativa más serena, útil y deseable.</p>
+            <p>La home abre con una promesa clara y desciende hacia agenda, pago y operación con una narrativa más serena, útil y deseable.</p>
           </div>
         </section>
 
@@ -460,7 +585,7 @@ export function createApp({ prisma }) {
           <article class="card split-left premium-copy">
               <h2>Donde el ritual y el producto encuentran el mismo tono</h2>
               <p>TISA toma la calma como punto de partida, pero la traduce a una experiencia digital que también sabe orientar, ordenar y resolver.</p>
-              <p>La propuesta ya no se limita a vender una clase; presenta un sistema completo con relato, agenda legible y acceso cuidado.</p>
+              <p>La propuesta ya no se limita a mostrar una clase; presenta un sistema completo con relato, agenda legible y confirmación de pago confiable.</p>
               <p class="quote">"Una experiencia que se siente íntima, exclusiva y sorprendentemente fácil de usar."</p>
           </article>
           <article class="card split-right premium-preview">
@@ -485,7 +610,7 @@ export function createApp({ prisma }) {
             <div class="section-heading section-heading-surface reveal">
               <p class="eyebrow">RITUAL DE RESERVA</p>
               <h2>El recorrido principal se entiende de inmediato</h2>
-            <p>Explora la agenda, confirma por correo y llega con tu QR dentro de una secuencia continua, clara y confiable.</p>
+            <p>Explora la agenda, aparta lugares, paga y llega con tu QR dentro de una secuencia continua, clara y confiable.</p>
           </div>
           <div class="grid ritual-grid">${ritualCards}</div>
         </section>
@@ -504,11 +629,11 @@ export function createApp({ prisma }) {
 
         <section class="section">
           <div class="section-heading section-heading-surface reveal">
-            <p class="eyebrow">ACCESOS · PAQUETES</p>
-            <h2>Accesos visibles antes de reservar</h2>
-            <p>Los paquetes aparecen desde la landing para que el valor de cada práctica se entienda antes del clic.</p>
+            <p class="eyebrow">PRECIO · CHECKOUT</p>
+            <h2>Precios visibles antes de reservar</h2>
+            <p>Cada horario destacado muestra su precio por lugar para que el valor se entienda antes del clic.</p>
           </div>
-          <div class="grid">${bundleCards || '<div class="card">Próximamente habrá accesos disponibles.</div>'}</div>
+          <div class="grid">${pricingCards || '<div class="card">Próximamente aparecerán horarios con precio visible.</div>'}</div>
         </section>
 
         <section class="section reveal">
@@ -549,19 +674,13 @@ export function createApp({ prisma }) {
   });
 
   app.get(['/concept-tisa-01', '/concept-goyo'], async (req, res) => {
-    const [types, upcoming, bundles] = await Promise.all([
+    const [types, upcoming] = await Promise.all([
       prisma.class_types.findMany({ orderBy: { name: 'asc' }, take: 3 }),
       prisma.class_occurrences.findMany({
         include: { classType: true, trainer: true },
         orderBy: { startsAt: 'asc' },
         take: 4,
         where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
-      }),
-      prisma.ticket_products.findMany({
-        include: { classType: true },
-        orderBy: [{ bundleSize: 'desc' }, { priceCents: 'asc' }],
-        take: 3,
-        where: { active: true },
       }),
     ]);
 
@@ -595,13 +714,13 @@ export function createApp({ prisma }) {
       )
       .join('');
 
-    const bundleCards = bundles
+    const pricingCards = upcoming
       .map(
-        (bundle) => `
+        (occurrence) => `
         <article class="concept-bundle-card">
-          <p>${esc(bundle.classType.name)}</p>
-          <strong>${bundle.bundleSize} tickets</strong>
-          <span>MXN ${(bundle.priceCents / 100).toLocaleString('es-MX')}</span>
+          <p>${esc(occurrence.classType.name)}</p>
+          <strong>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')}</strong>
+          <span>${formatCurrency(occurrence.unitPriceCents)}</span>
         </article>
       `
       )
@@ -693,10 +812,10 @@ export function createApp({ prisma }) {
             </ul>
           </article>
           <article class="concept-panel accent">
-            <p class="concept-label">ACCESOS</p>
-            <h2>El valor del acceso visible antes del clic.</h2>
+            <p class="concept-label">PRECIO</p>
+            <h2>El valor de la reservación visible antes del clic.</h2>
             <div class="concept-bundle-grid">
-              ${bundleCards}
+              ${pricingCards}
             </div>
           </article>
         </section>
@@ -714,20 +833,12 @@ export function createApp({ prisma }) {
   });
 
   app.get(['/concept-tisa-02', '/concept-goyo-02'], async (req, res) => {
-    const [upcoming, bundles] = await Promise.all([
-      prisma.class_occurrences.findMany({
-        include: { classType: true, trainer: true, location: true },
-        orderBy: { startsAt: 'asc' },
-        take: 6,
-        where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
-      }),
-      prisma.ticket_products.findMany({
-        include: { classType: true },
-        orderBy: [{ bundleSize: 'desc' }, { priceCents: 'asc' }],
-        take: 3,
-        where: { active: true },
-      }),
-    ]);
+    const upcoming = await prisma.class_occurrences.findMany({
+      include: { classType: true, trainer: true, location: true },
+      orderBy: { startsAt: 'asc' },
+      take: 6,
+      where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
+    });
 
     const featured = upcoming[0];
     const scheduleRows = upcoming
@@ -747,15 +858,15 @@ export function createApp({ prisma }) {
       )
       .join('');
 
-    const bundleRows = bundles
+    const pricingRows = upcoming
       .map(
-        (bundle) => `
+        (occurrence) => `
         <article class="concept2-bundle-row">
           <div>
-            <p>${esc(bundle.classType.name)}</p>
-            <strong>${bundle.bundleSize} tickets</strong>
+            <p>${esc(occurrence.classType.name)}</p>
+            <strong>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')}</strong>
           </div>
-          <span>MXN ${(bundle.priceCents / 100).toLocaleString('es-MX')}</span>
+          <span>${formatCurrency(occurrence.unitPriceCents)}</span>
         </article>
       `
       )
@@ -767,12 +878,12 @@ export function createApp({ prisma }) {
           <div class="concept2-copy">
             <p class="concept-label">TISA / CONCEPTO 02</p>
             <h1>La agenda y la reserva como una experiencia serena, clara y deseable.</h1>
-            <p>Este concepto lleva la calma visual de TISA al momento más importante: elegir una práctica, entender el valor de cada acceso y cerrar la reserva dentro de una superficie cálida, simple y precisa.</p>
+            <p>Este concepto lleva la calma visual de TISA al momento más importante: elegir una práctica, entender el valor de cada lugar y cerrar la reserva dentro de una superficie cálida, simple y precisa.</p>
           </div>
           <div class="concept2-chip-row">
             <span>Agenda contemplativa</span>
             <span>Reserva sin fricción</span>
-            <span>Créditos visibles</span>
+            <span>Precio visible</span>
           </div>
         </section>
 
@@ -797,25 +908,26 @@ export function createApp({ prisma }) {
               <div><span>Horario</span><strong>${featured ? dayjs(featured.startsAt).format('ddd DD MMM · HH:mm') : 'Por definir'}</strong></div>
               <div><span>Guía</span><strong>${featured ? esc(featured.trainer.displayName) : 'Por definir'}</strong></div>
               <div><span>Ubicación</span><strong>TISA Central</strong></div>
+              <div><span>Precio</span><strong>${featured ? formatCurrency(featured.unitPriceCents) : 'Por definir'}</strong></div>
             </div>
             <div class="concept2-action-box">
-              <button class="btn" type="button">Continuar con créditos</button>
-              <button class="btn alt" type="button">Explorar accesos</button>
+              <button class="btn" type="button">Abrir Checkout</button>
+              <button class="btn alt" type="button">Ver agenda</button>
             </div>
           </article>
         </section>
 
         <section class="concept2-secondary-grid">
           <article class="concept2-panel concept2-wallet-panel">
-            <p class="concept-label">ACCESOS</p>
-            <h2>Los créditos deben sentirse claros, presentes y tranquilos.</h2>
+            <p class="concept-label">PRICING</p>
+            <h2>El precio por horario debe sentirse claro, presente y tranquilo.</h2>
             <div class="concept2-wallet-card">
               <span>Disponible ahora</span>
-              <strong>08</strong>
-              <p>Accesos Flow Suave</p>
+              <strong>${featured ? formatCurrency(featured.unitPriceCents) : 'MXN 350'}</strong>
+              <p>${featured ? esc(featured.classType.name) : 'Práctica destacada'}</p>
             </div>
             <div class="concept2-bundle-list">
-              ${bundleRows}
+              ${pricingRows}
             </div>
           </article>
 
@@ -834,7 +946,7 @@ export function createApp({ prisma }) {
 
         <section class="concept2-final">
           <p class="concept-label">DIRECCIÓN</p>
-          <h2>Este concepto conserva la sensibilidad editorial de TISA, pero la acerca más al producto real: agenda, accesos y reserva dentro de una experiencia coherente.</h2>
+          <h2>Este concepto conserva la sensibilidad editorial de TISA, pero la acerca más al producto real: agenda, checkout y reserva dentro de una experiencia coherente.</h2>
         </section>
       </section>
     `;
@@ -873,7 +985,7 @@ export function createApp({ prisma }) {
             <div class="mobile-hero-card">
               <p class="concept-label">TISA / CONCEPTO MÓVIL</p>
               <h1>Reservar desde el móvil debe sentirse simple, íntimo y natural.</h1>
-              <p>Este concepto reúne agenda, selección, accesos y confirmación en una experiencia más cálida, pensada para moverse con una mano y decidir sin esfuerzo.</p>
+              <p>Este concepto reúne agenda, selección, pago y confirmación en una experiencia más cálida, pensada para moverse con una mano y decidir sin esfuerzo.</p>
             </div>
 
             <div class="mobile-card-stack">
@@ -896,10 +1008,10 @@ export function createApp({ prisma }) {
                 <div class="mobile-booking-meta">
                   <div><span>Horario</span><strong>${featured ? dayjs(featured.startsAt).format('HH:mm') : '--:--'}</strong></div>
                   <div><span>Guía</span><strong>${featured ? esc(featured.trainer.displayName) : 'Por definir'}</strong></div>
-                  <div><span>Accesos</span><strong>08 créditos</strong></div>
+                  <div><span>Precio</span><strong>${featured ? formatCurrency(featured.unitPriceCents) : 'MXN 350'}</strong></div>
                 </div>
-                <button class="btn" type="button">Reservar con crédito</button>
-                <button class="btn alt" type="button">Ver accesos</button>
+                <button class="btn" type="button">Pagar ahora</button>
+                <button class="btn alt" type="button">Ver agenda</button>
               </section>
 
               <section class="mobile-confirm-card">
@@ -1019,8 +1131,8 @@ export function createApp({ prisma }) {
               <div><span>Estudio</span><strong>TISA Central</strong></div>
             </div>
             <div class="system-action-stack">
-              <button class="btn" type="button">Abrir acceso</button>
-              <button class="btn alt" type="button">Ver créditos</button>
+              <button class="btn" type="button">Abrir checkout</button>
+              <button class="btn alt" type="button">Ver lugares</button>
             </div>
           </article>
         </section>
@@ -1059,22 +1171,22 @@ export function createApp({ prisma }) {
       orderBy: { startsAt: 'asc' },
       where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
     });
-    const products = await prisma.ticket_products.findMany({
-      include: { classType: true },
-      orderBy: [{ bundleSize: 'desc' }, { priceCents: 'asc' }],
+    const accessCards = await prisma.class_occurrences.findMany({
+      include: { classType: true, trainer: true },
+      orderBy: { startsAt: 'asc' },
       take: 3,
-      where: { active: true },
+      where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
     });
 
-    const accessCards = products
+    const pricingCards = accessCards
       .map(
-        (product) => `
+        (schedule) => `
         <article class="access-product-row">
           <div>
-            <p>${esc(product.classType.name)}</p>
-            <strong>${product.bundleSize} accesos</strong>
+            <p>${esc(schedule.classType.name)}</p>
+            <strong>${dayjs(schedule.startsAt).format('DD MMM · HH:mm')}</strong>
           </div>
-          <span>MXN ${(product.priceCents / 100).toLocaleString('es-MX')}</span>
+          <span>${formatCurrency(schedule.unitPriceCents)}</span>
         </article>
       `
       )
@@ -1084,35 +1196,36 @@ export function createApp({ prisma }) {
       <section class="system-shell">
         <section class="system-hero scroll-hero" data-scroll-target="access-entry">
           <div>
-            <p class="concept-label">TISA / ACCESO Y RESERVA</p>
-            <h1>El acceso por correo, la confirmación y el QR deben sentirse parte del mismo ritual.</h1>
-            <p>Este board ordena el tramo más sensible del producto: entrar desde el correo, decidir con qué acceso reservar y llegar con una confirmación que inspire calma y certeza.</p>
+            <p class="concept-label">TISA / CHECKOUT Y RESERVA</p>
+            <h1>El checkout, la confirmación y el QR deben sentirse parte del mismo ritual.</h1>
+            <p>Este board ordena el tramo más sensible del producto: elegir lugares, decidir qué horario pagar y llegar con una confirmación que inspire calma y certeza.</p>
           </div>
           <div class="system-chip-row">
-            <button class="system-chip-button" type="button" data-scroll-target="access-entry">Acceso por correo</button>
-            <button class="system-chip-button" type="button" data-scroll-target="access-bundles">Compra contextual</button>
+            <button class="system-chip-button" type="button" data-scroll-target="access-entry">Checkout directo</button>
+            <button class="system-chip-button" type="button" data-scroll-target="access-bundles">Precio contextual</button>
             <button class="system-chip-button" type="button" data-scroll-target="access-qr">QR sereno</button>
           </div>
         </section>
 
         <section class="system-grid access-grid">
           <article class="system-panel system-panel-light" id="access-entry">
-            <p class="concept-label">ACCESO POR CORREO</p>
+            <p class="concept-label">CHECKOUT DIRECTO</p>
             <h2>Confirmar tu lugar en menos de un minuto.</h2>
             <div class="system-detail-list">
               <div><span>Práctica</span><strong>${occurrence ? esc(occurrence.classType.name) : 'Meditación Guiada'}</strong></div>
               <div><span>Horario</span><strong>${occurrence ? shortDateLabel(dayjs(occurrence.startsAt)) : '06 MAR · 07:00'}</strong></div>
               <div><span>Guía</span><strong>${occurrence ? esc(occurrence.trainer.displayName) : 'Sofía Luna'}</strong></div>
+              <div><span>Precio</span><strong>${occurrence ? formatCurrency(occurrence.unitPriceCents) : 'MXN 350'}</strong></div>
             </div>
             <div class="mail-chip">alemunozpro80@gmail.com</div>
-            <button class="btn" type="button">Consumir 1 crédito y reservar</button>
+            <button class="btn" type="button">Pagar y emitir QR</button>
           </article>
 
           <article class="system-panel system-panel-dark" id="access-bundles">
-            <p class="concept-label">SIN ACCESOS</p>
-            <h2>Comprar sin salir del flujo.</h2>
+            <p class="concept-label">PRECIO POR HORARIO</p>
+            <h2>Elegir sin salir del flujo.</h2>
             <div class="access-product-list">
-              ${accessCards}
+              ${pricingCards}
             </div>
           </article>
         </section>
@@ -1151,7 +1264,7 @@ export function createApp({ prisma }) {
 
   app.get('/concept-tisa-admin', async (req, res) => {
     const [bookings, clients, paid, classes, trainerClasses] = await Promise.all([
-      prisma.bookings.count({ where: { status: 'BOOKED' } }),
+      prisma.bookings.count({ where: { status: { in: ACTIVE_RESERVATION_STATUSES } } }),
       prisma.clients.count(),
       prisma.payments.count({ where: { status: 'PAID' } }),
       prisma.class_occurrences.count({ where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } } }),
@@ -1377,8 +1490,8 @@ export function createApp({ prisma }) {
         <aside class="page-hero-side">
           <div class="spotlight-card">
             <span>Cómo funciona</span>
-            <strong>Elige un bloque, selecciona tus lugares y luego deja tu correo.</strong>
-            <p>El enlace mágico ya lleva los lugares elegidos para que confirmes o compres accesos sin volver a empezar.</p>
+            <strong>Elige un bloque, selecciona tus lugares y luego paga en el mismo flujo.</strong>
+            <p>La reservación se crea con hold temporal y Stripe Checkout conserva el vínculo con la clase y los lugares elegidos.</p>
           </div>
           <div class="spotlight-card muted">
             <span>Ventaja</span>
@@ -1418,6 +1531,7 @@ export function createApp({ prisma }) {
   });
 
   app.get('/booking/seats', async (req, res) => {
+    await expireStaleReservations(prisma);
     const occurrenceId = String(req.query.occurrenceId || '');
     if (!occurrenceId) return res.status(400).send(renderError('Falta la clase a reservar.'));
 
@@ -1428,17 +1542,14 @@ export function createApp({ prisma }) {
     if (!occurrence) return res.status(404).send(renderError('Clase no encontrada.'));
     if (occurrence.status === 'CANCELLED') return res.status(409).send(renderError('La clase fue cancelada por el trainer.'));
 
-    const occupiedSeatCodes = (
-      await prisma.reserved_seats.findMany({
-        where: { classOccurrenceId: occurrence.id },
-        select: { seatCode: true },
-        orderBy: { seatCode: 'asc' },
-      })
-    ).map((seat) => seat.seatCode);
+    const occupiedSeatCodes = await getActiveSeatCodes(prisma, occurrence.id);
 
     const body = renderSeatSelectionBody({
       occurrence,
       occupiedSeatCodes,
+      customerName: String(req.query.customerName || ''),
+      customerEmail: String(req.query.customerEmail || ''),
+      customerPhone: String(req.query.customerPhone || ''),
       message: req.query.error ? String(req.query.error) : '',
       messageType: 'error',
     });
@@ -1446,476 +1557,268 @@ export function createApp({ prisma }) {
     res.send(renderLayout({ title: 'Elegir lugares', body, simulationMode: config.simulationMode }));
   });
 
-  app.post('/magic-link/request', async (req, res) => {
-    const schema = z.object({ email: z.string().email(), occurrenceId: z.string().min(8) });
-    const parsed = schema.safeParse(req.body);
+  const reservationSchema = z.object({
+    occurrenceId: z.string().min(8),
+    seatCodes: z.array(z.string().min(2)).min(1),
+    customerName: z.string().min(2),
+    customerEmail: z.string().email(),
+    customerPhone: z.string().trim().optional().or(z.literal('')),
+    salesChannel: z.enum(['web', 'whatsapp']).default('web'),
+  });
+
+  const checkoutSchema = z.object({
+    reservationId: z.string().min(8),
+    salesChannel: z.enum(['web', 'whatsapp']).default('web'),
+  });
+
+  app.post('/api/reservations', async (req, res) => {
+    try {
+      const parsed = reservationSchema.parse({
+        ...req.body,
+        seatCodes: Array.isArray(req.body.seatCodes) ? req.body.seatCodes : [req.body.seatCodes].filter(Boolean),
+      });
+      const reservation = await createDraftReservation(prisma, parsed);
+      const payload = await getReservationResponse(prisma, reservation.id, getBaseUrl(req));
+      res.status(201).json(payload);
+    } catch (error) {
+      if (error instanceof ReservationError) {
+        return res.status(error.status).json({ error: error.message, code: error.code });
+      }
+      throw error;
+    }
+  });
+
+  app.get('/api/reservations/:id', async (req, res) => {
+    try {
+      const payload = await getReservationResponse(prisma, req.params.id, getBaseUrl(req), { createManageLink: true });
+      res.json(payload);
+    } catch (error) {
+      if (error instanceof ReservationError) {
+        return res.status(error.status).json({ error: error.message, code: error.code });
+      }
+      throw error;
+    }
+  });
+
+  app.post('/api/payments/checkout-session', async (req, res) => {
+    try {
+      const parsed = checkoutSchema.parse(req.body);
+      const result = await createCheckoutSessionForReservation(prisma, {
+        ...parsed,
+        baseUrl: getBaseUrl(req),
+      });
+      res.status(201).json({
+        reservationId: parsed.reservationId,
+        paymentId: result.payment.id,
+        checkoutUrl: result.checkoutUrl,
+        paymentMethodTypes: result.paymentMethodTypes,
+      });
+    } catch (error) {
+      if (error instanceof ReservationError) {
+        return res.status(error.status).json({ error: error.message, code: error.code });
+      }
+      throw error;
+    }
+  });
+
+  app.post('/api/payments/payment-link', async (req, res) => {
+    try {
+      const parsed = checkoutSchema.parse({
+        reservationId: req.body.reservationId,
+        salesChannel: 'whatsapp',
+      });
+      const result = await createCheckoutSessionForReservation(prisma, {
+        ...parsed,
+        baseUrl: getBaseUrl(req),
+      });
+      res.status(201).json({
+        reservationId: parsed.reservationId,
+        paymentId: result.payment.id,
+        paymentLinkUrl: result.checkoutUrl,
+        checkoutUrl: result.checkoutUrl,
+        paymentMethodTypes: result.paymentMethodTypes,
+      });
+    } catch (error) {
+      if (error instanceof ReservationError) {
+        return res.status(error.status).json({ error: error.message, code: error.code });
+      }
+      throw error;
+    }
+  });
+
+  app.post('/reservations/web-checkout', async (req, res) => {
     const seatCodes = Array.isArray(req.body.seatCodes) ? req.body.seatCodes : req.body.seatCodes ? [req.body.seatCodes] : [];
-
-    if (!parsed.success) return res.status(400).send(renderError('Datos inválidos para crear magic link.'));
-
-    const { email, occurrenceId } = parsed.data;
-    const occurrence = await prisma.class_occurrences.findUnique({
-      where: { id: occurrenceId },
-      include: { classType: true, trainer: true, location: true },
+    const parsed = reservationSchema.safeParse({
+      ...req.body,
+      seatCodes,
+      customerName: req.body.customerName,
+      customerEmail: req.body.customerEmail,
+      customerPhone: req.body.customerPhone,
+      salesChannel: req.body.salesChannel || 'web',
     });
-    if (!occurrence) return res.status(404).send(renderError('Clase no encontrada.'));
-    if (occurrence.status === 'CANCELLED') return res.status(409).send(renderError('Esta clase fue cancelada por el trainer.'));
 
-    const occupiedSeatCodes = (
-      await prisma.reserved_seats.findMany({
-        where: { classOccurrenceId: occurrence.id },
-        select: { seatCode: true },
-      })
-    ).map((seat) => seat.seatCode);
+    if (!parsed.success) {
+      return res.status(400).redirect(buildSeatSelectionUrl(String(req.body.occurrenceId || ''), {
+        error: 'Completa nombre, correo y al menos un lugar para continuar.',
+        customerName: String(req.body.customerName || ''),
+        customerEmail: String(req.body.customerEmail || ''),
+        customerPhone: String(req.body.customerPhone || ''),
+      }));
+    }
 
-    const validation = validateSeatSelection({ seatCodes, capacity: occurrence.capacity, occupiedSeatCodes });
-    if (!validation.ok) {
+    try {
+      const reservation = await createDraftReservation(prisma, parsed.data);
+      const checkout = await createCheckoutSessionForReservation(prisma, {
+        reservationId: reservation.id,
+        salesChannel: parsed.data.salesChannel,
+        baseUrl: getBaseUrl(req),
+      });
+      return res.redirect(checkout.checkoutUrl);
+    } catch (error) {
+      const occurrence = await prisma.class_occurrences.findUnique({
+        where: { id: parsed.data.occurrenceId },
+        include: { classType: true, trainer: true, location: true },
+      });
+      if (!occurrence) throw error;
+      const occupiedSeatCodes = await getActiveSeatCodes(prisma, occurrence.id);
       const body = renderSeatSelectionBody({
         occurrence,
         occupiedSeatCodes,
-        selectedSeatCodes: Array.isArray(seatCodes) ? seatCodes : [seatCodes],
-        email,
-        message: validation.message,
+        selectedSeatCodes: parsed.data.seatCodes,
+        customerName: parsed.data.customerName,
+        customerEmail: parsed.data.customerEmail,
+        customerPhone: parsed.data.customerPhone || '',
+        message: error instanceof ReservationError ? error.message : 'No se pudo iniciar la reservación.',
       });
-      return res.status(409).send(renderLayout({ title: 'Elegir lugares', body, simulationMode: config.simulationMode }));
+      return res.status(error instanceof ReservationError ? error.status : 500).send(
+        renderLayout({ title: 'Elegir lugares', body, simulationMode: config.simulationMode }),
+      );
     }
-
-    if (occurrence.availableSlots < validation.seats.length) {
-      const body = renderSeatSelectionBody({
-        occurrence,
-        occupiedSeatCodes,
-        selectedSeatCodes: validation.seats.map((seat) => seat.code),
-        email,
-        message: 'La clase ya no tiene suficientes lugares libres para esa selección.',
-      });
-      return res.status(409).send(renderLayout({ title: 'Elegir lugares', body, simulationMode: config.simulationMode }));
-    }
-
-    const client = await prisma.clients.upsert({
-      where: { email },
-      update: {},
-      create: { email, fullName: email.split('@')[0] },
-    });
-
-    const token = createToken();
-    const tokenHash = hashToken(token);
-    const expiresAt = dayjs().add(30, 'minute').toDate();
-    const contextJson = JSON.stringify({
-      occurrenceId,
-      quantity: validation.seats.length,
-      seatCodes: validation.seats.map((seat) => seat.code),
-    });
-
-    await prisma.magic_links.create({
-      data: {
-        clientId: client.id,
-        tokenHash,
-        purpose: `BOOK:${occurrenceId}`,
-        contextJson,
-        expiresAt,
-      },
-    });
-
-    const baseUrl = getBaseUrl(req);
-    const url = `${baseUrl}/booking/start?token=${token}`;
-    const seatLabels = formatSeatLabels(validation.seats.map((seat) => seat.code), occurrence.capacity);
-
-    console.log(`[magic-link] send to ${email}: ${url}`);
-    await sendMagicLinkEmail({
-      to: email,
-      bookingUrl: url,
-      className: occurrence.classType.name,
-      classDate: dayjs(occurrence.startsAt).format('DD MMM YYYY · HH:mm'),
-      trainerName: occurrence.trainer.displayName,
-      locationName: occurrence.location.name,
-      seatLabels,
-    });
-
-    const body = `
-      <section class="section">
-        <div class="system-shell">
-          <section class="system-hero scroll-hero" data-scroll-target="magic-link-detail">
-            <p class="concept-kicker">TISA / ACCESO</p>
-            <h1>Tu acceso temporal ya está listo.</h1>
-            <p>Guardamos tu selección y enviamos un enlace privado para continuar la reserva sin perder los lugares elegidos.</p>
-          </section>
-          <div class="system-grid" id="magic-link-detail">
-            <article class="system-panel system-panel-light">
-              <h2>Resumen</h2>
-              <div class="system-detail-list">
-                <div><span>Correo</span><strong>${esc(email)}</strong></div>
-                <div><span>Lugares</span><strong>${esc(seatLabels)}</strong></div>
-                <div><span>Vigencia</span><strong>30 minutos</strong></div>
-                <div><span>Modo</span><strong>${config.simulationMode ? 'Simulación con enlace visible' : 'Correo real enviado'}</strong></div>
-              </div>
-            </article>
-            <article class="system-panel system-panel-dark">
-              <h2>Continúa tu recorrido</h2>
-              <div class="system-action-stack">
-                <a class="btn" href="${url}">Abrir enlace mágico</a>
-                <a class="btn alt" href="/classes">Volver a la agenda</a>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-    `;
-    res.send(renderLayout({ title: 'Magic Link', body, simulationMode: config.simulationMode }));
   });
 
-  app.get('/booking/start', async (req, res) => {
-    const token = String(req.query.token || '');
-    const found = await prisma.magic_links.findUnique({ where: { tokenHash: hashToken(token) }, include: { client: true } });
-    if (!found || found.usedAt || dayjs(found.expiresAt).isBefore(dayjs())) {
-      return res.status(400).send(renderLayout({ title: 'Token inválido', body: renderError('Token expirado o usado.'), simulationMode: config.simulationMode }));
-    }
-
-    const context = getMagicLinkContext(found);
-    const occurrenceId = String(context.occurrenceId || '');
-    const selectedSeatCodes = Array.isArray(context.seatCodes) ? context.seatCodes : [];
-    if (!occurrenceId) return res.status(400).send(renderError('Este enlace no tiene una clase asociada.'));
-
-    const occurrence = await prisma.class_occurrences.findUnique({
-      where: { id: occurrenceId },
-      include: { classType: true, trainer: true, location: true },
-    });
-    if (!occurrence) return res.status(404).send(renderError('Clase no encontrada'));
-    if (occurrence.status === 'CANCELLED') return res.status(409).send(renderError('La clase fue cancelada por el trainer.'));
-
-    const occupiedSeatCodes = (
-      await prisma.reserved_seats.findMany({
-        where: { classOccurrenceId: occurrence.id },
-        select: { seatCode: true },
-      })
-    ).map((seat) => seat.seatCode);
-    const validation = validateSeatSelection({ seatCodes: selectedSeatCodes, capacity: occurrence.capacity, occupiedSeatCodes });
-    if (!validation.ok || occurrence.availableSlots < selectedSeatCodes.length) {
-      return res.redirect(buildSeatSelectionUrl(occurrence.id, { error: validation.ok ? 'La clase ya no tiene suficientes lugares libres para esa selección.' : validation.message }));
-    }
-
-    const wallet = await prisma.client_wallets.findUnique({ where: { clientId_classTypeId: { clientId: found.clientId, classTypeId: occurrence.classTypeId } } });
-    const quantity = validation.seats.length;
-    const seatLabels = formatSeatLabels(validation.seats.map((seat) => seat.code), occurrence.capacity);
-    const availableCredits = wallet?.credits || 0;
-    const hasEnoughCredits = availableCredits >= quantity;
-
-    const body = `
-      <section class="section">
-        <div class="system-shell">
-          <section class="system-hero scroll-hero" data-scroll-target="booking-start-grid">
-            <p class="concept-kicker">TISA / RESERVA</p>
-            <h1>Confirma tus lugares con serenidad.</h1>
-            <p>Tu acceso ya validó tu identidad. Desde aquí puedes usar ${quantity} ${quantity === 1 ? 'crédito' : 'créditos'} o comprar accesos sin perder el mapa que elegiste.</p>
-          </section>
-          <div class="system-grid" id="booking-start-grid">
-            <article class="system-panel system-panel-light">
-              <h2>${esc(occurrence.classType.name)}</h2>
-              <div class="system-detail-list">
-                <div><span>Horario</span><strong>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')}</strong></div>
-                <div><span>Guía</span><strong>${esc(occurrence.trainer.displayName)}</strong></div>
-                <div><span>Estudio</span><strong>${esc(occurrence.location.name)}</strong></div>
-                <div><span>Cliente</span><strong>${esc(found.client.email)}</strong></div>
-                <div><span>Lugares</span><strong>${esc(seatLabels)}</strong></div>
-                <div><span>Personas</span><strong>${quantity}</strong></div>
-              </div>
-            </article>
-            <article class="system-panel system-panel-soft">
-              <h2>Tus accesos</h2>
-              <div class="system-detail-list">
-                <div><span>Créditos disponibles</span><strong>${availableCredits}</strong></div>
-                <div><span>Accesos necesarios</span><strong>${quantity}</strong></div>
-                <div><span>Siguiente paso</span><strong>Confirmar reserva para ${esc(seatLabels)}</strong></div>
-              </div>
-              <form action="/bookings" method="post" class="system-action-stack">
-                <input type="hidden" name="token" value="${esc(token)}" />
-                <button class="btn" type="submit" ${hasEnoughCredits ? '' : 'disabled aria-disabled="true"'}>Confirmar con ${quantity} ${quantity === 1 ? 'acceso' : 'accesos'}</button>
-              </form>
-              ${hasEnoughCredits ? '' : `<p class="system-inline-note">Te faltan ${quantity - availableCredits} ${quantity - availableCredits === 1 ? 'acceso' : 'accesos'} para cerrar esta reserva.</p>`}
-            </article>
-            <article class="system-panel system-panel-dark">
-              <h2>Si necesitas accesos</h2>
-              <p>Compra el paquete adecuado para esta práctica y vuelve al mismo recorrido con los lugares todavía vinculados a este enlace.</p>
-              <form action="/checkout/session" method="post" class="system-action-stack">
-                <input type="hidden" name="clientId" value="${found.clientId}" />
-                <input type="hidden" name="classTypeId" value="${occurrence.classTypeId}" />
-                <input type="hidden" name="token" value="${esc(token)}" />
-                <button class="btn alt" type="submit">Explorar accesos</button>
-              </form>
-            </article>
-          </div>
-        </div>
-      </section>`;
-
-    res.send(renderLayout({ title: 'Booking', body, simulationMode: config.simulationMode }));
-  });
-
-  app.post('/checkout/session', async (req, res) => {
-    const schema = z.object({ clientId: z.string().min(8), classTypeId: z.string().min(8), token: z.string().min(10).optional() });
-    const parsed = schema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).send(renderError('Datos de checkout inválidos'));
-
-    const { clientId, classTypeId, token } = parsed.data;
-    const product = await prisma.ticket_products.findFirst({ where: { classTypeId, active: true }, orderBy: { bundleSize: 'desc' } });
-    if (!product) return res.status(404).send(renderError('No hay bundle activo para este tipo de clase'));
-
-    const payment = await prisma.payments.create({
-      data: {
-        clientId,
-        ticketProductId: product.id,
-        amountCents: product.priceCents,
-        status: 'CREATED',
-      },
-    });
-
-    const tokenQuery = token ? `&token=${encodeURIComponent(token)}` : '';
-
-    if (stripe && product.stripePriceId) {
-      const session = await stripe.checkout.sessions.create({
-        mode: 'payment',
-        line_items: [{ price: product.stripePriceId, quantity: 1 }],
-        success_url: `${config.appUrl}/checkout/success?paymentId=${payment.id}${tokenQuery}`,
-        cancel_url: `${config.appUrl}/checkout/cancel?paymentId=${payment.id}${tokenQuery}`,
+  app.post('/reservations/:id/checkout', async (req, res) => {
+    try {
+      const result = await createCheckoutSessionForReservation(prisma, {
+        reservationId: req.params.id,
+        salesChannel: String(req.body.salesChannel || 'web'),
+        baseUrl: getBaseUrl(req),
       });
-      await prisma.payments.update({ where: { id: payment.id }, data: { stripeSessionId: session.id } });
-      return res.redirect(session.url);
+      res.redirect(result.checkoutUrl);
+    } catch (error) {
+      if (error instanceof ReservationError) {
+        return res.status(error.status).send(renderError(error.message));
+      }
+      throw error;
     }
-
-    const wallet = await prisma.client_wallets.upsert({
-      where: { clientId_classTypeId: { clientId, classTypeId } },
-      update: { credits: { increment: product.bundleSize } },
-      create: { clientId, classTypeId, credits: product.bundleSize },
-    });
-
-    await prisma.payments.update({ where: { id: payment.id }, data: { status: 'PAID', stripeSessionId: `sim_${payment.id}` } });
-    await prisma.wallet_ledger.create({
-      data: { walletId: wallet.id, type: 'CREDIT', amount: product.bundleSize, reason: 'Compra simulada', paymentId: payment.id },
-    });
-
-    res.redirect(`/checkout/success?paymentId=${payment.id}${tokenQuery}`);
   });
 
   app.get('/checkout/success', async (req, res) => {
-    const paymentId = String(req.query.paymentId || '');
-    const token = String(req.query.token || '');
-    const payment = await prisma.payments.findUnique({ where: { id: paymentId }, include: { ticketProduct: true, client: true } });
-    if (!payment) return res.status(404).send(renderError('Pago no encontrado'));
-    const returnHref = token ? `/booking/start?token=${encodeURIComponent(token)}` : '/classes';
-    const returnLabel = token ? 'Volver a la confirmación de lugares' : 'Volver a la agenda';
-    const body = `<section class="section"><div class="system-shell">
-      <section class="system-hero">
-        <p class="concept-kicker">TISA / PAGO</p>
-        <h1>Tu acceso quedó acreditado correctamente.</h1>
-        <p>${esc(payment.client.email)} adquirió ${esc(payment.ticketProduct.name)} y ya puede volver al flujo para cerrar su reserva.</p>
-      </section>
-      <div class="system-grid">
-        <article class="system-panel system-panel-dark">
-          <h2>Compra confirmada</h2>
-          <div class="system-action-stack"><a class="btn" href="${returnHref}">${returnLabel}</a></div>
-        </article>
-      </div>
-    </div></section>`;
-    res.send(renderLayout({ title: 'Pago exitoso', body, simulationMode: config.simulationMode }));
-  });
+    const sessionId = String(req.query.session_id || '');
+    if (!sessionId) return res.status(400).send(renderError('Falta la sesión de checkout.'));
 
-  app.get('/checkout/cancel', (req, res) => {
-    const token = String(req.query.token || '');
-    const returnHref = token ? `/booking/start?token=${encodeURIComponent(token)}` : '/classes';
-    const returnLabel = token ? 'Volver a tus lugares' : 'Regresar a la agenda';
-    const body = `<section class="section"><div class="system-shell">
-      <section class="system-hero">
-        <p class="concept-kicker">TISA / PAGO</p>
-        <h1>No se realizó ningún cargo.</h1>
-        <p>Puedes volver al flujo y retomar la reserva cuando te resulte conveniente.</p>
-      </section>
-      <div class="system-grid">
-        <article class="system-panel system-panel-soft">
-          <h2>Tu reserva sigue pendiente</h2>
-          <div class="system-action-stack"><a class="btn alt" href="${returnHref}">${returnLabel}</a></div>
-        </article>
-      </div>
-    </div></section>`;
-    res.send(renderLayout({ title: 'Pago cancelado', body, simulationMode: config.simulationMode }));
-  });
-
-  app.post('/bookings', async (req, res) => {
-    const schema = z.object({ token: z.string().min(10) });
-    const parsed = schema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).send(renderError('Request de booking inválido'));
-
-    const { token } = parsed.data;
-    const link = await prisma.magic_links.findUnique({ where: { tokenHash: hashToken(token) }, include: { client: true } });
-    if (!link || link.usedAt || dayjs(link.expiresAt).isBefore(dayjs())) return res.status(400).send(renderError('Magic link inválido'));
-
-    const context = getMagicLinkContext(link);
-    const occurrenceId = String(context.occurrenceId || '');
-    const selectedSeatCodes = Array.isArray(context.seatCodes) ? context.seatCodes : [];
-    if (!occurrenceId) return res.status(400).send(renderError('El enlace no tiene una clase asociada.'));
-
-    const occurrence = await prisma.class_occurrences.findUnique({
-      where: { id: occurrenceId },
-      include: { classType: true, trainer: true, location: true },
-    });
-    if (!occurrence) return res.status(404).send(renderError('Clase no encontrada'));
-    if (occurrence.status === 'CANCELLED') return res.status(409).send(renderError('La clase fue cancelada por el trainer.'));
-
-    const occupiedSeatCodes = (
-      await prisma.reserved_seats.findMany({
-        where: { classOccurrenceId: occurrence.id },
-        select: { seatCode: true },
-      })
-    ).map((seat) => seat.seatCode);
-    const validation = validateSeatSelection({ seatCodes: selectedSeatCodes, capacity: occurrence.capacity, occupiedSeatCodes });
-    if (!validation.ok) {
-      return res.redirect(buildSeatSelectionUrl(occurrence.id, { error: validation.message }));
-    }
-
-    const quantity = validation.seats.length;
-    if (occurrence.availableSlots < quantity) {
-      return res.redirect(buildSeatSelectionUrl(occurrence.id, { error: 'La clase ya no tiene suficientes lugares libres para esa selección.' }));
-    }
-
-    const bookingRef = makeBookingRef();
-    const qrPayloadObj = {
-      booking_ref: bookingRef,
-      occurrence_id: occurrence.id,
-      client_ref: link.clientId,
-      expires_at: dayjs(occurrence.endsAt).toISOString(),
-    };
-    const qrPayload = JSON.stringify(qrPayloadObj);
-    const qrSignature = signPayload(qrPayload, QR_SECRET);
-    const seatSummaryJson = JSON.stringify(describeSeatCodes(validation.seats.map((seat) => seat.code), occurrence.capacity));
-
-    let booking;
     try {
-      booking = await prisma.$transaction(async (tx) => {
-        const freshOccurrence = await tx.class_occurrences.findUnique({ where: { id: occurrence.id } });
-        if (!freshOccurrence || freshOccurrence.status === 'CANCELLED') throw new Error('CLASS_CANCELLED');
-
-        const activeSeatCodes = (
-          await tx.reserved_seats.findMany({
-            where: { classOccurrenceId: occurrence.id },
-            select: { seatCode: true },
-          })
-        ).map((seat) => seat.seatCode);
-
-        const seatValidation = validateSeatSelection({ seatCodes: selectedSeatCodes, capacity: freshOccurrence.capacity, occupiedSeatCodes: activeSeatCodes });
-        if (!seatValidation.ok) throw new Error(`SEAT_CONFLICT:${seatValidation.message}`);
-        if (freshOccurrence.availableSlots < quantity) throw new Error('NOT_ENOUGH_SLOTS');
-
-        const wallet = await tx.client_wallets.findUnique({
-          where: { clientId_classTypeId: { clientId: link.clientId, classTypeId: freshOccurrence.classTypeId } },
-        });
-        if (!wallet || wallet.credits < quantity) throw new Error('NO_CREDITS');
-
-        const already = await tx.bookings.findFirst({
-          where: { clientId: link.clientId, classOccurrenceId: freshOccurrence.id, status: 'BOOKED' },
-        });
-        if (already) throw new Error('ALREADY_BOOKED');
-
-        const created = await tx.bookings.create({
-          data: {
-            bookingRef,
-            clientId: link.clientId,
-            classOccurrenceId: freshOccurrence.id,
-            qrPayload,
-            qrSignature,
-            quantity,
-            seatSummaryJson,
-            status: 'BOOKED',
-          },
-        });
-
-        await tx.reserved_seats.createMany({
-          data: seatValidation.seats.map((seat) => ({
-            bookingId: created.id,
-            classOccurrenceId: freshOccurrence.id,
-            seatCode: seat.code,
-            zone: seat.zone,
-          })),
-        });
-
-        await tx.client_wallets.update({ where: { id: wallet.id }, data: { credits: { decrement: quantity } } });
-        await tx.wallet_ledger.create({
-          data: {
-            walletId: wallet.id,
-            type: 'DEBIT',
-            amount: -quantity,
-            reason: `Reserva confirmada (${quantity} ${quantity === 1 ? 'lugar' : 'lugares'})`,
-            bookingId: created.id,
-          },
-        });
-        await tx.class_occurrences.update({ where: { id: freshOccurrence.id }, data: { availableSlots: { decrement: quantity } } });
-        await tx.magic_links.update({ where: { id: link.id }, data: { usedAt: new Date() } });
-        return created;
+      const result = await fulfillCheckout(prisma, {
+        sessionId,
+        baseUrl: getBaseUrl(req),
       });
+      const reservation = await getReservationResponse(prisma, result.reservation.id, getBaseUrl(req), { createManageLink: result.state === 'paid' });
+      const qrDataUrl =
+        reservation.qrPayload && result.reservation.qrSignature
+          ? await QRCode.toDataURL(JSON.stringify({ ...parseJson(reservation.qrPayload, {}), signature: result.reservation.qrSignature }))
+          : null;
+
+      let heroTitle = 'Estamos revisando tu pago.';
+      let heroCopy = 'Tu reservación se actualiza en cuanto Stripe confirma el resultado final.';
+      let actionMarkup = '<a class="btn alt" href="/classes">Volver a la agenda</a>';
+
+      if (result.state === 'paid') {
+        heroTitle = 'Pago confirmado. Tu acceso ya está listo.';
+        heroCopy = 'Tu reservación quedó pagada y el QR ya fue emitido.';
+        actionMarkup = `
+          ${reservation.manageUrl ? `<a class="btn" href="${reservation.manageUrl}">Abrir detalle de la reservación</a>` : ''}
+          <a class="btn alt" href="/classes">Reservar otra práctica</a>
+        `;
+      } else if (result.state === 'pending_async') {
+        heroTitle = 'Estamos esperando confirmación del pago.';
+        heroCopy = 'Tu lugar sigue apartado temporalmente. Te avisaremos cuando el pago quede aplicado.';
+      } else if (result.state === 'expired' || result.state === 'expired_after_payment') {
+        heroTitle = 'El apartado ya expiró.';
+        heroCopy = 'Si el pago llegó fuera de tiempo, el equipo debe revisarlo manualmente.';
+      } else if (result.state === 'failed') {
+        heroTitle = 'El pago no se completó.';
+        heroCopy = 'Liberamos los lugares para evitar sobreventa. Puedes intentar de nuevo.';
+      }
+
+      const body = `<section class="section"><div class="system-shell">
+        <section class="system-hero">
+          <p class="concept-kicker">TISA / CHECKOUT</p>
+          <h1>${heroTitle}</h1>
+          <p>${heroCopy}</p>
+        </section>
+        <div class="system-grid">
+          <article class="system-panel system-panel-light">
+            <h2>Resumen</h2>
+            <div class="system-detail-list">
+              <div><span>Referencia</span><strong>${esc(reservation.bookingRef)}</strong></div>
+              <div><span>Estado</span><strong>${esc(getBookingStateLabel(reservation.status))}</strong></div>
+              <div><span>Cliente</span><strong>${esc(reservation.customer.email)}</strong></div>
+              <div><span>Total</span><strong>MXN ${(reservation.pricing.totalCents / 100).toLocaleString('es-MX')}</strong></div>
+            </div>
+          </article>
+          <article class="system-panel system-panel-dark">
+            <h2>Próximo paso</h2>
+            ${qrDataUrl ? `<img class="qr" src="${qrDataUrl}" alt="QR de acceso" />` : '<p class="system-inline-note">El QR solo aparece cuando el pago ya está confirmado.</p>'}
+            <div class="system-action-stack">${actionMarkup}</div>
+          </article>
+        </div>
+      </div></section>`;
+      res.send(renderLayout({ title: 'Checkout', body, simulationMode: config.simulationMode }));
     } catch (error) {
-      if (error.code === 'P2002' || String(error.message || '').startsWith('SEAT_CONFLICT:')) {
-        const message = error.code === 'P2002' ? 'Uno de los lugares ya fue ocupado por otra reserva.' : String(error.message).replace('SEAT_CONFLICT:', '');
-        return res.redirect(buildSeatSelectionUrl(occurrence.id, { error: message }));
+      if (error instanceof ReservationError) {
+        return res.status(error.status).send(renderError(error.message));
       }
-      if (String(error.message) === 'NOT_ENOUGH_SLOTS') {
-        return res.redirect(buildSeatSelectionUrl(occurrence.id, { error: 'La clase ya no tiene suficientes lugares libres para esa selección.' }));
-      }
-      if (String(error.message) === 'NO_CREDITS') return res.status(409).send(renderError('No hay créditos suficientes para confirmar esos lugares.'));
-      if (String(error.message) === 'ALREADY_BOOKED') return res.status(409).send(renderError('Ya existe una reserva activa para esta clase con este correo.'));
-      if (String(error.message) === 'CLASS_CANCELLED') return res.status(409).send(renderError('La clase fue cancelada por el trainer.'));
       throw error;
     }
+  });
 
-    const qrDataUrl = await QRCode.toDataURL(JSON.stringify({ ...qrPayloadObj, signature: qrSignature }));
-    const bookingUrlToken = createToken();
-    await prisma.magic_links.create({
-      data: {
-        clientId: link.clientId,
-        tokenHash: hashToken(bookingUrlToken),
-        purpose: `BOOKING_ACCESS:${booking.id}`,
-        expiresAt: dayjs().add(20, 'day').toDate(),
-      },
-    });
+  app.get('/checkout/cancel', async (req, res) => {
+    const reservationId = String(req.query.reservation_id || '');
+    if (!reservationId) return res.status(400).send(renderError('Falta la reservación asociada.'));
 
-    const baseUrl = getBaseUrl(req);
-    const bookingUrl = `${baseUrl}/booking/manage?token=${bookingUrlToken}&bookingId=${booking.id}`;
-    const seatLabels = formatSeatLabels(selectedSeatCodes, occurrence.capacity);
-
-    await sendBookingConfirmationEmail({
-      to: link.client.email,
-      bookingRef: booking.bookingRef,
-      bookingUrl,
-      className: occurrence.classType.name,
-      classDate: dayjs(occurrence.startsAt).format('DD MMM YYYY · HH:mm'),
-      trainerName: occurrence.trainer.displayName,
-      locationName: occurrence.location.name,
-      seatLabels,
-      quantity,
-      qrDataUrl,
-    });
-
-    const body = `<section class="section"><div class="system-shell">
-      <section class="system-hero scroll-hero" data-scroll-target="booking-confirm-detail">
-        <p class="concept-kicker">TISA / CONFIRMACIÓN</p>
-        <h1>Tu reserva ya quedó confirmada.</h1>
-        <p>Referencia <strong>${booking.bookingRef}</strong>. Guarda este QR y revisa el detalle de tus lugares cuando quieras.</p>
-      </section>
-      <div class="system-grid" id="booking-confirm-detail">
-        <article class="system-panel system-panel-light">
-          <h2>Resumen</h2>
-          <div class="system-detail-list">
-            <div><span>Correo</span><strong>${esc(link.client.email)}</strong></div>
-            <div><span>Lugares</span><strong>${esc(seatLabels)}</strong></div>
-            <div><span>Personas</span><strong>${quantity}</strong></div>
-          </div>
-        </article>
-        <article class="system-panel system-panel-dark">
-          <h2>Acceso al estudio</h2>
-          <img class="qr" src="${qrDataUrl}" alt="QR" />
-          <div class="system-action-stack">
-            <a class="btn" href="${bookingUrl}">Ver detalle de la reserva</a>
-            <a class="btn alt" href="/classes">Reservar otra práctica</a>
-          </div>
-        </article>
-      </div>
-    </div></section>`;
-    res.send(renderLayout({ title: 'Reserva confirmada', body, simulationMode: config.simulationMode }));
+    try {
+      const reservation = await getReservationResponse(prisma, reservationId, getBaseUrl(req));
+      const canRetry = reservation.status === 'PENDING_PAYMENT' || reservation.status === 'PAYMENT_PENDING_ASYNC';
+      const body = `<section class="section"><div class="system-shell">
+        <section class="system-hero">
+          <p class="concept-kicker">TISA / CHECKOUT</p>
+          <h1>Checkout cancelado.</h1>
+          <p>No se registró un cobro confirmado. Si el apartado sigue vigente, puedes retomar el pago desde aquí.</p>
+        </section>
+        <div class="system-grid">
+          <article class="system-panel system-panel-light">
+            <h2>Reservación</h2>
+            <div class="system-detail-list">
+              <div><span>Referencia</span><strong>${esc(reservation.bookingRef)}</strong></div>
+              <div><span>Estado</span><strong>${esc(getBookingStateLabel(reservation.status))}</strong></div>
+              <div><span>Expira</span><strong>${reservation.expiresAt ? dayjs(reservation.expiresAt).format('DD MMM · HH:mm') : 'Sin hold activo'}</strong></div>
+            </div>
+          </article>
+          <article class="system-panel system-panel-dark">
+            <h2>Continuar</h2>
+            <div class="system-action-stack">
+              ${canRetry ? `<form method="post" action="/reservations/${reservation.id}/checkout"><input type="hidden" name="salesChannel" value="${esc(reservation.salesChannel || 'web')}" /><button class="btn" type="submit">Reintentar pago</button></form>` : ''}
+              <a class="btn alt" href="/classes">Volver a la agenda</a>
+            </div>
+          </article>
+        </div>
+      </div></section>`;
+      res.send(renderLayout({ title: 'Pago cancelado', body, simulationMode: config.simulationMode }));
+    } catch (error) {
+      if (error instanceof ReservationError) {
+        return res.status(error.status).send(renderError(error.message));
+      }
+      throw error;
+    }
   });
 
   app.get('/booking/manage', async (req, res) => {
@@ -1927,12 +1830,14 @@ export function createApp({ prisma }) {
 
     const booking = await prisma.bookings.findUnique({
       where: { id: bookingId },
-      include: { classOccurrence: { include: { classType: true, trainer: true, location: true } }, client: true },
+      include: { classOccurrence: { include: { classType: true, trainer: true, location: true } }, client: true, reservedSeats: true },
     });
 
     if (!booking) return res.status(404).send(renderError('Reserva no encontrada'));
-    const qrDataUrl = await QRCode.toDataURL(JSON.stringify({ ...parseJson(booking.qrPayload, {}), signature: booking.qrSignature }));
-    const seatSummary = describeSeatCodes(parseJson(booking.seatSummaryJson, []).map((seat) => seat.code || seat.label), booking.classOccurrence.capacity);
+    const qrDataUrl = booking.qrPayload && booking.qrSignature
+      ? await QRCode.toDataURL(JSON.stringify({ ...parseJson(booking.qrPayload, {}), signature: booking.qrSignature }))
+      : null;
+    const seatSummary = describeSeatCodes(booking.reservedSeats.map((seat) => seat.seatCode), booking.classOccurrence.capacity);
     const seatLabels = seatSummary.map((seat) => seat.label).join(', ');
 
     const body = `<section class="section">
@@ -1940,7 +1845,7 @@ export function createApp({ prisma }) {
         <section class="system-hero scroll-hero" data-scroll-target="manage-booking-grid">
           <p class="concept-kicker">TISA / RESERVA</p>
           <h1>Tu reserva permanece contigo hasta el momento de entrar.</h1>
-          <p>Consulta el estado, presenta el QR al llegar y cancela si todavía estás dentro de la ventana permitida.</p>
+          <p>Consulta el estado y presenta el QR cuando el pago ya esté confirmado.</p>
         </section>
         <div class="system-grid" id="manage-booking-grid">
           <article class="system-panel system-panel-light">
@@ -1953,12 +1858,11 @@ export function createApp({ prisma }) {
               <div><span>Personas</span><strong>${booking.quantity}</strong></div>
               <div><span>Estado</span><strong>${getBookingStateLabel(booking.status)}</strong></div>
             </div>
-            ${booking.status === 'BOOKED' ? `<form method="post" action="/bookings/${booking.id}/cancel" class="system-action-stack"><button class="btn alt" type="submit">Cancelar reserva</button></form>` : ''}
           </article>
           <article class="system-panel system-panel-dark">
             <h2>Tu QR de acceso</h2>
-            <p>Presenta este código al llegar al estudio para completar tu entrada del grupo completo.</p>
-            <img class="qr" src="${qrDataUrl}" alt="QR" />
+            <p>${qrDataUrl ? 'Presenta este código al llegar al estudio para completar tu entrada.' : 'El QR aparece aquí solo después de la confirmación definitiva del pago.'}</p>
+            ${qrDataUrl ? `<img class="qr" src="${qrDataUrl}" alt="QR" />` : '<p class="system-inline-note">Aún no hay acceso emitido para esta reservación.</p>'}
           </article>
         </div>
       </div>
@@ -1967,35 +1871,7 @@ export function createApp({ prisma }) {
   });
 
   app.post('/bookings/:id/cancel', async (req, res) => {
-    const booking = await prisma.bookings.findUnique({ where: { id: req.params.id }, include: { classOccurrence: true } });
-    if (!booking || booking.status !== 'BOOKED') return res.status(404).send(renderError('Booking no cancelable'));
-
-    const cutoff = dayjs(booking.classOccurrence.startsAt).subtract(2, 'hour');
-    const eligibleRefund = dayjs().isBefore(cutoff);
-
-    await prisma.$transaction(async (tx) => {
-      await tx.bookings.update({ where: { id: booking.id }, data: { status: 'CANCELLED', cancelledAt: new Date() } });
-      await tx.reserved_seats.deleteMany({ where: { bookingId: booking.id } });
-      await tx.class_occurrences.update({ where: { id: booking.classOccurrenceId }, data: { availableSlots: { increment: booking.quantity } } });
-
-      if (eligibleRefund) {
-        const wallet = await tx.client_wallets.findUnique({ where: { clientId_classTypeId: { clientId: booking.clientId, classTypeId: booking.classOccurrence.classTypeId } } });
-        if (wallet) {
-          await tx.client_wallets.update({ where: { id: wallet.id }, data: { credits: { increment: booking.quantity } } });
-          await tx.wallet_ledger.create({
-            data: {
-              walletId: wallet.id,
-              type: 'REFUND',
-              amount: booking.quantity,
-              reason: 'Cancelación en ventana válida',
-              bookingId: booking.id,
-            },
-          });
-        }
-      }
-    });
-
-    res.redirect('/classes');
+    res.status(409).send(renderError('La cancelación en línea no está disponible en esta fase. Contacta al staff para soporte.'));
   });
 
   app.get('/staff/login', (req, res) => {
@@ -2052,9 +1928,137 @@ export function createApp({ prisma }) {
     req.session.destroy(() => res.redirect('/'));
   });
 
+  const loadAssistedSalesOccurrences = () =>
+    prisma.class_occurrences.findMany({
+      include: { classType: true, trainer: true, location: true },
+      orderBy: { startsAt: 'asc' },
+      take: 24,
+      where: {
+        status: { not: 'CANCELLED' },
+        startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) },
+      },
+    });
+
+  app.get('/admin/assisted-sales', requireStaff, requireRole('ADMIN', 'OPS'), async (req, res) => {
+    const occurrences = await loadAssistedSalesOccurrences();
+    const body = renderAssistedSalesBody({
+      occurrences,
+      form: {
+        occurrenceId: String(req.query.occurrenceId || occurrences[0]?.id || ''),
+        seatCodesText: String(req.query.seatCodesText || ''),
+        customerName: String(req.query.customerName || ''),
+        customerEmail: String(req.query.customerEmail || ''),
+        customerPhone: String(req.query.customerPhone || ''),
+      },
+    });
+    res.send(renderLayout({
+      title: 'Ventas Asistidas',
+      body,
+      staff: req.session.staffName,
+      staffRole: req.session.staffRole,
+      simulationMode: config.simulationMode,
+    }));
+  });
+
+  app.post('/admin/assisted-sales', requireStaff, requireRole('ADMIN', 'OPS'), async (req, res) => {
+    const occurrences = await loadAssistedSalesOccurrences();
+    const form = {
+      occurrenceId: String(req.body.occurrenceId || ''),
+      seatCodesText: String(req.body.seatCodesText || ''),
+      customerName: String(req.body.customerName || ''),
+      customerEmail: String(req.body.customerEmail || ''),
+      customerPhone: String(req.body.customerPhone || ''),
+    };
+    const schema = z.object({
+      occurrenceId: z.string().min(8),
+      customerName: z.string().min(2),
+      customerEmail: z.string().email(),
+      customerPhone: z.string().trim().optional().or(z.literal('')),
+    });
+    const parsed = schema.safeParse(form);
+    if (!parsed.success) {
+      const body = renderAssistedSalesBody({
+        occurrences,
+        form,
+        error: 'Completa clase, nombre y correo para generar el checkout.',
+      });
+      return res.status(400).send(renderLayout({
+        title: 'Ventas Asistidas',
+        body,
+        staff: req.session.staffName,
+        staffRole: req.session.staffRole,
+        simulationMode: config.simulationMode,
+      }));
+    }
+
+    const seatCodes = parseSeatCodesInput(form.seatCodesText);
+    if (seatCodes.length === 0) {
+      const body = renderAssistedSalesBody({
+        occurrences,
+        form,
+        error: 'Captura uno o dos lugares, por ejemplo A1 o A1, A2.',
+      });
+      return res.status(400).send(renderLayout({
+        title: 'Ventas Asistidas',
+        body,
+        staff: req.session.staffName,
+        staffRole: req.session.staffRole,
+        simulationMode: config.simulationMode,
+      }));
+    }
+
+    try {
+      const reservation = await createDraftReservation(prisma, {
+        occurrenceId: parsed.data.occurrenceId,
+        seatCodes,
+        customerName: parsed.data.customerName,
+        customerEmail: parsed.data.customerEmail,
+        customerPhone: parsed.data.customerPhone || '',
+        salesChannel: 'whatsapp',
+      });
+      const checkout = await createCheckoutSessionForReservation(prisma, {
+        reservationId: reservation.id,
+        salesChannel: 'whatsapp',
+        baseUrl: getBaseUrl(req),
+      });
+      const reservationPayload = await getReservationResponse(prisma, reservation.id, getBaseUrl(req));
+      const body = renderAssistedSalesBody({
+        occurrences,
+        form,
+        result: {
+          bookingRef: reservationPayload.bookingRef,
+          checkoutUrl: checkout.checkoutUrl,
+          customerEmail: reservationPayload.customer.email,
+          status: reservationPayload.status,
+          expiresAt: reservationPayload.expiresAt,
+        },
+      });
+      return res.send(renderLayout({
+        title: 'Ventas Asistidas',
+        body,
+        staff: req.session.staffName,
+        staffRole: req.session.staffRole,
+        simulationMode: config.simulationMode,
+      }));
+    } catch (error) {
+      const body = renderAssistedSalesBody({
+        occurrences,
+        form,
+        error: error instanceof ReservationError ? error.message : 'No se pudo crear la reservación asistida.',
+      });
+      return res.status(error instanceof ReservationError ? error.status : 500).send(renderLayout({
+        title: 'Ventas Asistidas',
+        body,
+        staff: req.session.staffName,
+        staffRole: req.session.staffRole,
+        simulationMode: config.simulationMode,
+      }));
+    }
+  });
+
   app.get('/admin/dashboard', requireStaff, requireRole('ADMIN'), async (req, res) => {
     const [bookings, clients, paid, classes] = await Promise.all([
-      prisma.bookings.count({ where: { status: 'BOOKED' } }),
+      prisma.bookings.count({ where: { status: { in: ACTIVE_RESERVATION_STATUSES } } }),
       prisma.clients.count(),
       prisma.payments.count({ where: { status: 'PAID' } }),
       prisma.class_occurrences.count({ where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } } }),
@@ -2066,8 +2070,6 @@ export function createApp({ prisma }) {
       orderBy: { startsAt: 'asc' },
     });
 
-    const rows = topClasses.map((c) => `<tr><td>${esc(c.classType.name)}</td><td>${esc(c.trainer.displayName)}</td><td>${c.capacity - c.availableSlots}/${c.capacity}</td></tr>`).join('');
-
     const body = `<section class="section">
       <div class="system-shell">
         <section class="system-hero scroll-hero" data-scroll-target="admin-metrics">
@@ -2077,6 +2079,7 @@ export function createApp({ prisma }) {
           <div class="system-chip-row">
             <button type="button" class="system-chip-button" data-scroll-target="admin-metrics">Métricas</button>
             <button type="button" class="system-chip-button" data-scroll-target="admin-occupancy">Ocupación</button>
+            <a class="system-chip-button" href="/admin/assisted-sales">Ventas WhatsApp</a>
           </div>
         </section>
         <div class="system-grid">
@@ -2097,7 +2100,13 @@ export function createApp({ prisma }) {
       </div>
     </section>`;
 
-    res.send(renderLayout({ title: 'Admin Dashboard', body, staff: req.session.staffName, simulationMode: config.simulationMode }));
+    res.send(renderLayout({
+      title: 'Admin Dashboard',
+      body,
+      staff: req.session.staffName,
+      staffRole: req.session.staffRole,
+      simulationMode: config.simulationMode,
+    }));
   });
 
   app.get('/trainer/classes', requireStaff, requireRole('TRAINER'), async (req, res) => {
@@ -2115,7 +2124,11 @@ export function createApp({ prisma }) {
             lt: new Date(periodEnd.endOf('day').toISOString()),
           },
         },
-        include: { classType: true, location: true, bookings: { where: { status: 'BOOKED' }, include: { client: true } } },
+        include: {
+          classType: true,
+          location: true,
+          bookings: { where: { status: { in: ACTIVE_RESERVATION_STATUSES } }, include: { client: true } },
+        },
         orderBy: { startsAt: 'asc' },
         take: 200,
       }),
@@ -2233,6 +2246,7 @@ export function createApp({ prisma }) {
             <div class="form-row"><label>Hora inicio</label><input type="time" name="startTime" required /></div>
             <div class="form-row"><label>Duración (min)</label><input type="number" name="durationMin" min="30" max="180" value="60" required /></div>
             <div class="form-row"><label>Cupo</label><input type="number" name="capacity" min="1" max="80" value="18" required /></div>
+            <div class="form-row"><label>Precio por lugar (MXN)</label><input type="number" name="unitPriceMxn" min="0" max="5000" step="0.01" value="350" required /></div>
           </div>
           <button class="btn" type="submit">Guardar en agenda</button>
         </form>
@@ -2258,7 +2272,13 @@ export function createApp({ prisma }) {
       </dialog>
       </div>
     </section>`;
-    res.send(renderLayout({ title: 'Trainer', body, staff: req.session.staffName, simulationMode: config.simulationMode }));
+    res.send(renderLayout({
+      title: 'Trainer',
+      body,
+      staff: req.session.staffName,
+      staffRole: req.session.staffRole,
+      simulationMode: config.simulationMode,
+    }));
   });
 
   app.post('/trainer/classes', requireStaff, requireRole('TRAINER'), async (req, res) => {
@@ -2269,11 +2289,12 @@ export function createApp({ prisma }) {
       startTime: z.string().min(4),
       durationMin: z.coerce.number().int().min(30).max(180),
       capacity: z.coerce.number().int().min(1).max(80),
+      unitPriceMxn: z.coerce.number().min(0).max(5000),
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).send(renderError('Datos inválidos para crear clase.'));
 
-    const { classTypeId, locationId, date, startTime, durationMin, capacity } = parsed.data;
+    const { classTypeId, locationId, date, startTime, durationMin, capacity, unitPriceMxn } = parsed.data;
     const startsAt = dayjs(`${date}T${startTime}`);
     if (!startsAt.isValid()) return res.status(400).send(renderError('Fecha u hora inválida.'));
     if (startsAt.isBefore(dayjs().subtract(5, 'minute'))) return res.status(400).send(renderError('No se puede crear una clase en el pasado.'));
@@ -2291,6 +2312,7 @@ export function createApp({ prisma }) {
         endsAt: endsAt.toDate(),
         capacity,
         availableSlots: capacity,
+        unitPriceCents: Math.round(unitPriceMxn * 100),
         status: 'SCHEDULED',
       },
     });
@@ -2301,12 +2323,17 @@ export function createApp({ prisma }) {
   app.post('/trainer/classes/:id/cancel', requireStaff, requireRole('TRAINER'), async (req, res) => {
     const occurrence = await prisma.class_occurrences.findUnique({
       where: { id: req.params.id },
-      include: { bookings: { where: { status: 'BOOKED' } } },
+      include: { bookings: { where: { status: { in: ACTIVE_RESERVATION_STATUSES } } } },
     });
     if (!occurrence || occurrence.trainerId !== req.session.staffId) {
       return res.status(404).send(renderError('Clase no encontrada para este trainer.'));
     }
     if (occurrence.status === 'CANCELLED') return res.redirect('/trainer/classes');
+
+    const bookingIds = occurrence.bookings.map((booking) => booking.id);
+    const openBookingIds = occurrence.bookings
+      .filter((booking) => OPEN_RESERVATION_STATUSES.includes(booking.status))
+      .map((booking) => booking.id);
 
     await prisma.$transaction(async (tx) => {
       await tx.class_occurrences.update({
@@ -2314,31 +2341,39 @@ export function createApp({ prisma }) {
         data: { status: 'CANCELLED', availableSlots: 0 },
       });
 
-      if (occurrence.bookings.length > 0) {
+      if (bookingIds.length > 0) {
         await tx.bookings.updateMany({
-          where: { classOccurrenceId: occurrence.id, status: 'BOOKED' },
-          data: { status: 'CANCELLED', cancelledAt: new Date() },
+          where: { id: { in: bookingIds } },
+          data: { status: 'CANCELLED', cancelledAt: new Date(), expiresAt: null },
         });
         await tx.reserved_seats.deleteMany({ where: { classOccurrenceId: occurrence.id } });
-
-        for (const booking of occurrence.bookings) {
-          const wallet = await tx.client_wallets.findUnique({
-            where: { clientId_classTypeId: { clientId: booking.clientId, classTypeId: occurrence.classTypeId } },
-          });
-          if (wallet) {
-            await tx.client_wallets.update({ where: { id: wallet.id }, data: { credits: { increment: booking.quantity } } });
-            await tx.wallet_ledger.create({
-              data: {
-                walletId: wallet.id,
-                type: 'REFUND',
-                amount: booking.quantity,
-                reason: 'Clase cancelada por trainer',
-                bookingId: booking.id,
-              },
-            });
-          }
-        }
       }
+
+      if (openBookingIds.length > 0) {
+        await tx.payments.updateMany({
+          where: {
+            bookingId: { in: openBookingIds },
+            status: { in: ['CREATED', 'PENDING_ASYNC'] },
+          },
+          data: { status: 'FAILED' },
+        });
+      }
+
+      if (bookingIds.length > 0) {
+        await tx.audit_events.create({
+          data: {
+            actorType: 'staff',
+            actorId: req.session.staffId,
+            action: 'CLASS_CANCELLED',
+            entityType: 'class_occurrence',
+            entityId: occurrence.id,
+            metadata: JSON.stringify({
+              bookingIds,
+              requiresManualRefundReview: occurrence.bookings.some((booking) => booking.status === 'PAID' || booking.status === 'CHECKED_IN'),
+            }),
+          },
+        });
+        }
     });
 
     res.redirect('/trainer/classes');
@@ -2375,7 +2410,13 @@ export function createApp({ prisma }) {
         }
       </script>
     </section>`;
-    res.send(renderLayout({ title: 'Ops Check-in', body, staff: req.session.staffName, simulationMode: config.simulationMode }));
+    res.send(renderLayout({
+      title: 'Ops Check-in',
+      body,
+      staff: req.session.staffName,
+      staffRole: req.session.staffRole,
+      simulationMode: config.simulationMode,
+    }));
   });
 
   app.post('/ops/checkin/scan', requireStaff, requireRole('OPS', 'ADMIN'), async (req, res) => {
@@ -2399,18 +2440,20 @@ export function createApp({ prisma }) {
 
     const booking = await prisma.bookings.findUnique({
       where: { bookingRef: booking_ref },
-      include: { classOccurrence: true, client: true },
+      include: { classOccurrence: true, client: true, reservedSeats: true },
     });
     if (!booking || booking.classOccurrenceId !== occurrence_id || booking.clientId !== client_ref) {
       return res.status(404).send(renderError('Booking no coincide con payload'));
     }
     if (booking.status === 'CHECKED_IN') return res.status(409).send(renderError('Cliente ya ingresó'));
-    if (booking.status !== 'BOOKED') return res.status(409).send(renderError('Booking no está activo'));
+    if (!CONFIRMED_RESERVATION_STATUSES.includes(booking.status)) {
+      return res.status(409).send(renderError('La reservación aún no está pagada o ya no está activa.'));
+    }
 
     const classStart = dayjs(booking.classOccurrence.startsAt);
     const classEnd = dayjs(booking.classOccurrence.endsAt);
     const now = dayjs();
-    if (now.isBefore(classStart.subtract(30, 'minute')) || now.isAfter(classEnd.add(20, 'minute'))) {
+    if (!isWithinCheckinWindow(now.toISOString(), classStart.toISOString(), classEnd.toISOString())) {
       return res.status(409).send(renderError('Fuera de ventana de check-in'));
     }
 
@@ -2419,7 +2462,7 @@ export function createApp({ prisma }) {
       await tx.checkins.create({ data: { bookingId: booking.id, staffId: req.session.staffId, method: 'QR_CAMERA_OR_MANUAL' } });
     });
 
-    const seatLabels = describeSeatCodes(parseJson(booking.seatSummaryJson, []).map((seat) => seat.code || seat.label), booking.classOccurrence.capacity)
+    const seatLabels = describeSeatCodes(booking.reservedSeats.map((seat) => seat.seatCode), booking.classOccurrence.capacity)
       .map((seat) => seat.label)
       .join(', ');
 
@@ -2443,7 +2486,13 @@ export function createApp({ prisma }) {
         </article>
       </div>
     </div></section>`;
-    res.send(renderLayout({ title: 'Check-in OK', body, staff: req.session.staffName, simulationMode: config.simulationMode }));
+    res.send(renderLayout({
+      title: 'Check-in OK',
+      body,
+      staff: req.session.staffName,
+      staffRole: req.session.staffRole,
+      simulationMode: config.simulationMode,
+    }));
   });
 
   app.get('/health', (req, res) => res.json({ status: 'ok', app: 'tisa-studio' }));

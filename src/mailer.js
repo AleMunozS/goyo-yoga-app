@@ -1,14 +1,17 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import ejs from 'ejs';
 import nodemailer from 'nodemailer';
 import { config } from './config.js';
-import { esc } from './utils.js';
 
 let transportPromise;
+
+const templatesDir = fileURLToPath(new URL('./views/email', import.meta.url));
 
 function getMailerSettings() {
   const configured = Boolean(config.smtpHost && config.smtpPort && config.smtpUser && config.smtpPass);
   if (!configured) {
-    if (config.simulationMode) return null;
-    throw new Error('SMTP no está configurado. Define SMTP_HOST, SMTP_PORT, SMTP_USER y SMTP_PASS.');
+    return null;
   }
   return {
     host: config.smtpHost,
@@ -30,12 +33,29 @@ async function getTransport() {
   return transportPromise;
 }
 
-async function sendMail({ to, subject, html, text }) {
+async function renderEmailTemplate(templateName, data) {
+  const templatePath = path.join(templatesDir, `${templateName}.ejs`);
+  return ejs.renderFile(templatePath, data);
+}
+
+function attachmentFromDataUrl(dataUrl, filename, contentId) {
+  const match = String(dataUrl || '').match(/^data:(.+?);base64,(.+)$/);
+  if (!match) return null;
+
+  return {
+    filename,
+    content: Buffer.from(match[2], 'base64'),
+    contentType: match[1],
+    cid: contentId,
+  };
+}
+
+async function sendMail({ to, subject, html, text, attachments = [] }) {
   const transport = await getTransport();
   if (!transport) {
-    console.log(`[mail:simulation] to=${to} subject="${subject}"`);
+    console.log(`[mail:skipped] to=${to} subject="${subject}" smtp_configured=false simulation_mode=${config.simulationMode}`);
     console.log(text);
-    return { simulated: true };
+    return { skipped: true };
   }
 
   return transport.sendMail({
@@ -44,26 +64,30 @@ async function sendMail({ to, subject, html, text }) {
     subject,
     text,
     html,
+    attachments,
   });
 }
 
 export async function sendMagicLinkEmail({ to, bookingUrl, className, classDate, trainerName, locationName, seatLabels }) {
   const subject = `Tu acceso para ${className}`;
-  const html = `
-    <div style="font-family:Arial,sans-serif;color:#2f2924;line-height:1.6">
-      <h2 style="margin-bottom:8px;">Tu acceso temporal ya está listo</h2>
-      <p>Recibimos tu selección para <strong>${esc(className)}</strong>.</p>
-      <ul>
-        <li><strong>Horario:</strong> ${esc(classDate)}</li>
-        <li><strong>Guía:</strong> ${esc(trainerName)}</li>
-        <li><strong>Estudio:</strong> ${esc(locationName)}</li>
-        <li><strong>Lugares:</strong> ${esc(seatLabels)}</li>
-      </ul>
-      <p>Usa este enlace privado para continuar tu reserva:</p>
-      <p><a href="${bookingUrl}">${bookingUrl}</a></p>
-      <p>El enlace vence en 30 minutos.</p>
-    </div>
-  `;
+  const html = await renderEmailTemplate('magic-link', {
+    previewText: `Continúa tu reservación para ${className}.`,
+    accentLabel: 'ACCESO PRIVADO',
+    title: 'Tu acceso temporal ya está listo',
+    intro: `Recibimos tu selección para ${className}. Usa este enlace privado para continuar tu reservación sin volver a empezar.`,
+    bookingUrl,
+    ctaLabel: 'Continuar reservación',
+    chips: ['Enlace privado', 'Validez 30 min', 'Flujo directo'],
+    details: [
+      { label: 'Clase', value: className },
+      { label: 'Horario', value: classDate },
+      { label: 'Guía', value: trainerName },
+      { label: 'Estudio', value: locationName },
+      { label: 'Lugares', value: seatLabels },
+    ],
+    note: 'Este enlace vence en 30 minutos. Si el tiempo se agota, solo crea una nueva selección desde la agenda.',
+    footerText: 'TISA Studio System',
+  });
   const text = [
     'Tu acceso temporal ya está listo.',
     `Clase: ${className}`,
@@ -91,23 +115,30 @@ export async function sendBookingConfirmationEmail({
   qrDataUrl,
 }) {
   const subject = `QR de acceso ${bookingRef}`;
-  const html = `
-    <div style="font-family:Arial,sans-serif;color:#2f2924;line-height:1.6">
-      <h2 style="margin-bottom:8px;">Tu reserva quedó confirmada</h2>
-      <p>Referencia <strong>${esc(bookingRef)}</strong>.</p>
-      <ul>
-        <li><strong>Clase:</strong> ${esc(className)}</li>
-        <li><strong>Horario:</strong> ${esc(classDate)}</li>
-        <li><strong>Guía:</strong> ${esc(trainerName)}</li>
-        <li><strong>Estudio:</strong> ${esc(locationName)}</li>
-        <li><strong>Lugares:</strong> ${esc(seatLabels)}</li>
-        <li><strong>Personas:</strong> ${quantity}</li>
-      </ul>
-      <p>Puedes presentar este QR al llegar o abrir el detalle completo de tu reserva:</p>
-      <p><a href="${bookingUrl}">${bookingUrl}</a></p>
-      <p><img alt="QR de acceso" src="${qrDataUrl}" style="width:180px;height:180px;border-radius:12px;background:#fff;padding:8px;" /></p>
-    </div>
-  `;
+  const qrAttachment = qrDataUrl ? attachmentFromDataUrl(qrDataUrl, `${bookingRef}-qr.png`, `qr-${bookingRef}@tisa.local`) : null;
+  const html = await renderEmailTemplate('booking-confirmation', {
+    previewText: `Tu reserva ${bookingRef} ya está confirmada.`,
+    accentLabel: 'PAGO CONFIRMADO',
+    title: 'Tu reserva quedó confirmada',
+    intro: 'Tu pago ya quedó aplicado y el QR de acceso está listo. Presenta este correo al llegar o abre el detalle completo de tu reservación.',
+    bookingRef,
+    bookingUrl,
+    ctaLabel: 'Abrir detalle de la reservación',
+    chips: ['QR activo', 'Reserva asegurada', 'Acceso listo'],
+    details: [
+      { label: 'Referencia', value: bookingRef },
+      { label: 'Clase', value: className },
+      { label: 'Horario', value: classDate },
+      { label: 'Guía', value: trainerName },
+      { label: 'Estudio', value: locationName },
+      { label: 'Lugares', value: seatLabels },
+      { label: 'Personas', value: String(quantity) },
+    ],
+    qrImageSrc: qrAttachment ? `cid:${qrAttachment.cid}` : null,
+    qrCaption: 'Escanea este QR en recepción para validar tu acceso.',
+    note: 'Si necesitas soporte, responde a este correo y menciona tu referencia.',
+    footerText: 'TISA Studio System',
+  });
   const text = [
     'Tu reserva quedó confirmada.',
     `Referencia: ${bookingRef}`,
@@ -120,5 +151,11 @@ export async function sendBookingConfirmationEmail({
     `Detalle: ${bookingUrl}`,
   ].join('\n');
 
-  return sendMail({ to, subject, html, text });
+  return sendMail({
+    to,
+    subject,
+    html,
+    text,
+    attachments: qrAttachment ? [qrAttachment] : [],
+  });
 }
