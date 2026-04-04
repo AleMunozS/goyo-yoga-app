@@ -188,6 +188,7 @@
 
     if (seatViewport && seatCanvas) {
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+      const isSeatTarget = (target) => target instanceof Element && Boolean(target.closest('[data-seat-option]'));
       const pointers = new Map();
       let scale = 1;
       let minScale = 1;
@@ -261,6 +262,7 @@
       );
 
       seatViewport.addEventListener('pointerdown', (event) => {
+        if (isSeatTarget(event.target)) return;
         pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
         seatViewport.setPointerCapture?.(event.pointerId);
         if (pointers.size === 2) {
@@ -272,7 +274,6 @@
           return;
         }
 
-        if (event.target.closest('[data-seat-option]')) return;
         panPointerId = event.pointerId;
         lastPoint = { x: event.clientX, y: event.clientY };
         seatViewport.classList.add('is-panning');
