@@ -58,14 +58,22 @@ async function sendMail({ to, subject, html, text, attachments = [] }) {
     return { skipped: true };
   }
 
-  return transport.sendMail({
-    from: config.smtpFrom,
-    to,
-    subject,
-    text,
-    html,
-    attachments,
-  });
+  try {
+    return await transport.sendMail({
+      from: config.smtpFrom,
+      to,
+      subject,
+      text,
+      html,
+      attachments,
+    });
+  } catch (error) {
+    console.error(`[mail:error] to=${to} subject="${subject}" message=${error.message}`);
+    return {
+      failed: true,
+      error: error.message,
+    };
+  }
 }
 
 export async function sendMagicLinkEmail({ to, bookingUrl, className, classDate, trainerName, locationName, seatLabels }) {
