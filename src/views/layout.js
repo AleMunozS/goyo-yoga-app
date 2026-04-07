@@ -1,9 +1,10 @@
 import { esc } from '../utils.js';
+import { brand } from '../brand.js';
 
 export function renderLayout({ title, body, staff = null, staffRole = null, simulationMode = true }) {
   const isConceptBoard = title.startsWith('Concept') && !staff;
   const isHome = title === 'Inicio' && !staff;
-  const appName = 'TISA';
+  const appName = brand.name;
   const canAccessAssistedSales = staffRole === 'ADMIN' || staffRole === 'OPS';
   const nav = staff
     ? `
@@ -31,8 +32,8 @@ export function renderLayout({ title, body, staff = null, staffRole = null, simu
       <nav class="top-nav public-nav">
         <a href="/">Inicio</a>
         <a href="/classes">Agenda</a>
-        <a href="/staff/login">Staff</a>
         <a class="nav-cta" href="/classes">Reservar</a>
+        <a href="/staff/login">Staff</a>
       </nav>
     `;
 
@@ -41,19 +42,28 @@ export function renderLayout({ title, body, staff = null, staffRole = null, simu
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="${esc(brand.metaDescription)}" />
+    <meta name="theme-color" content="#f4eee6" />
     <title>${esc(title)} | ${appName}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css" />
-    <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
   </head>
-  <body class="${staff ? 'is-staff' : 'is-public'} ${isConceptBoard ? 'is-concept-board' : ''} ${isHome ? 'is-home has-landing-intro' : ''}">
+  <body
+    class="theme-tisa ${staff ? 'is-staff' : 'is-public'} ${isConceptBoard ? 'is-concept-board' : ''} ${isHome ? 'is-home has-landing-intro' : ''}"
+    style="--landing-side-emblem:url('${brand.assets.landingSideEmblem}');"
+  >
     ${simulationMode && !isConceptBoard ? '<div class="sim-banner">Modo simulación activo (no producción)</div>' : ''}
     <header class="site-header ${isConceptBoard ? 'concept-header' : ''}">
       <a class="brand" href="/">
-        <span>TISA</span>
-        <small>Studio System</small>
+        <img
+          class="brand-lockup"
+          src="${brand.assets.headerLogo}"
+          alt="${esc(brand.name)}"
+          width="1130"
+          height="384"
+        />
       </a>
       ${nav}
     </header>

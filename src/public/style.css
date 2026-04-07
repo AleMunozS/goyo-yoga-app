@@ -24,7 +24,7 @@ body {
 }
 
 body {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Manrope', sans-serif;
   color: var(--pizarra);
   background:
     radial-gradient(circle at 10% 0%, rgba(152, 109, 79, 0.22), transparent 35%),
@@ -300,6 +300,13 @@ main,
   font-size: 2rem;
   color: var(--tierra-tostada);
   letter-spacing: 0.06em;
+}
+
+.brand-lockup {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
 }
 
 .top-nav {
@@ -2489,8 +2496,9 @@ textarea {
 .brand {
   display: inline-flex;
   flex-direction: column;
-  gap: 0.08rem;
+  gap: 0;
   text-decoration: none;
+  line-height: 0;
 }
 
 .brand span {
@@ -2499,7 +2507,7 @@ textarea {
 }
 
 .brand small {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -4147,5 +4155,1292 @@ body.is-concept-board::before {
 
   .admin-metric-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+:root {
+  --caliza: #f5efe6;
+  --yeso: #ece3d7;
+  --arena-profunda: #c3b29e;
+  --arcilla: #a87657;
+  --tierra-tostada: #5e4434;
+  --pizarra: #3d332d;
+  --olivo-mineral: #7f8767;
+  --musgo: #68735d;
+  --bosque-seco: #4d5142;
+  --bruma-azul: #8d9598;
+}
+
+body.theme-tisa {
+  font-family: 'Manrope', sans-serif;
+  color: var(--pizarra);
+  background:
+    radial-gradient(circle at top left, rgba(202, 182, 156, 0.18), transparent 28%),
+    linear-gradient(180deg, #f7f2ea 0%, #f1e8dd 42%, #eee4d8 100%);
+}
+
+body.theme-tisa::before {
+  display: none;
+}
+
+.theme-tisa .sim-banner {
+  background: #4f5346;
+  color: #f6f0e7;
+  letter-spacing: 0.08em;
+}
+
+.theme-tisa .site-header {
+  padding: 1.05rem 1.4rem;
+  background: rgba(247, 242, 234, 0.9);
+  border-bottom: 1px solid rgba(94, 68, 52, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.theme-tisa .brand {
+  display: inline-flex;
+  align-items: flex-start;
+  width: clamp(162px, 15vw, 236px);
+  flex-shrink: 0;
+  color: var(--tierra-tostada);
+  text-decoration: none;
+}
+
+.theme-tisa .brand small {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(78, 73, 67, 0.64);
+}
+
+.theme-tisa .top-nav a,
+.theme-tisa .top-nav button {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: rgba(61, 51, 45, 0.82);
+}
+
+.theme-tisa .public-nav {
+  gap: 1.2rem;
+}
+
+.theme-tisa .public-nav .nav-cta {
+  padding: 0.72rem 1.15rem;
+  border-radius: 999px;
+  background: #5e4434;
+  color: #f7f0e7;
+  box-shadow: 0 12px 28px rgba(67, 48, 35, 0.14);
+}
+
+.theme-tisa h1,
+.theme-tisa h2,
+.theme-tisa h3,
+.theme-tisa .hero h1,
+.theme-tisa .section h2,
+.theme-tisa .system-hero h1,
+.theme-tisa .system-panel h2,
+.theme-tisa .page-hero h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.theme-tisa .btn {
+  background: #5e4434;
+  color: #f8f1e8;
+  border: 1px solid rgba(94, 68, 52, 0.14);
+  box-shadow: 0 12px 24px rgba(86, 63, 46, 0.12);
+}
+
+.theme-tisa .btn.alt {
+  background: rgba(255, 255, 255, 0.66);
+  color: var(--tierra-tostada);
+  border-color: rgba(94, 68, 52, 0.14);
+}
+
+.theme-tisa input,
+.theme-tisa select,
+.theme-tisa textarea {
+  border-radius: 16px;
+  border: 1px solid rgba(94, 68, 52, 0.12);
+  background: rgba(255, 252, 248, 0.88);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.home-shell {
+  width: min(1520px, calc(100vw - 56px));
+  max-width: none;
+  margin: 0 auto;
+  padding-top: 1.1rem;
+  display: grid;
+  gap: 1.2rem;
+}
+
+.home-shell > .section,
+.home-shell > .tisa-home-overview {
+  max-width: none;
+  padding: 0;
+}
+
+.tisa-home-hero,
+.page-hero,
+.system-hero,
+.status-card {
+  border-radius: 34px;
+  overflow: hidden;
+}
+
+.tisa-home-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  gap: 1.2rem;
+  padding: 1.2rem;
+  background:
+    linear-gradient(120deg, rgba(255, 250, 244, 0.78), rgba(244, 236, 225, 0.88)),
+    url('/static/tisa-mineral-surface.jpg') center center / cover no-repeat;
+  border: 1px solid rgba(94, 68, 52, 0.08);
+  box-shadow: 0 26px 60px rgba(89, 66, 49, 0.08);
+}
+
+.tisa-home-hero-copy,
+.page-hero-copy {
+  padding: clamp(1.3rem, 3vw, 2.3rem);
+}
+
+.tisa-home-hero-copy h1,
+.page-hero h1,
+.status-card h1 {
+  margin: 0;
+  max-width: 11.5ch;
+  font-size: clamp(3.2rem, 5vw, 5.5rem);
+  line-height: 0.9;
+}
+
+.page-kicker,
+.concept-kicker,
+.eyebrow {
+  margin-bottom: 0.7rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(94, 68, 52, 0.62);
+}
+
+.home-shell .section-heading {
+  max-width: min(920px, 100%);
+  margin-bottom: 1.35rem;
+}
+
+.home-shell .section-heading h2 {
+  font-size: clamp(3.2rem, 4.8vw, 5rem);
+  line-height: 0.92;
+  max-width: 12ch;
+}
+
+.home-shell .section-heading p:not(.eyebrow) {
+  font-size: 1.05rem;
+  max-width: 62ch;
+}
+
+.page-lede,
+.theme-tisa .system-hero p:last-child,
+.theme-tisa .status-card p:last-child {
+  max-width: 58ch;
+  margin-top: 1rem;
+  line-height: 1.8;
+  color: rgba(61, 51, 45, 0.78);
+}
+
+.tisa-home-hero-side,
+.page-hero-side {
+  display: grid;
+  gap: 0.9rem;
+  padding: clamp(1.1rem, 2.6vw, 1.9rem) clamp(1rem, 2.3vw, 1.6rem);
+}
+
+.tisa-home-overview .grid,
+.home-shell .ritual-grid,
+.home-shell .grid {
+  gap: 1.2rem;
+}
+
+.tisa-media-frame,
+.tisa-image-panel {
+  margin: 0;
+  border-radius: 28px;
+  overflow: hidden;
+  min-height: 100%;
+  background: #e9ded0;
+}
+
+.tisa-media-frame img,
+.tisa-image-panel img,
+.system-media-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.spotlight-card,
+.mini-stat,
+.tisa-card,
+.system-panel,
+.status-card,
+.calendar-shell,
+.calendar-range,
+.ui-status-banner {
+  border: 1px solid rgba(94, 68, 52, 0.1);
+  box-shadow: 0 18px 38px rgba(76, 57, 42, 0.08);
+}
+
+.tisa-card,
+.spotlight-card,
+.mini-stat,
+.status-card,
+.ops-showcase,
+.system-panel-light,
+.calendar-shell,
+.schedule-board {
+  background: rgba(252, 248, 243, 0.9);
+}
+
+.spotlight-card,
+.mini-stat,
+.tisa-card,
+.status-card {
+  border-radius: 26px;
+}
+
+.spotlight-card {
+  padding: 1.2rem 1.25rem;
+}
+
+.spotlight-card strong {
+  display: block;
+  line-height: 1.45;
+}
+
+.spotlight-card p {
+  margin: 0.55rem 0 0;
+  line-height: 1.65;
+  color: rgba(61, 51, 45, 0.76);
+}
+
+.spotlight-card-texture {
+  background:
+    linear-gradient(150deg, rgba(251, 247, 241, 0.84), rgba(244, 234, 221, 0.88)),
+    url('/static/tisa-mineral-surface.jpg') center center / cover no-repeat;
+}
+
+.mini-stat-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1.2rem;
+}
+
+.mini-stat strong {
+  display: block;
+  margin-top: 0.45rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.45rem;
+  color: var(--tierra-tostada);
+}
+
+.tisa-image-panel {
+  padding: 0;
+  min-height: 420px;
+}
+
+.theme-tisa .split-left,
+.theme-tisa .split-right,
+.theme-tisa .schedule-board,
+.theme-tisa .ops-showcase {
+  border-radius: 30px;
+  border: 1px solid rgba(94, 68, 52, 0.08);
+  box-shadow: 0 20px 42px rgba(81, 60, 44, 0.08);
+}
+
+.home-shell .split-section {
+  display: grid;
+  grid-template-columns: minmax(560px, 1.05fr) minmax(480px, 0.95fr);
+  gap: 1rem;
+}
+
+.home-editorial-section,
+.home-full-span-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.home-editorial-section {
+  grid-template-columns: minmax(300px, 0.44fr) minmax(0, 0.56fr);
+  align-items: start;
+}
+
+.home-editorial-heading {
+  position: sticky;
+  top: 118px;
+  margin-bottom: 0;
+}
+
+.home-editorial-heading.section-heading-surface {
+  padding: 1.15rem 1.2rem 1.25rem;
+}
+
+.home-editorial-content {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.home-practice-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.home-journey-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.home-pricing-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.home-practice-grid > .card:only-child,
+.home-pricing-grid > .card:only-child {
+  grid-column: 1 / -1;
+}
+
+.home-empty-card {
+  min-height: 220px;
+  display: grid;
+  align-content: center;
+}
+
+.home-shell .split-left {
+  padding: 1.3rem 1.4rem 1.45rem;
+}
+
+.home-shell .split-left h2 {
+  font-size: clamp(4rem, 5vw, 5.6rem);
+  line-height: 0.9;
+  max-width: 10ch;
+}
+
+.home-shell .split-left p:not(.eyebrow):not(.quote) {
+  max-width: 26ch;
+  font-size: 1.02rem;
+}
+
+.home-shell .quote {
+  max-width: 18ch;
+  font-size: clamp(2rem, 2.6vw, 2.8rem);
+  line-height: 1;
+}
+
+.theme-tisa .split-left {
+  background: rgba(252, 248, 243, 0.92);
+}
+
+.theme-tisa .split-right {
+  background: #e9dfd2;
+}
+
+.page-shell {
+  padding-top: 1.15rem;
+}
+
+.page-hero,
+.system-hero,
+.status-card {
+  padding: 1.3rem;
+  background:
+    linear-gradient(130deg, rgba(255, 251, 246, 0.94), rgba(242, 232, 220, 0.88)),
+    url('/static/tisa-mineral-surface.jpg') center center / cover no-repeat;
+  border: 1px solid rgba(94, 68, 52, 0.08);
+  box-shadow: 0 24px 54px rgba(76, 57, 42, 0.08);
+  color: var(--pizarra);
+}
+
+.status-card-error {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.page-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  gap: 1rem;
+}
+
+.system-panel {
+  padding: 1.3rem;
+  border-radius: 28px;
+}
+
+.system-panel-dark,
+.ops-showcase {
+  background:
+    linear-gradient(160deg, rgba(94, 68, 52, 0.96), rgba(69, 58, 48, 0.94)),
+    url('/static/tisa-mineral-surface.jpg') center center / cover no-repeat;
+  color: #f7f0e7;
+}
+
+.system-panel-texture {
+  background:
+    linear-gradient(140deg, rgba(252, 248, 243, 0.88), rgba(244, 235, 223, 0.9)),
+    url('/static/tisa-mineral-surface.jpg') center center / cover no-repeat;
+}
+
+.system-panel-texture-dark {
+  background:
+    linear-gradient(160deg, rgba(94, 68, 52, 0.96), rgba(69, 58, 48, 0.94)),
+    url('/static/tisa-mineral-surface.jpg') center center / cover no-repeat;
+}
+
+.theme-tisa .system-panel-dark h2,
+.theme-tisa .system-panel-dark p,
+.theme-tisa .system-panel-dark span,
+.theme-tisa .system-panel-dark strong,
+.theme-tisa .ops-copy p,
+.theme-tisa .ops-copy .eyebrow {
+  color: #f7f0e7;
+}
+
+.system-media-card {
+  margin: 1rem 0 0;
+  overflow: hidden;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(94, 68, 52, 0.08);
+}
+
+.system-media-card img {
+  aspect-ratio: 16 / 10;
+}
+
+.system-media-card figcaption {
+  padding: 0.9rem 1rem 1rem;
+  line-height: 1.6;
+  color: rgba(61, 51, 45, 0.74);
+}
+
+.theme-tisa .system-inline-note {
+  display: inline-block;
+  margin-top: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(94, 68, 52, 0.08);
+}
+
+.calendar-shell,
+.schedule-board {
+  background: rgba(252, 248, 243, 0.9);
+  border-radius: 30px;
+}
+
+.calendar-grid-header {
+  background: rgba(245, 236, 225, 0.94);
+}
+
+.calendar-class-block {
+  border-radius: 20px;
+  padding: 0.85rem 0.9rem;
+  background: linear-gradient(160deg, rgba(255, 250, 245, 0.96), rgba(239, 227, 214, 0.94));
+  border: 1px solid rgba(94, 68, 52, 0.1);
+  color: var(--pizarra);
+  box-shadow: 0 14px 28px rgba(76, 57, 42, 0.08);
+}
+
+.timeline-row {
+  text-decoration: none;
+  color: inherit;
+  border-radius: 18px;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(94, 68, 52, 0.08);
+  background: rgba(255, 251, 246, 0.76);
+  margin-bottom: 0.7rem;
+}
+
+.timeline-row strong {
+  font-size: 1.25rem;
+}
+
+.timeline-row p,
+.timeline-row small {
+  font-size: 0.97rem;
+}
+
+.proof-chip {
+  background: rgba(255, 255, 255, 0.72);
+  color: rgba(94, 68, 52, 0.84);
+  border: 1px solid rgba(94, 68, 52, 0.08);
+}
+
+.tisa-principle-card {
+  min-height: 206px;
+  padding: 1.15rem 1.15rem 1.2rem;
+}
+
+.tisa-principle-card h3 {
+  font-size: 1.15rem;
+  line-height: 1.05;
+  margin: 0.15rem 0 0.75rem;
+}
+
+.tisa-principle-card p {
+  font-size: 0.98rem;
+  line-height: 1.52;
+}
+
+.experience-card {
+  min-height: 250px;
+  padding: 1.2rem 1.2rem 1.25rem;
+}
+
+.experience-card h3 {
+  font-size: 2rem;
+  line-height: 0.96;
+  margin: 0.15rem 0 0.45rem;
+}
+
+.experience-card p {
+  font-size: 1rem;
+  line-height: 1.58;
+}
+
+.home-practice-grid .experience-card,
+.home-pricing-grid > .card {
+  min-height: 280px;
+}
+
+.home-journey-grid .ritual-card {
+  min-height: 260px;
+}
+
+.schedule-board {
+  padding: 1.35rem 1.4rem 1.45rem;
+}
+
+.ops-showcase {
+  padding: 1.35rem 1.4rem 1.45rem;
+}
+
+.ritual-step,
+.status-pill {
+  background: rgba(94, 68, 52, 0.92);
+  color: #f7f0e7;
+}
+
+.seat-map-module,
+.seat-status-banner,
+.seat-map-viewport,
+.booking-modal-card {
+  border-radius: 26px;
+}
+
+.ui-status-banner {
+  border-radius: 24px;
+  background: rgba(255, 251, 246, 0.72);
+}
+
+.qr {
+  border-radius: 20px;
+  padding: 0.7rem;
+  box-shadow: 0 18px 34px rgba(22, 17, 15, 0.2);
+}
+
+@media (max-width: 1100px) {
+  .tisa-home-hero,
+  .page-hero-grid,
+  .theme-tisa .system-grid,
+  .theme-tisa .split-section {
+    grid-template-columns: 1fr;
+  }
+
+  .tisa-image-panel {
+    min-height: 320px;
+  }
+
+  .home-shell {
+    width: min(100vw - 32px, 1320px);
+  }
+
+  .home-shell .split-section {
+    grid-template-columns: 1fr;
+  }
+
+  .home-editorial-section,
+  .home-practice-grid,
+  .home-journey-grid,
+  .home-pricing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-editorial-heading {
+    position: static;
+  }
+
+  .home-shell .split-left h2,
+  .home-shell .section-heading h2 {
+    max-width: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .theme-tisa .site-header {
+    padding: 0.7rem 0.85rem 0.78rem;
+  }
+
+  .theme-tisa .brand {
+    width: 112px;
+  }
+
+  .theme-tisa .brand-lockup {
+    width: 112px;
+    max-width: 112px;
+  }
+
+  .theme-tisa .section {
+    padding: 1rem;
+  }
+
+  .home-shell {
+    width: min(100vw - 20px, 100%);
+    gap: 1rem;
+  }
+
+  .tisa-home-hero,
+  .page-hero,
+  .system-hero,
+  .system-panel,
+  .status-card,
+  .schedule-board,
+  .ops-showcase {
+    border-radius: 24px;
+  }
+
+  .mini-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tisa-home-hero-copy h1,
+  .page-hero h1,
+  .status-card h1,
+  .system-hero h1 {
+    max-width: none;
+    font-size: clamp(2.6rem, 12vw, 4.2rem);
+  }
+
+  .home-shell .split-left h2,
+  .home-shell .section-heading h2 {
+    font-size: clamp(2.7rem, 11vw, 4rem);
+    line-height: 0.92;
+  }
+
+  .home-editorial-heading.section-heading-surface,
+  .schedule-board,
+  .ops-showcase {
+    padding: 1rem;
+  }
+
+  .home-shell .split-left p:not(.eyebrow):not(.quote),
+  .home-shell .quote,
+  .home-shell .section-heading p:not(.eyebrow) {
+    max-width: none;
+  }
+}
+
+.landing-page {
+  width: min(1680px, calc(100vw - 48px));
+  margin: 0 auto;
+  padding: clamp(1rem, 1.6vw, 1.4rem) 0 3rem;
+  display: grid;
+  gap: clamp(1rem, 1.4vw, 1.4rem);
+  position: relative;
+  z-index: 1;
+}
+
+.is-home main {
+  isolation: isolate;
+}
+
+.is-home main::before,
+.is-home main::after {
+  content: '';
+  position: fixed;
+  top: clamp(6.25rem, 8vw, 9.5rem);
+  height: min(78vh, 920px);
+  width: clamp(240px, 20vw, 340px);
+  background-image: var(--landing-side-emblem);
+  background-position: top center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: none;
+  opacity: 0.38;
+  mix-blend-mode: multiply;
+  filter: saturate(0.92) brightness(0.96);
+  z-index: 0;
+  will-change: transform, opacity;
+}
+
+.is-home main::before {
+  left: clamp(0.25rem, 1.2vw, 1.75rem);
+  transform: translateY(calc(var(--landing-emblem-shift, 0px) * 0.14));
+}
+
+.is-home main::after {
+  right: clamp(0.25rem, 1.2vw, 1.75rem);
+  transform: translateY(calc(var(--landing-emblem-shift, 0px) * 0.14)) scaleX(-1);
+}
+
+.landing-page > * {
+  position: relative;
+  z-index: 1;
+}
+
+body.has-landing-intro.is-home main::before,
+body.has-landing-intro.is-home main::after {
+  opacity: 0;
+}
+
+.landing-hero,
+.landing-feature,
+.landing-band,
+.landing-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.landing-hero {
+  grid-template-columns: minmax(0, 1.16fr) minmax(380px, 0.84fr);
+  align-items: stretch;
+  padding: clamp(1.1rem, 1.8vw, 1.5rem);
+  border-radius: 36px;
+  border: 1px solid rgba(94, 68, 52, 0.08);
+  background:
+    linear-gradient(130deg, rgba(255, 251, 246, 0.95), rgba(242, 232, 220, 0.9)),
+    url('/static/tisa-mineral-surface.jpg') center center / cover no-repeat;
+  box-shadow: 0 24px 54px rgba(76, 57, 42, 0.08);
+}
+
+.landing-hero-main,
+.landing-hero-side {
+  padding: clamp(0.25rem, 0.8vw, 0.8rem);
+}
+
+.landing-hero-main {
+  display: grid;
+  align-content: space-between;
+  gap: 1.15rem;
+}
+
+.landing-hero .page-lede {
+  max-width: 56ch;
+  margin: 0;
+}
+
+.landing-hero h1 {
+  margin: 0;
+  max-width: 11ch;
+  font-size: clamp(3.2rem, 5vw, 5.5rem);
+  line-height: 0.9;
+}
+
+.landing-hero-side {
+  display: grid;
+  gap: 1rem;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.landing-media-frame,
+.landing-feature-media {
+  overflow: hidden;
+  border-radius: 30px;
+  border: 1px solid rgba(94, 68, 52, 0.08);
+  background: #e7ddd0;
+  box-shadow: 0 18px 38px rgba(76, 57, 42, 0.08);
+}
+
+.landing-media-frame {
+  aspect-ratio: 5 / 6;
+}
+
+.landing-feature-media {
+  min-height: 100%;
+  aspect-ratio: 7 / 6;
+}
+
+.landing-media-frame img,
+.landing-feature-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.landing-note-card,
+.landing-stat-card,
+.landing-principle-card,
+.landing-practice-card,
+.landing-journey-card,
+.landing-price-card,
+.landing-feature-copy,
+.landing-band-lead,
+.landing-panel,
+.home-empty-card {
+  border-radius: 30px;
+  border: 1px solid rgba(94, 68, 52, 0.1);
+  background: rgba(252, 248, 243, 0.92);
+  box-shadow: 0 18px 38px rgba(76, 57, 42, 0.08);
+}
+
+.landing-note-card {
+  padding: 1.2rem 1.25rem 1.25rem;
+  background:
+    linear-gradient(150deg, rgba(251, 247, 241, 0.84), rgba(244, 234, 221, 0.88)),
+    url('/static/tisa-mineral-surface.jpg') center center / cover no-repeat;
+}
+
+.landing-note-card span,
+.landing-stat-card span,
+.landing-band-lead .eyebrow,
+.landing-panel-head .eyebrow {
+  display: block;
+}
+
+.landing-note-card strong {
+  display: block;
+  line-height: 1.48;
+}
+
+.landing-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.landing-stat-card {
+  min-height: 128px;
+  padding: 1rem 1.05rem;
+  display: grid;
+  align-content: end;
+  gap: 0.25rem;
+}
+
+.landing-stat-card strong {
+  display: block;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.8rem, 2vw, 2.35rem);
+  line-height: 1;
+  color: var(--tierra-tostada);
+}
+
+.landing-principles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.landing-principle-card {
+  min-height: 198px;
+  padding: 1.2rem;
+}
+
+.landing-principle-card h3 {
+  margin: 0.15rem 0 0.7rem;
+  font-size: clamp(1.35rem, 1.6vw, 1.7rem);
+  line-height: 1.06;
+}
+
+.landing-principle-card p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.58;
+}
+
+.landing-feature {
+  grid-template-columns: minmax(0, 1.02fr) minmax(420px, 0.98fr);
+  align-items: stretch;
+}
+
+.landing-feature-copy {
+  padding: 1.35rem 1.45rem 1.5rem;
+  display: grid;
+  align-content: space-between;
+  gap: 1rem;
+}
+
+.landing-feature-copy h2 {
+  margin: 0;
+  max-width: 11ch;
+  font-size: clamp(3.4rem, 4.6vw, 5.2rem);
+  line-height: 0.9;
+}
+
+.landing-feature-copy p:not(.eyebrow):not(.quote) {
+  max-width: 34ch;
+  font-size: 1.02rem;
+  line-height: 1.62;
+}
+
+.landing-feature-copy .quote {
+  max-width: 18ch;
+  font-size: clamp(2.05rem, 2.3vw, 2.75rem);
+  line-height: 1.02;
+}
+
+.landing-band {
+  gap: 1rem;
+}
+
+.landing-band-lead,
+.landing-panel-head {
+  padding: 1.25rem 1.3rem 1.35rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.landing-band-lead {
+  max-width: 1040px;
+}
+
+.landing-band-lead h2,
+.landing-panel-head h2 {
+  margin: 0;
+  max-width: 13ch;
+  font-size: clamp(2.8rem, 3.6vw, 4.1rem);
+  line-height: 0.93;
+}
+
+.landing-band-lead p:not(.eyebrow),
+.landing-panel-head p:not(.eyebrow) {
+  max-width: 58ch;
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.62;
+}
+
+.landing-band-body,
+.landing-panel-body {
+  display: grid;
+  gap: 1rem;
+}
+
+.landing-practice-grid,
+.landing-pricing-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.landing-journey-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.landing-practice-grid > :only-child,
+.landing-pricing-grid > :only-child {
+  grid-column: 1 / -1;
+}
+
+.landing-practice-card,
+.landing-price-card {
+  min-height: 238px;
+  padding: 1.25rem 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.landing-practice-card h3,
+.landing-price-card h3 {
+  margin: 0.1rem 0 0.3rem;
+  max-width: 12ch;
+  font-size: clamp(1.9rem, 2.2vw, 2.55rem);
+  line-height: 0.98;
+}
+
+.landing-practice-card p,
+.landing-price-card p {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.58;
+}
+
+.landing-price-card .metric {
+  margin-top: 0.25rem;
+  font-size: clamp(1.6rem, 1.9vw, 2rem);
+}
+
+.landing-journey-card {
+  min-height: 214px;
+  padding: 1.2rem;
+}
+
+.landing-journey-card h3 {
+  margin: 0.15rem 0 0.65rem;
+  font-size: clamp(1.35rem, 1.7vw, 1.8rem);
+  line-height: 1.05;
+}
+
+.landing-journey-card p {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.56;
+}
+
+.landing-panel {
+  padding: 1.25rem 1.3rem 1.35rem;
+}
+
+.landing-panel-head {
+  max-width: none;
+  margin-bottom: 0;
+}
+
+.landing-schedule-layout {
+  grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.92fr);
+  align-items: start;
+}
+
+.landing-timeline {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.landing-timeline .timeline-row {
+  margin: 0;
+  padding: 1rem 1.1rem;
+  border-radius: 24px;
+  border: 1px solid rgba(94, 68, 52, 0.1);
+  background: rgba(255, 251, 246, 0.84);
+  box-shadow: 0 14px 28px rgba(76, 57, 42, 0.06);
+  text-decoration: none;
+  color: inherit;
+}
+
+.landing-schedule-side {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+
+.landing-schedule-side .proof-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 0;
+}
+
+.landing-schedule-side .proof-chip {
+  min-height: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+.landing-ops-panel {
+  background:
+    linear-gradient(160deg, rgba(94, 68, 52, 0.96), rgba(69, 58, 48, 0.94)),
+    url('/static/tisa-mineral-surface.jpg') center center / cover no-repeat;
+}
+
+.landing-ops-panel .landing-panel-head h2,
+.landing-ops-panel .landing-panel-head p,
+.landing-ops-panel .landing-panel-head .eyebrow {
+  color: #f7f0e7;
+}
+
+.landing-ops-layout .ops-panels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.landing-ops-layout .ops-panel {
+  min-height: 176px;
+  padding: 1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 240, 224, 0.08);
+  background: rgba(255, 248, 239, 0.92);
+  box-shadow: 0 16px 28px rgba(26, 19, 15, 0.12);
+}
+
+.landing-ops-layout .ops-panel strong {
+  display: block;
+  line-height: 1.45;
+  color: var(--pizarra);
+}
+
+.landing-ops-layout .ops-panel span {
+  color: rgba(94, 68, 52, 0.7);
+}
+
+@media (max-width: 1280px) {
+  .landing-page {
+    width: min(100vw - 32px, 1440px);
+  }
+
+  .is-home main::before,
+  .is-home main::after {
+    width: clamp(170px, 16vw, 250px);
+    opacity: 0.3;
+  }
+
+  .landing-hero,
+  .landing-feature,
+  .landing-schedule-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero h1,
+  .landing-feature-copy h2,
+  .landing-band-lead h2,
+  .landing-panel-head h2 {
+    max-width: none;
+  }
+
+  .landing-hero-side {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.72fr);
+    grid-template-rows: none;
+    align-items: stretch;
+  }
+
+  .landing-media-frame {
+    aspect-ratio: 7 / 4;
+  }
+
+  .landing-feature-media {
+    aspect-ratio: 16 / 9;
+  }
+
+  .landing-schedule-side .proof-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .landing-principles,
+  .landing-journey-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-practice-grid,
+  .landing-pricing-grid,
+  .landing-ops-layout .ops-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-schedule-side .proof-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .landing-page {
+    width: min(100vw - 20px, 100%);
+    padding: 0.85rem 0 1.75rem;
+    gap: 0.95rem;
+  }
+
+  .is-home main::before,
+  .is-home main::after {
+    top: 10.25rem;
+    height: min(62vh, 520px);
+    width: 92px;
+    opacity: 0.16;
+  }
+
+  .is-home main::before {
+    left: -0.6rem;
+    transform: translateX(-10%) translateY(calc(var(--landing-emblem-shift, 0px) * 0.12));
+  }
+
+  .is-home main::after {
+    right: -0.6rem;
+    transform: translateX(10%) translateY(calc(var(--landing-emblem-shift, 0px) * 0.12)) scaleX(-1);
+  }
+
+  .landing-hero,
+  .landing-feature,
+  .landing-panel,
+  .landing-note-card,
+  .landing-stat-card,
+  .landing-principle-card,
+  .landing-practice-card,
+  .landing-journey-card,
+  .landing-price-card,
+  .landing-feature-copy,
+  .landing-band-lead,
+  .landing-media-frame,
+  .landing-feature-media {
+    border-radius: 24px;
+  }
+
+  .landing-hero,
+  .landing-panel {
+    padding: 0.95rem;
+  }
+
+  .landing-hero-main,
+  .landing-hero-side {
+    padding: 0;
+  }
+
+  .landing-hero-side,
+  .landing-principles,
+  .landing-practice-grid,
+  .landing-pricing-grid,
+  .landing-journey-grid,
+  .landing-ops-layout .ops-panels,
+  .landing-schedule-side .proof-row {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero h1 {
+    font-size: clamp(2.6rem, 13vw, 4rem);
+    line-height: 0.92;
+  }
+
+  .landing-feature-copy h2,
+  .landing-band-lead h2,
+  .landing-panel-head h2 {
+    font-size: clamp(2.3rem, 10vw, 3.45rem);
+    line-height: 0.94;
+  }
+
+  .landing-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-feature-copy,
+  .landing-band-lead,
+  .landing-panel-head,
+  .landing-principle-card,
+  .landing-practice-card,
+  .landing-journey-card,
+  .landing-price-card {
+    padding: 1rem;
+  }
+
+  .landing-feature-copy p:not(.eyebrow):not(.quote),
+  .landing-feature-copy .quote,
+  .landing-band-lead p:not(.eyebrow),
+  .landing-panel-head p:not(.eyebrow),
+  .landing-hero .page-lede {
+    max-width: none;
+  }
+
+  .landing-media-frame,
+  .landing-feature-media {
+    aspect-ratio: 4 / 5;
+  }
+
+  .landing-schedule-side .btn,
+  .landing-hero .btn {
+    width: 100%;
+    text-align: center;
   }
 }

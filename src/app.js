@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import QRCode from 'qrcode';
 import { z } from 'zod';
 import { fileURLToPath } from 'url';
+import { brand, getCheckoutStateCopy } from './brand.js';
 import { renderLayout } from './views/layout.js';
 import { config } from './config.js';
 import { esc, hashToken, isWithinCheckinWindow, signPayload } from './utils.js';
@@ -51,7 +52,13 @@ function requireRole(...roles) {
 }
 
 function renderError(message) {
-  return `<section class="section"><div class="card"><h2>Error</h2><p>${esc(message)}</p></div></section>`;
+  return `<section class="section page-shell">
+    <div class="status-card status-card-error">
+      <p class="page-kicker">${brand.name} · ESTADO</p>
+      <h1>Algo necesita atención.</h1>
+      <p>${esc(message)}</p>
+    </div>
+  </section>`;
 }
 
 function startOfWeekMonday(value) {
@@ -161,12 +168,12 @@ function renderSeatSelectionBody({
     <section class="section seat-selection-page">
       <div class="system-shell">
         <section class="system-hero scroll-hero" data-scroll-target="seat-selection-grid">
-          <p class="concept-kicker">TISA / LUGARES</p>
-          <h1>Elige tu lugar y confirma tu pago en el mismo flujo.</h1>
-          <p>Selecciona uno o dos lugares exactos, deja tus datos y pasa directo a Stripe Checkout. El QR solo se emite cuando el pago queda confirmado.</p>
+          <p class="concept-kicker">${brand.seatSelection.kicker}</p>
+          <h1>${brand.seatSelection.title}</h1>
+          <p>${brand.seatSelection.lede}</p>
         </section>
         <div class="system-grid seat-selection-grid" id="seat-selection-grid">
-          <article class="system-panel system-panel-light">
+          <article class="system-panel system-panel-light system-panel-texture">
             <h2>${esc(occurrence.classType.name)}</h2>
             <div class="system-detail-list">
               <div><span>Horario</span><strong>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')}</strong></div>
@@ -175,7 +182,11 @@ function renderSeatSelectionBody({
               <div><span>Mapa</span><strong>${enabledSeats.length} lugares habilitados · ${availableCount} disponibles</strong></div>
               <div><span>Precio por lugar</span><strong>MXN ${(occurrence.unitPriceCents / 100).toLocaleString('es-MX')}</strong></div>
             </div>
-            <p class="system-inline-note">Tu apartado se mantiene por 10 minutos mientras completas el checkout.</p>
+            <p class="system-inline-note">${brand.seatSelection.note}</p>
+            <figure class="system-media-card">
+              <img src="${brand.assets.editorialGrid}" alt="Atmósfera visual de TISA" />
+              <figcaption>Una lectura clara del espacio para decidir con tranquilidad antes de pagar.</figcaption>
+            </figure>
           </article>
           <article class="system-panel system-panel-dark">
             <form action="/reservations/web-checkout" method="post" id="seat-selection-form" class="seat-selection-form">
@@ -203,15 +214,15 @@ function renderSeatSelectionBody({
               </div>
               <div class="ui-status-banner ${message ? `is-${messageType === 'success' ? 'success' : 'cancel'}` : 'is-muted'} seat-status-banner">
                 <div>
-                  <p class="concept-kicker">Selección</p>
+                  <p class="concept-kicker">Tu selección</p>
                   <h3 id="seat-selection-count">${selectedSeatCodes.length} de ${MAX_SEATS_PER_BOOKING} lugares elegidos</h3>
-                  <p id="seat-selection-summary">${selectedSummary || 'Selecciona uno o dos lugares para continuar.'}</p>
+                  <p id="seat-selection-summary">${selectedSummary || brand.seatSelection.summaryEmpty}</p>
                   ${message ? `<p class="seat-inline-message">${esc(message)}</p>` : ''}
                 </div>
               </div>
               <div class="form-row">
                 <label>Nombre</label>
-                <input type="text" name="customerName" value="${esc(customerName)}" placeholder="Tu nombre" required />
+                <input type="text" name="customerName" value="${esc(customerName)}" placeholder="Nombre completo" required />
               </div>
               <div class="form-row">
                 <label>Correo</label>
@@ -219,9 +230,9 @@ function renderSeatSelectionBody({
               </div>
               <div class="form-row">
                 <label>Teléfono</label>
-                <input type="tel" name="customerPhone" value="${esc(customerPhone)}" placeholder="+52..." />
+                <input type="tel" name="customerPhone" value="${esc(customerPhone)}" placeholder="55..." />
               </div>
-              <button class="btn" type="submit">Apartar y pagar ahora</button>
+              <button class="btn" type="submit">${brand.seatSelection.cta}</button>
               <a class="btn alt" href="/classes">Volver a la agenda</a>
             </form>
           </article>
@@ -412,19 +423,19 @@ export function createApp({ prisma }) {
     const stats = {
       classTypes: types.length,
       upcoming: upcoming.length,
-      pricing: upcoming.length,
+      firstClass: upcoming[0] || null,
     };
 
     const typeCards = types
       .map(
         (t) => `
-      <article class="card dune-card experience-card reveal">
+      <article class="card tisa-card landing-practice-card reveal">
         <span class="tag">${esc(t.intensity)}</span>
         <h3>${esc(t.name)}</h3>
         <p>${esc(t.description)}</p>
         <div class="experience-meta">
           <span class="status-pill">${t.durationMin} min</span>
-          <span class="experience-detail">Diseñada para ritmo ${esc(t.intensity.toLowerCase())}</span>
+          <span class="experience-detail">Diseñada para un ritmo ${esc(t.intensity.toLowerCase())}</span>
         </div>
       </article>
     `
@@ -435,7 +446,7 @@ export function createApp({ prisma }) {
       ? upcoming
           .map(
             (c) => `
-        <div class="timeline-row reveal">
+        <a class="timeline-row reveal" href="${buildSeatSelectionUrl(c.id)}">
           <div>
             <strong>${esc(c.classType.name)}</strong>
             <p>${esc(c.trainer.displayName)}</p>
@@ -444,7 +455,7 @@ export function createApp({ prisma }) {
             <span>${dayjs(c.startsAt).format('HH:mm')}</span>
             <small>${c.availableSlots} cupos</small>
           </div>
-        </div>
+        </a>
       `
           )
           .join('')
@@ -453,37 +464,21 @@ export function createApp({ prisma }) {
     const pricingCards = upcoming
       .map(
         (occurrence) => `
-      <article class="card reveal">
+      <article class="card tisa-card landing-price-card reveal">
         <h3>${esc(occurrence.classType.name)}</h3>
         <p>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')} · ${esc(occurrence.trainer.displayName)}</p>
         <div class="metric">${formatCurrency(occurrence.unitPriceCents)}</div>
-        <p>${occurrence.availableSlots} lugares listos para reservar con Checkout.</p>
-        <a class="btn" href="${buildSeatSelectionUrl(occurrence.id)}">Reservar ahora</a>
+        <p>${occurrence.availableSlots} lugares disponibles para reservar dentro del mismo recorrido.</p>
+        <a class="btn" href="${buildSeatSelectionUrl(occurrence.id)}">Elegir práctica</a>
       </article>
     `
       )
       .join('');
 
-    const ritualCards = [
-      {
-        label: 'Explora',
-        title: 'Agenda con lectura clara',
-        text: 'Semana y mes con estados visibles para encontrar rápido una clase disponible.',
-      },
-      {
-        label: 'Reserva',
-        title: 'Checkout directo',
-        text: 'El cliente elige lugares, deja nombre y correo, y pasa directo a Stripe Checkout sin pasos intermedios.',
-      },
-      {
-        label: 'Entra',
-        title: 'Check-in con QR',
-        text: 'Operación valida acceso en segundos desde una superficie pensada para staff.',
-      },
-    ]
+    const principleCards = brand.home.principles
       .map(
         (item) => `
-      <article class="card ritual-card reveal">
+      <article class="card tisa-card landing-principle-card reveal">
         <span class="ritual-step">${item.label}</span>
         <h3>${item.title}</h3>
         <p>${item.text}</p>
@@ -492,12 +487,20 @@ export function createApp({ prisma }) {
       )
       .join('');
 
-    const proofCards = [
-      `${stats.classTypes || 0}+ experiencias activas listas para reservar`,
-      `${stats.upcoming || 0} clases destacadas cargadas en agenda`,
-      `${stats.pricing || 0} horarios con precio visible para pago inmediato`,
-    ]
-      .map((item) => `<div class="proof-chip reveal">${item}</div>`)
+    const proofCards = brand.home.journey
+      .map((item) => `<div class="proof-chip reveal">${item.step} · ${item.title}</div>`)
+      .join('');
+
+    const journeyCards = brand.home.journey
+      .map(
+        (item) => `
+      <article class="card tisa-card landing-journey-card reveal">
+        <span class="ritual-step">${item.step}</span>
+        <h3>${item.title}</h3>
+        <p>${item.text}</p>
+      </article>
+    `
+      )
       .join('');
 
     const body = `
@@ -534,137 +537,120 @@ export function createApp({ prisma }) {
         <span class="sand-river river-c"></span>
       </section>
 
-      <section class="story-root">
-        <div class="ambient-lights" aria-hidden="true">
-          <span class="light-orb orb-1"></span>
-          <span class="light-orb orb-2"></span>
-          <span class="light-orb orb-3"></span>
-          <span class="light-orb orb-4"></span>
-        </div>
-
-        <section class="hero parallax dune-hero" id="landing-main-hero">
-          <div class="hero-card hero-premium reveal">
-            <div class="hero-grid">
-              <div class="hero-copy">
-                <p class="eyebrow">TISA · AGENDA · RESERVAS</p>
-                <h1>Reserva tu práctica con claridad y entra con calma.</h1>
-                <p>Consulta horarios, elige lugares y confirma tu pago con Stripe Checkout dentro de una misma experiencia, sobria y precisa.</p>
-                <div class="hero-actions">
-                  <button type="button" class="btn" data-scroll-target="landing-overview">Descubrir el recorrido</button>
-                  <a class="btn alt" href="/classes">Ir a la agenda</a>
-                </div>
-                <div class="proof-row">${proofCards}</div>
-              </div>
-              <div class="hero-aside">
-                <div class="hero-aside-card">
-                  <span>Reserva</span>
-                  <strong>Explora horarios y elige tu lugar con criterio.</strong>
-                  <p>La agenda presenta disponibilidad, guía y horario dentro de una lectura limpia y directa.</p>
-                </div>
-                <div class="hero-aside-card">
-                  <span>Pago</span>
-                  <strong>Paga al instante y recibe tu QR solo cuando Stripe confirma.</strong>
-                  <p>Cliente, staff y operación comparten el mismo estado real de la reservación de principio a fin.</p>
-                </div>
-              </div>
+      <section class="landing-page story-root">
+        <section class="landing-hero reveal scroll-hero" data-scroll-target="home-overview">
+          <div class="landing-hero-main">
+            <p class="page-kicker">${brand.home.kicker}</p>
+            <h1>${brand.home.title}</h1>
+            <p class="page-lede">${brand.home.lede}</p>
+            <div class="hero-actions">
+              <a class="btn" href="/classes">Ver agenda</a>
+              <button type="button" class="btn alt" data-scroll-target="home-overview">Cómo funciona</button>
+            </div>
+            <div class="landing-stat-grid">
+              <article class="landing-stat-card"><span>Prácticas activas</span><strong>${stats.classTypes}</strong></article>
+              <article class="landing-stat-card"><span>Próximas salidas</span><strong>${stats.upcoming}</strong></article>
+              <article class="landing-stat-card"><span>Primera clase</span><strong>${stats.firstClass ? dayjs(stats.firstClass.startsAt).format('DD MMM · HH:mm') : 'En actualización'}</strong></article>
             </div>
           </div>
-        </section>
-
-        <section class="section section-band reveal" id="landing-overview">
-          <div class="band-shell">
-            <div>
-              <p class="eyebrow">LANDING · AGENDA · CHECKOUT</p>
-              <h2>Un solo recorrido para descubrir, pagar y llegar al estudio.</h2>
+          <aside class="landing-hero-side">
+            <figure class="landing-media-frame">
+              <img src="${brand.assets.editorialGrid}" alt="Atmósfera editorial de TISA" />
+            </figure>
+            <div class="landing-note-card">
+              <span>${brand.home.noteTitle}</span>
+              <strong>${brand.home.noteText}</strong>
             </div>
-            <p>La home abre con una promesa clara y desciende hacia agenda, pago y operación con una narrativa más serena, útil y deseable.</p>
-          </div>
+          </aside>
         </section>
 
-        <section class="section split-section reveal">
-          <article class="card split-left premium-copy">
-              <h2>Donde el ritual y el producto encuentran el mismo tono</h2>
-              <p>TISA toma la calma como punto de partida, pero la traduce a una experiencia digital que también sabe orientar, ordenar y resolver.</p>
-              <p>La propuesta ya no se limita a mostrar una clase; presenta un sistema completo con relato, agenda legible y confirmación de pago confiable.</p>
-              <p class="quote">"Una experiencia que se siente íntima, exclusiva y sorprendentemente fácil de usar."</p>
+        <section class="landing-principles" id="home-overview">
+          ${principleCards}
+        </section>
+
+        <section class="landing-feature reveal">
+          <article class="landing-feature-copy">
+            <p class="eyebrow">${brand.home.storyKicker}</p>
+            <h2>${brand.home.storyTitle}</h2>
+            <p>${brand.home.storyBody}</p>
+            <p class="quote">"${brand.home.storyQuote}"</p>
           </article>
-          <article class="card split-right premium-preview">
-            <div class="clay-shape"></div>
-            <div class="preview-caption">
-              <strong>Una interfaz sobria, cálida y legible</strong>
-              <p>Texturas minerales, superficies sólidas y un contraste pensado para reservar de verdad, no solo para verse bien.</p>
-            </div>
+          <article class="landing-feature-media">
+            <img src="${brand.assets.conceptGrid}" alt="Referencia conceptual TISA" />
           </article>
         </section>
 
-        <section class="section">
-          <div class="section-heading section-heading-surface reveal">
-            <p class="eyebrow">CLASES</p>
-            <h2>Prácticas pensadas para distintos ritmos</h2>
-            <p>Cada clase se presenta con intención, duración y carácter propio para que elegir se sienta natural desde el primer vistazo.</p>
+        <section class="landing-band reveal">
+          <div class="landing-band-lead">
+            <p class="eyebrow">PRÁCTICAS</p>
+            <h2>Ritmos distintos, misma intención de cuidado.</h2>
+            <p>Cada práctica se presenta desde la base: claridad, duración, tono y un lenguaje que acompaña sin exagerar.</p>
           </div>
-          <div class="grid">${typeCards}</div>
+          <div class="landing-band-body landing-practice-grid">
+            ${typeCards}
+          </div>
         </section>
 
-        <section class="section">
-            <div class="section-heading section-heading-surface reveal">
-              <p class="eyebrow">RITUAL DE RESERVA</p>
-              <h2>El recorrido principal se entiende de inmediato</h2>
-            <p>Explora la agenda, aparta lugares, paga y llega con tu QR dentro de una secuencia continua, clara y confiable.</p>
+        <section class="landing-band reveal">
+          <div class="landing-band-lead">
+            <p class="eyebrow">RECORRIDO</p>
+            <h2>Reservar debe sentirse continuo y claro.</h2>
+            <p>Desde la agenda hasta el QR, el sistema conserva una misma atmósfera y una misma lógica de cuidado.</p>
           </div>
-          <div class="grid ritual-grid">${ritualCards}</div>
+          <div class="landing-band-body landing-journey-grid">
+            ${journeyCards}
+          </div>
         </section>
 
-        <section class="section schedule-shell reveal">
-          <div class="card schedule-board">
-            <div class="section-heading section-heading-surface compact">
-              <p class="eyebrow">AGENDA CLARA</p>
-              <h2>Una agenda que invita a decidir con calma</h2>
-              <p>Una lectura limpia del calendario, pensada para conservar claridad en escritorio y en móvil.</p>
+        <section class="landing-panel reveal">
+          <div class="landing-panel-head">
+            <p class="eyebrow">AGENDA DISPONIBLE</p>
+            <h2>Una lectura rápida para decidir sin fricción.</h2>
+            <p>La agenda deja ver horario, guía y disponibilidad real antes de que abras el mapa de lugares.</p>
+          </div>
+          <div class="landing-panel-body landing-schedule-layout">
+            <div class="landing-timeline">
+              ${timeline}
             </div>
-            <div class="timeline">${timeline}</div>
-            <a class="btn" href="/classes">Explorar horarios</a>
+            <aside class="landing-schedule-side">
+              <div class="proof-row">${proofCards}</div>
+              <a class="btn" href="/classes">Explorar agenda completa</a>
+            </aside>
           </div>
         </section>
 
-        <section class="section">
-          <div class="section-heading section-heading-surface reveal">
-            <p class="eyebrow">PRECIO · CHECKOUT</p>
-            <h2>Precios visibles antes de reservar</h2>
-            <p>Cada horario destacado muestra su precio por lugar para que el valor se entienda antes del clic.</p>
+        <section class="landing-band reveal">
+          <div class="landing-band-lead">
+            <p class="eyebrow">VALOR VISIBLE</p>
+            <h2>El precio y la disponibilidad se entienden antes del clic.</h2>
+            <p>La decisión se siente acompañada porque cada horario explica su valor sin saturar la pantalla.</p>
           </div>
-          <div class="grid">${pricingCards || '<div class="card">Próximamente aparecerán horarios con precio visible.</div>'}</div>
+          <div class="landing-band-body landing-pricing-grid">
+            ${pricingCards || '<div class="card tisa-card home-empty-card">Próximamente aparecerán horarios disponibles para reservar.</div>'}
+          </div>
         </section>
 
-        <section class="section reveal">
-          <div class="card ops-showcase">
-            <div class="ops-copy">
-              <p class="eyebrow">SUPERFICIES OPERATIVAS</p>
-              <h2>La operación también forma parte de la experiencia TISA.</h2>
-              <p>Administración, trainers y check-in comparten una estética más limpia, para que el backoffice se sienta preciso, rápido y confiable.</p>
-            </div>
+        <section class="landing-panel reveal landing-ops-panel">
+          <div class="landing-panel-head">
+            <p class="eyebrow">OPERACIÓN COMPARTIDA</p>
+            <h2>La parte interna también responde al mismo sistema.</h2>
+            <p>Staff, trainers y operación reciben una limpieza visual inmediata para que el producto público y la operación hablen el mismo idioma.</p>
+          </div>
+          <div class="landing-panel-body landing-ops-layout">
             <div class="ops-panels">
               <div class="ops-panel">
-                <span>Panel admin</span>
-                <strong>Indicadores clave, ocupación y seguimiento diario.</strong>
+                <span>Admin</span>
+                <strong>Lectura diaria del estudio, pagos y ocupación sin ruido visual.</strong>
               </div>
               <div class="ops-panel">
-                <span>Agenda trainer</span>
-                <strong>Calendario, roster y control sobrio de sesiones.</strong>
+                <span>Trainer</span>
+                <strong>Agenda clara para programar, revisar reservas y sostener el ritmo del día.</strong>
               </div>
               <div class="ops-panel">
-                <span>Ops check-in</span>
-                <strong>QR visible, validación rápida y respuestas claras.</strong>
+                <span>Check-in</span>
+                <strong>Validación rápida con respuestas legibles y consistentes con la experiencia pública.</strong>
               </div>
             </div>
-          </div>
-        </section>
-
-        <section class="section reveal">
-          <div class="card final-manifesto">
-            <h2>Cuando todo se ordena bien, solo queda elegir tu práctica.</h2>
-            <p>La nueva experiencia reduce ruido, eleva la percepción de marca y acompaña la reserva con una sensación de calma, certeza y cuidado.</p>
-            <a class="btn alt" href="/classes">Entrar a la agenda</a>
           </div>
         </section>
       </section>
@@ -1474,9 +1460,9 @@ export function createApp({ prisma }) {
     const body = `<section class="section page-shell">
       <div class="page-hero page-hero-grid reveal scroll-hero" data-scroll-target="classes-calendar">
         <div class="page-hero-copy">
-          <p class="page-kicker">TISA · AGENDA · RESERVA CLARA</p>
-          <h1>Una agenda viva para elegir con calma y reservar sin fricción.</h1>
-          <p class="page-lede">Explora la semana o el mes, detecta disponibilidad al instante y abre la reserva desde el mismo bloque de clase. Todo el flujo está pensado para que el estudio se sienta sobrio, intuitivo y preciso.</p>
+          <p class="page-kicker">${brand.agenda.kicker}</p>
+          <h1>${brand.agenda.title}</h1>
+          <p class="page-lede">${brand.agenda.lede}</p>
           <div class="system-chip-row">
             <button type="button" class="system-chip-button" data-scroll-target="classes-calendar">Ver agenda</button>
             <button type="button" class="system-chip-button" data-scroll-target="classes-toolbar">Cambiar vista</button>
@@ -1489,13 +1475,13 @@ export function createApp({ prisma }) {
         </div>
         <aside class="page-hero-side">
           <div class="spotlight-card">
-            <span>Cómo funciona</span>
-            <strong>Elige un bloque, selecciona tus lugares y luego paga en el mismo flujo.</strong>
-            <p>La reservación se crea con hold temporal y Stripe Checkout conserva el vínculo con la clase y los lugares elegidos.</p>
+            <span>${brand.agenda.howItWorksTitle}</span>
+            <strong>${brand.agenda.howItWorksText}</strong>
+            <p>La reservación se crea con hold temporal y el pago conserva el vínculo con la clase y los lugares elegidos.</p>
           </div>
           <div class="spotlight-card muted">
-            <span>Ventaja</span>
-            <strong>Ahora también ves los lugares ocupados antes de pedir tu QR.</strong>
+            <span>${brand.agenda.benefitTitle}</span>
+            <strong>${brand.agenda.benefitText}</strong>
           </div>
         </aside>
       </div>
@@ -1511,7 +1497,7 @@ export function createApp({ prisma }) {
         </div>
       </div>
       ${req.query.error ? `<div class="ui-status-banner is-cancel"><div><p class="concept-kicker">Disponibilidad</p><h2>El mapa cambió antes de confirmar.</h2><p>${esc(String(req.query.error))}</p></div></div>` : ''}
-      <p class="calendar-subtitle">Selecciona cualquier bloque para reservar. Las clases canceladas aparecen claramente marcadas.</p>
+      <p class="calendar-subtitle">Selecciona cualquier bloque para reservar. Las clases canceladas y los espacios llenos se distinguen de inmediato.</p>
       <div class="calendar-shell reveal" id="classes-calendar">
         ${
           view === 'month'
@@ -1727,26 +1713,16 @@ export function createApp({ prisma }) {
           ? await QRCode.toDataURL(JSON.stringify({ ...parseJson(reservation.qrPayload, {}), signature: result.reservation.qrSignature }))
           : null;
 
-      let heroTitle = 'Estamos revisando tu pago.';
-      let heroCopy = 'Tu reservación se actualiza en cuanto Stripe confirma el resultado final.';
+      const checkoutCopy = getCheckoutStateCopy(result.state);
+      let heroTitle = checkoutCopy.title;
+      let heroCopy = checkoutCopy.copy;
       let actionMarkup = '<a class="btn alt" href="/classes">Volver a la agenda</a>';
 
       if (result.state === 'paid') {
-        heroTitle = 'Pago confirmado. Tu acceso ya está listo.';
-        heroCopy = 'Tu reservación quedó pagada y el QR ya fue emitido.';
         actionMarkup = `
           ${reservation.manageUrl ? `<a class="btn" href="${reservation.manageUrl}">Abrir detalle de la reservación</a>` : ''}
           <a class="btn alt" href="/classes">Reservar otra práctica</a>
         `;
-      } else if (result.state === 'pending_async') {
-        heroTitle = 'Estamos esperando confirmación del pago.';
-        heroCopy = 'Tu lugar sigue apartado temporalmente. Te avisaremos cuando el pago quede aplicado.';
-      } else if (result.state === 'expired' || result.state === 'expired_after_payment') {
-        heroTitle = 'El apartado ya expiró.';
-        heroCopy = 'Si el pago llegó fuera de tiempo, el equipo debe revisarlo manualmente.';
-      } else if (result.state === 'failed') {
-        heroTitle = 'El pago no se completó.';
-        heroCopy = 'Liberamos los lugares para evitar sobreventa. Puedes intentar de nuevo.';
       }
 
       const body = `<section class="section"><div class="system-shell">
@@ -1765,7 +1741,7 @@ export function createApp({ prisma }) {
               <div><span>Total</span><strong>MXN ${(reservation.pricing.totalCents / 100).toLocaleString('es-MX')}</strong></div>
             </div>
           </article>
-          <article class="system-panel system-panel-dark">
+          <article class="system-panel system-panel-dark system-panel-texture-dark">
             <h2>Próximo paso</h2>
             ${qrDataUrl ? `<img class="qr" src="${qrDataUrl}" alt="QR de acceso" />` : '<p class="system-inline-note">El QR solo aparece cuando el pago ya está confirmado.</p>'}
             <div class="system-action-stack">${actionMarkup}</div>
@@ -1791,8 +1767,8 @@ export function createApp({ prisma }) {
       const body = `<section class="section"><div class="system-shell">
         <section class="system-hero">
           <p class="concept-kicker">TISA / CHECKOUT</p>
-          <h1>Checkout cancelado.</h1>
-          <p>No se registró un cobro confirmado. Si el apartado sigue vigente, puedes retomar el pago desde aquí.</p>
+          <h1>Pausa en el pago.</h1>
+          <p>No se registró un cobro confirmado. Si el apartado sigue vigente, puedes retomarlo desde esta misma pantalla.</p>
         </section>
         <div class="system-grid">
           <article class="system-panel system-panel-light">
@@ -1804,7 +1780,7 @@ export function createApp({ prisma }) {
             </div>
           </article>
           <article class="system-panel system-panel-dark">
-            <h2>Continuar</h2>
+            <h2>Continuar cuando quieras</h2>
             <div class="system-action-stack">
               ${canRetry ? `<form method="post" action="/reservations/${reservation.id}/checkout"><input type="hidden" name="salesChannel" value="${esc(reservation.salesChannel || 'web')}" /><button class="btn" type="submit">Reintentar pago</button></form>` : ''}
               <a class="btn alt" href="/classes">Volver a la agenda</a>
@@ -1843,12 +1819,12 @@ export function createApp({ prisma }) {
     const body = `<section class="section">
       <div class="system-shell">
         <section class="system-hero scroll-hero" data-scroll-target="manage-booking-grid">
-          <p class="concept-kicker">TISA / RESERVA</p>
-          <h1>Tu reserva permanece contigo hasta el momento de entrar.</h1>
-          <p>Consulta el estado y presenta el QR cuando el pago ya esté confirmado.</p>
+          <p class="concept-kicker">${brand.manage.kicker}</p>
+          <h1>${brand.manage.title}</h1>
+          <p>${brand.manage.lede}</p>
         </section>
         <div class="system-grid" id="manage-booking-grid">
-          <article class="system-panel system-panel-light">
+          <article class="system-panel system-panel-light system-panel-texture">
             <h2>${esc(booking.classOccurrence.classType.name)}</h2>
             <div class="system-detail-list">
               <div><span>Correo</span><strong>${esc(booking.client.email)}</strong></div>
@@ -1859,7 +1835,7 @@ export function createApp({ prisma }) {
               <div><span>Estado</span><strong>${getBookingStateLabel(booking.status)}</strong></div>
             </div>
           </article>
-          <article class="system-panel system-panel-dark">
+          <article class="system-panel system-panel-dark system-panel-texture-dark">
             <h2>Tu QR de acceso</h2>
             <p>${qrDataUrl ? 'Presenta este código al llegar al estudio para completar tu entrada.' : 'El QR aparece aquí solo después de la confirmación definitiva del pago.'}</p>
             ${qrDataUrl ? `<img class="qr" src="${qrDataUrl}" alt="QR" />` : '<p class="system-inline-note">Aún no hay acceso emitido para esta reservación.</p>'}
@@ -1878,9 +1854,9 @@ export function createApp({ prisma }) {
     const body = `<section class="section">
       <div class="system-shell">
         <section class="system-hero">
-          <p class="concept-kicker">TISA / STAFF</p>
-          <h1>La operación merece una entrada clara, sobria y confiable.</h1>
-          <p>Administración, trainers y check-in comparten el mismo lenguaje visual, mientras cada rol conserva un flujo preciso.</p>
+          <p class="concept-kicker">${brand.staff.kicker}</p>
+          <h1>${brand.staff.title}</h1>
+          <p>${brand.staff.lede}</p>
         </section>
         <div class="system-grid">
           <article class="system-panel system-panel-light">

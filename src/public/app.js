@@ -34,6 +34,7 @@
   const intro = document.getElementById('landing-intro');
   const introEnter = document.getElementById('intro-enter');
   if (intro) {
+    const introPreviewMode = new URLSearchParams(window.location.search).get('previewIntro') === '1';
     const state = { tx: 0, ty: 0, x: 0, y: 0 };
     const tick = () => {
       state.x += (state.tx - state.x) * 0.08;
@@ -101,9 +102,18 @@
         startIntroTransition();
       });
     }
+
+    if (introPreviewMode) {
+      requestAnimationFrame(() => startIntroTransition());
+    }
   }
 
   const revealEls = document.querySelectorAll('.reveal');
+  const previewRevealMode = new URLSearchParams(window.location.search).get('previewIntro') === '1';
+  if (previewRevealMode) {
+    revealEls.forEach((el) => el.classList.add('show'));
+  }
+
   const io = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
@@ -112,7 +122,9 @@
     },
     { threshold: 0.15 }
   );
-  revealEls.forEach((el) => io.observe(el));
+  if (!previewRevealMode) {
+    revealEls.forEach((el) => io.observe(el));
+  }
 
   const parallaxEls = document.querySelectorAll('.parallax');
   const storyRoot = document.querySelector('.story-root');
@@ -122,6 +134,8 @@
     parallaxEls.forEach((el, i) => {
       el.style.setProperty('--parallax', `${(i + 1) * y * 0.05}px`);
     });
+
+    document.documentElement.style.setProperty('--landing-emblem-shift', `${Math.min(y, 1200)}px`);
 
     if (!storyRoot) return;
 
@@ -172,7 +186,7 @@
         countLabel.textContent = `${selected.length} de 2 lugares elegidos`;
       }
       if (summaryLabel) {
-        summaryLabel.textContent = labels.length ? `Lugares elegidos: ${labels.join(', ')}` : 'Selecciona uno o dos lugares para continuar.';
+        summaryLabel.textContent = labels.length ? `Lugares elegidos: ${labels.join(', ')}` : 'Elige uno o dos lugares para continuar con calma.';
       }
     };
 

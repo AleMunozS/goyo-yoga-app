@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import ejs from 'ejs';
 import nodemailer from 'nodemailer';
 import { config } from './config.js';
+import { brand } from './brand.js';
 
 let transportPromise;
 
@@ -94,7 +95,7 @@ export async function sendMagicLinkEmail({ to, bookingUrl, className, classDate,
       { label: 'Lugares', value: seatLabels },
     ],
     note: 'Este enlace vence en 30 minutos. Si el tiempo se agota, solo crea una nueva selección desde la agenda.',
-    footerText: 'TISA Studio System',
+    footerText: `${brand.name} · ${brand.descriptor}`,
   });
   const text = [
     'Tu acceso temporal ya está listo.',
@@ -122,13 +123,13 @@ export async function sendBookingConfirmationEmail({
   quantity,
   qrDataUrl,
 }) {
-  const subject = `QR de acceso ${bookingRef}`;
+  const subject = `Acceso confirmado ${bookingRef}`;
   const qrAttachment = qrDataUrl ? attachmentFromDataUrl(qrDataUrl, `${bookingRef}-qr.png`, `qr-${bookingRef}@tisa.local`) : null;
   const html = await renderEmailTemplate('booking-confirmation', {
-    previewText: `Tu reserva ${bookingRef} ya está confirmada.`,
+    previewText: `Tu reserva ${bookingRef} ya quedó confirmada.`,
     accentLabel: 'PAGO CONFIRMADO',
-    title: 'Tu reserva quedó confirmada',
-    intro: 'Tu pago ya quedó aplicado y el QR de acceso está listo. Presenta este correo al llegar o abre el detalle completo de tu reservación.',
+    title: 'Tu reserva ya quedó confirmada',
+    intro: 'Tu pago ya quedó aplicado y el QR de acceso está listo. Puedes presentar este correo al llegar o abrir el detalle completo de tu reservación.',
     bookingRef,
     bookingUrl,
     ctaLabel: 'Abrir detalle de la reservación',
@@ -143,12 +144,12 @@ export async function sendBookingConfirmationEmail({
       { label: 'Personas', value: String(quantity) },
     ],
     qrImageSrc: qrAttachment ? `cid:${qrAttachment.cid}` : null,
-    qrCaption: 'Escanea este QR en recepción para validar tu acceso.',
-    note: 'Si necesitas soporte, responde a este correo y menciona tu referencia.',
-    footerText: 'TISA Studio System',
+    qrCaption: 'Presenta este QR al llegar para validar tu entrada.',
+    note: 'Si necesitas apoyo, responde a este correo y menciona tu referencia.',
+    footerText: `${brand.name} · ${brand.descriptor}`,
   });
   const text = [
-    'Tu reserva quedó confirmada.',
+    'Tu reserva ya quedó confirmada.',
     `Referencia: ${bookingRef}`,
     `Clase: ${className}`,
     `Horario: ${classDate}`,

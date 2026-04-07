@@ -39,13 +39,25 @@ async function createStaffUsers() {
     data: { email: 'admin@tisa.local', passwordHash: adminHash, role: 'ADMIN', displayName: 'Admin TISA' },
   });
   const trainer1 = await prisma.staff_users.create({
-    data: { email: 'sofia@tisa.local', passwordHash: trainerHash, role: 'TRAINER', displayName: 'Sofía Luna', trainerBio: 'Vinyasa, movilidad y control.' },
+    data: {
+      email: 'sofia@tisa.local',
+      passwordHash: trainerHash,
+      role: 'TRAINER',
+      displayName: 'Sofía Luna',
+      trainerBio: 'Práctica suave, movilidad y respiración aplicada al cuerpo.',
+    },
   });
   const trainer2 = await prisma.staff_users.create({
-    data: { email: 'diego@tisa.local', passwordHash: trainerHash, role: 'TRAINER', displayName: 'Diego Sol', trainerBio: 'Power flow y respiración activa.' },
+    data: {
+      email: 'diego@tisa.local',
+      passwordHash: trainerHash,
+      role: 'TRAINER',
+      displayName: 'Diego Sol',
+      trainerBio: 'Fuerza serena, control y atención plena al movimiento.',
+    },
   });
   const ops = await prisma.staff_users.create({
-    data: { email: 'ops@tisa.local', passwordHash: opsHash, role: 'OPS', displayName: 'Operaciones TISA' },
+    data: { email: 'ops@tisa.local', passwordHash: opsHash, role: 'OPS', displayName: 'Operación TISA' },
   });
 
   return { admin, trainer1, trainer2, ops };
@@ -53,7 +65,7 @@ async function createStaffUsers() {
 
 async function createClassCatalog() {
   const location = await prisma.locations.create({
-    data: { name: 'TISA Central', slug: 'tisa-central', address: 'Torreón, Coahuila' },
+    data: { name: 'TISA Torreón', slug: 'tisa-torreon', address: 'Torreón, Coahuila' },
   });
 
   const classTypes = await Promise.all([
@@ -61,27 +73,27 @@ async function createClassCatalog() {
       data: {
         name: 'Flow Suave',
         slug: 'flow-suave',
-        description: 'Respiración y movilidad restaurativa.',
-        durationMin: 50,
+        description: 'Práctica para bajar el ritmo, recuperar espacio y volver a la respiración.',
+        durationMin: 55,
         intensity: 'Suave',
         colorHex: '#986d4f',
       },
     }),
     prisma.class_types.create({
       data: {
-        name: 'Power Yoga',
-        slug: 'power-yoga',
-        description: 'Secuencia activa de fuerza y control.',
+        name: 'Movilidad Consciente',
+        slug: 'movilidad-consciente',
+        description: 'Secuencia guiada para soltar tensión y ordenar el cuerpo desde la base.',
         durationMin: 55,
-        intensity: 'Media/Alta',
+        intensity: 'Media',
         colorHex: '#6a7346',
       },
     }),
     prisma.class_types.create({
       data: {
-        name: 'Meditación Guiada',
-        slug: 'meditacion-guiada',
-        description: 'Aterrizar mente y cuerpo con foco.',
+        name: 'Respira y Regula',
+        slug: 'respira-y-regula',
+        description: 'Trabajo suave de respiración, pausa y presencia para recuperar equilibrio.',
         durationMin: 40,
         intensity: 'Baja',
         colorHex: '#828a91',
