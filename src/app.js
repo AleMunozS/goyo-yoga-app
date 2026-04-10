@@ -507,34 +507,14 @@ export function createApp({ prisma }) {
       <section class="landing-intro" id="landing-intro" aria-label="Pantalla de bienvenida de TISA">
         <div class="intro-shell">
           <div class="intro-copy">
-            <div class="intro-mobile-stage" aria-hidden="true"></div>
-            <div class="intro-breathing" aria-label="Ritual de respiración guiada">
-              <p class="intro-breathing-kicker">Respira con TISA</p>
-              <div class="intro-breathing-core" aria-hidden="true">
-                <span class="intro-breathing-aura intro-breathing-aura-primary"></span>
-                <span class="intro-breathing-aura intro-breathing-aura-secondary"></span>
-                <span class="intro-breathing-orb"></span>
+            <div class="intro-panel">
+              <div class="intro-actions" role="group" aria-label="Acciones principales de TISA">
+                <button type="button" class="btn intro-glass-button" id="intro-discover">Conoce Tisa</button>
+                <a class="btn intro-glass-button" id="intro-reserve" href="/classes">Reservar Ahora</a>
               </div>
-              <div class="intro-breathing-steps" aria-hidden="true">
-                <span class="is-inhale">Inhala</span>
-                <span class="is-hold">Sostén</span>
-                <span class="is-exhale">Exhala</span>
-              </div>
-              <div class="intro-breathing-copy">
-                <p class="is-inhale">Inhala calma</p>
-                <p class="is-hold">Sostén presencia</p>
-                <p class="is-exhale">Exhala tensión</p>
-                <p class="is-center">Vuelve a tu centro</p>
-              </div>
-            </div>
-            <div class="intro-actions">
-              <button type="button" class="btn" id="intro-enter">Entrar a TISA</button>
             </div>
           </div>
         </div>
-        <span class="sand-river river-a"></span>
-        <span class="sand-river river-b"></span>
-        <span class="sand-river river-c"></span>
       </section>
 
       <section class="landing-page story-root">

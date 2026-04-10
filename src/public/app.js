@@ -32,7 +32,8 @@
   });
 
   const intro = document.getElementById('landing-intro');
-  const introEnter = document.getElementById('intro-enter');
+  const introDiscover = document.getElementById('intro-discover');
+  const introReserve = document.getElementById('intro-reserve');
   if (intro) {
     const introPreviewMode = new URLSearchParams(window.location.search).get('previewIntro') === '1';
     const state = { tx: 0, ty: 0, x: 0, y: 0 };
@@ -90,16 +91,18 @@
       setTimeout(finalize, 1150);
     };
 
-    intro.addEventListener('click', (ev) => {
-      if (ev.target.closest('a, input, textarea, select')) return;
-      startIntroTransition();
-    });
-
-    if (introEnter) {
-      introEnter.addEventListener('click', (ev) => {
+    if (introDiscover) {
+      introDiscover.addEventListener('click', (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
         startIntroTransition();
+      });
+    }
+
+    if (introReserve) {
+      introReserve.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        window.location.assign('/classes');
       });
     }
 
