@@ -164,8 +164,8 @@ body::before {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 4.35rem;
-  padding: 0.9rem 1.75rem;
+  min-height: 4.6rem;
+  padding: 0.95rem 1.95rem;
   border: 1px solid rgba(255, 249, 243, 0.56);
   border-radius: 0.8rem;
   background: rgba(255, 255, 255, 0.02);
@@ -183,6 +183,22 @@ body::before {
   backdrop-filter: blur(22px) saturate(1.08);
   -webkit-backdrop-filter: blur(22px) saturate(1.08);
   cursor: pointer;
+}
+
+.theme-tisa .intro-button-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.72rem;
+  line-height: 1;
+}
+
+.theme-tisa .intro-button-wordmark {
+  display: block;
+  width: auto;
+  height: clamp(2.75rem, 3.56vw, 3.38rem);
+  flex: 0 0 auto;
+  transform: translateY(0.08em);
 }
 
 .theme-tisa .intro-actions .intro-glass-button:hover,
@@ -241,8 +257,17 @@ body.intro-pushing .landing-intro {
   }
 
   .theme-tisa .intro-actions .intro-glass-button {
-    min-height: 4.1rem;
-    font-size: clamp(1.65rem, 8vw, 2rem);
+    min-height: 4.3rem;
+    padding: 0.95rem 1.4rem;
+    font-size: clamp(1.72rem, 8vw, 2.05rem);
+  }
+
+  .theme-tisa .intro-button-copy {
+    gap: 0.56rem;
+  }
+
+  .theme-tisa .intro-button-wordmark {
+    height: clamp(2.48rem, 10.25vw, 2.88rem);
   }
 }
 
@@ -1173,20 +1198,35 @@ textarea {
   .theme-tisa .intro-actions .intro-glass-button {
     width: 100%;
     min-width: 0;
-    min-height: 4rem;
+    min-height: 4.28rem;
+    padding: 1rem 1.35rem;
     border-radius: 0.8rem;
-    border-color: rgba(255, 252, 247, 0.74);
-    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 247, 238, 0.5);
+    background: rgba(76, 53, 37, 0.46);
     color: #fff7ee;
     box-shadow:
-      0 16px 32px rgba(10, 8, 7, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.32),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.12);
-    font-size: clamp(1.75rem, 7vw, 2rem);
+      0 18px 34px rgba(10, 8, 7, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    font-size: clamp(1.8rem, 7.2vw, 2.08rem);
     font-weight: 500;
     letter-spacing: 0.01em;
-    backdrop-filter: blur(18px) saturate(1.02);
-    -webkit-backdrop-filter: blur(18px) saturate(1.02);
+    backdrop-filter: blur(18px) saturate(1.04);
+    -webkit-backdrop-filter: blur(18px) saturate(1.04);
+  }
+
+  .theme-tisa .intro-button-wordmark {
+    height: clamp(2.65rem, 11vw, 3.08rem);
+  }
+
+  .theme-tisa .intro-actions .intro-glass-button:hover,
+  .theme-tisa .intro-actions .intro-glass-button:focus-visible {
+    background: rgba(68, 47, 33, 0.56);
+    border-color: rgba(255, 247, 238, 0.72);
+    box-shadow:
+      0 20px 38px rgba(10, 8, 7, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   }
 
   .dune-card,

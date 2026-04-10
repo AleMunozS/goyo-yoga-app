@@ -509,7 +509,12 @@ export function createApp({ prisma }) {
           <div class="intro-copy">
             <div class="intro-panel">
               <div class="intro-actions" role="group" aria-label="Acciones principales de TISA">
-                <button type="button" class="btn intro-glass-button" id="intro-discover">Conoce Tisa</button>
+                <button type="button" class="btn intro-glass-button intro-glass-button-wordmark" id="intro-discover" aria-label="Conoce Tisa">
+                  <span class="intro-button-copy">
+                    <span>Conoce</span>
+                    <img class="intro-button-wordmark" src="/static/intro-tisa-wordmark.svg" alt="Tisa" />
+                  </span>
+                </button>
                 <a class="btn intro-glass-button" id="intro-reserve" href="/classes">Reservar Ahora</a>
               </div>
             </div>
