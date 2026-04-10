@@ -132,6 +132,69 @@
   const parallaxEls = document.querySelectorAll('.parallax');
   const storyRoot = document.querySelector('.story-root');
 
+  document.querySelectorAll('[data-card-carousel]').forEach((carousel) => {
+    const viewport = carousel.querySelector('[data-carousel-viewport]');
+    const track = carousel.querySelector('.landing-carousel-track');
+    const prevButton = carousel.querySelector('[data-carousel-prev]');
+    const nextButton = carousel.querySelector('[data-carousel-next]');
+    if (!viewport || !track || !prevButton || !nextButton) return;
+    let isDragging = false;
+    let pointerId = null;
+    let startX = 0;
+    let startScrollLeft = 0;
+
+    const getStep = () => {
+      const firstCard = track.firstElementChild;
+      const styles = window.getComputedStyle(track);
+      const gap = Number.parseFloat(styles.columnGap || styles.gap || '0') || 0;
+      return firstCard ? firstCard.getBoundingClientRect().width + gap : viewport.clientWidth * 0.9;
+    };
+
+    const updateButtons = () => {
+      const maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth - 2);
+      prevButton.disabled = viewport.scrollLeft <= 2;
+      nextButton.disabled = viewport.scrollLeft >= maxScroll;
+    };
+
+    const scrollByCard = (direction) => {
+      viewport.scrollBy({ left: getStep() * direction, behavior: 'smooth' });
+    };
+
+    prevButton.addEventListener('click', () => scrollByCard(-1));
+    nextButton.addEventListener('click', () => scrollByCard(1));
+    viewport.addEventListener('scroll', updateButtons, { passive: true });
+    window.addEventListener('resize', updateButtons);
+
+    viewport.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      isDragging = true;
+      pointerId = event.pointerId;
+      startX = event.clientX;
+      startScrollLeft = viewport.scrollLeft;
+      viewport.classList.add('is-dragging');
+      viewport.setPointerCapture?.(event.pointerId);
+    });
+
+    viewport.addEventListener('pointermove', (event) => {
+      if (!isDragging || pointerId !== event.pointerId) return;
+      const delta = event.clientX - startX;
+      viewport.scrollLeft = startScrollLeft - delta;
+    });
+
+    const stopDrag = (event) => {
+      if (pointerId !== null && event.pointerId !== pointerId) return;
+      isDragging = false;
+      pointerId = null;
+      viewport.classList.remove('is-dragging');
+      updateButtons();
+    };
+
+    viewport.addEventListener('pointerup', stopDrag);
+    viewport.addEventListener('pointercancel', stopDrag);
+    viewport.addEventListener('lostpointercapture', stopDrag);
+    updateButtons();
+  });
+
   const updateVisualStory = () => {
     const y = window.scrollY;
     parallaxEls.forEach((el, i) => {

@@ -109,6 +109,185 @@ function parseSeatCodesInput(value) {
   ).slice(0, MAX_SEATS_PER_BOOKING);
 }
 
+const SPANISH_DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const SPANISH_DAY_NAMES_SHORT = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+const SPANISH_MONTH_NAMES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const SPANISH_MONTH_NAMES_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const AGENDA_INTENSITY_ORDER = ['Suave', 'Baja', 'Media/Alta'];
+
+function capitalizeLabel(value) {
+  if (!value) return '';
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
+function normalizeAgendaIntensity(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (raw === 'media' || raw === 'media/alta' || raw === 'media alta' || raw === 'alta') return 'Media/Alta';
+  if (raw === 'baja') return 'Baja';
+  return 'Suave';
+}
+
+function getAgendaIntensityMeta(value) {
+  const label = normalizeAgendaIntensity(value);
+  const tones = {
+    Suave: {
+      label,
+      className: 'is-suave',
+      description: 'Pausa y regulación',
+    },
+    Baja: {
+      label,
+      className: 'is-baja',
+      description: 'Movimiento accesible',
+    },
+    'Media/Alta': {
+      label,
+      className: 'is-media-alta',
+      description: 'Foco y energía',
+    },
+  };
+  return tones[label] || tones.Suave;
+}
+
+function formatAgendaDayName(value) {
+  const date = dayjs(value);
+  return capitalizeLabel(SPANISH_DAY_NAMES[date.day()]);
+}
+
+function formatAgendaDayNameShort(value) {
+  const date = dayjs(value);
+  return capitalizeLabel(SPANISH_DAY_NAMES_SHORT[date.day()]);
+}
+
+function formatAgendaDateLabel(value) {
+  const date = dayjs(value);
+  return `${String(date.date()).padStart(2, '0')} ${SPANISH_MONTH_NAMES_SHORT[date.month()]}`;
+}
+
+function formatAgendaMonthLabel(value) {
+  const date = dayjs(value);
+  return `${capitalizeLabel(SPANISH_MONTH_NAMES[date.month()])} ${date.year()}`;
+}
+
+function formatAgendaRangeLabel(periodStart, view) {
+  if (view === 'month') return formatAgendaMonthLabel(periodStart);
+  const rangeEnd = dayjs(periodStart).add(6, 'day');
+  return `${formatAgendaDateLabel(periodStart)} - ${formatAgendaDateLabel(rangeEnd)} ${rangeEnd.year()}`;
+}
+
+function renderClassesCustomHeader() {
+  return `
+    <header class="classes-site-header">
+      <div class="classes-site-header__inner">
+        <a class="classes-site-brand" href="/">
+          <img
+            class="classes-site-brand__lockup"
+            src="${brand.assets.headerLogo}"
+            alt="${esc(brand.name)}"
+            width="1130"
+            height="384"
+          />
+        </a>
+        <nav class="classes-site-nav" aria-label="Agenda TISA">
+          <a href="/">Inicio</a>
+          <a class="is-active" href="/classes">Agenda</a>
+          <button type="button" data-scroll-target="classes-editorial-grid">Reservar</button>
+          <a href="/staff/login">Staff</a>
+        </nav>
+      </div>
+    </header>
+  `;
+}
+
+function renderClassesCustomFooter({ view, periodStart }) {
+  const weekHref = `/classes?view=week&start=${startOfWeekMonday(periodStart).format('YYYY-MM-DD')}`;
+  const monthHref = `/classes?view=month&start=${dayjs(periodStart).startOf('month').format('YYYY-MM-DD')}`;
+  return `
+    <nav class="classes-mobile-nav" aria-label="Agenda móvil">
+      <a href="/">
+        <span>Inicio</span>
+      </a>
+      <a class="${view === 'week' ? 'is-active' : ''}" href="${weekHref}">
+        <span>Semana</span>
+      </a>
+      <a class="${view === 'month' ? 'is-active' : ''}" href="${monthHref}">
+        <span>Mes</span>
+      </a>
+      <a href="/staff/login">
+        <span>Staff</span>
+      </a>
+    </nav>
+    <footer class="classes-site-footer">
+      <div class="classes-site-footer__brand">
+        <strong>${esc(brand.name)}</strong>
+        <p>${esc(brand.descriptorLong)}</p>
+      </div>
+      <div class="classes-site-footer__links">
+        <a href="/">Inicio</a>
+        <a href="/classes">Agenda</a>
+        <a href="/staff/login">Staff</a>
+      </div>
+      <p class="classes-site-footer__caption">© ${dayjs().year()} ${esc(brand.name)}. Agenda editorial con disponibilidad real.</p>
+    </footer>
+  `;
+}
+
+function renderClassesEditorialEventCard(occurrence, { compact = false } = {}) {
+  const startsAt = dayjs(occurrence.startsAt);
+  const intensity = getAgendaIntensityMeta(occurrence.classType.intensity);
+  const isCancelled = occurrence.status === 'CANCELLED';
+  const isFull = occurrence.availableSlots <= 0;
+  const disabled = isCancelled || isFull;
+  const stateLabel = isCancelled ? 'Cancelada' : isFull ? 'Completa' : `${occurrence.availableSlots} cupos`;
+  const ctaLabel = isCancelled ? 'No disponible' : isFull ? 'Lista llena' : 'Reservar';
+
+  if (compact) {
+    return `
+      <a
+        class="classes-mini-event ${intensity.className} ${isCancelled ? 'is-cancelled' : ''} ${isFull ? 'is-full' : ''}"
+        href="${disabled ? '#' : buildSeatSelectionUrl(occurrence.id)}"
+        ${disabled ? 'aria-disabled="true"' : ''}
+      >
+        <div class="classes-mini-event__topline">
+          <span>${startsAt.format('HH:mm')}</span>
+          <span>${esc(intensity.label)}</span>
+        </div>
+        <strong>${esc(occurrence.classType.name)}</strong>
+        <small>${esc(occurrence.trainer.displayName)} · ${esc(stateLabel)}</small>
+      </a>
+    `;
+  }
+
+  return `
+    <a
+      class="classes-event-card ${intensity.className} ${isCancelled ? 'is-cancelled' : ''} ${isFull ? 'is-full' : ''}"
+      href="${disabled ? '#' : buildSeatSelectionUrl(occurrence.id)}"
+      ${disabled ? 'aria-disabled="true"' : ''}
+    >
+      <div class="classes-event-card__topline">
+        <span class="classes-event-pill">${esc(intensity.label)}</span>
+        <span class="classes-event-time">${startsAt.format('HH:mm')}</span>
+      </div>
+      <h3>${esc(occurrence.classType.name)}</h3>
+      <p class="classes-event-card__summary">${esc(occurrence.classType.description)}</p>
+      <div class="classes-event-card__meta">
+        <div>
+          <span>Guía</span>
+          <strong>${esc(occurrence.trainer.displayName)}</strong>
+        </div>
+        <div>
+          <span>Valor</span>
+          <strong>${formatCurrency(occurrence.unitPriceCents)}</strong>
+        </div>
+      </div>
+      <div class="classes-event-card__footer">
+        <span class="classes-event-card__state">${esc(stateLabel)}</span>
+        <span class="classes-event-card__cta">${ctaLabel}</span>
+      </div>
+    </a>
+  `;
+}
+
 function renderSeatSelectionBody({
   occurrence,
   occupiedSeatCodes,
@@ -426,50 +605,156 @@ export function createApp({ prisma }) {
       firstClass: upcoming[0] || null,
     };
 
-    const typeCards = types
+    const classProfiles = [
+      {
+        intensity: 'Baja',
+        name: 'Yoga',
+        description: 'Práctica accesible para aterrizar el cuerpo, soltar tensión y regular el ritmo.',
+        durationMin: 40,
+        guideText: 'Ideal cuando buscas bajar revoluciones con una secuencia amable y clara.',
+        intensitySummary: 'Baja. Movimiento accesible para entrar en ritmo.',
+        visualClass: 'baja',
+        intensityOrder: 2,
+      },
+      {
+        intensity: 'Media/Alta',
+        name: 'Yoga Inmersivo',
+        description: 'Práctica envolvente de mayor intensidad para foco, resistencia y presencia sostenida.',
+        durationMin: 55,
+        guideText: 'Pensada para una energía más activa, profunda y sostenida.',
+        intensitySummary: 'Media/Alta. Práctica más intensa, activa y sostenida.',
+        visualClass: 'media-alta',
+        intensityOrder: 3,
+      },
+      {
+        intensity: 'Suave',
+        name: 'Head Spa',
+        description: 'Experiencia suave de descanso, respiración y bienestar para volver al centro.',
+        durationMin: 50,
+        guideText: 'Funciona mejor cuando necesitas pausa, ligereza y recuperación.',
+        intensitySummary: 'Suave. Pausa profunda, descanso y regulación.',
+        visualClass: 'suave',
+        intensityOrder: 1,
+      },
+    ];
+
+    const normalizeIntensity = (value) => {
+      const raw = String(value || '').trim().toLowerCase();
+      if (raw === 'media' || raw === 'media/alta' || raw === 'media alta' || raw === 'alta') return 'Media/Alta';
+      if (raw === 'suave') return 'Suave';
+      if (raw === 'baja') return 'Baja';
+      return 'Suave';
+    };
+
+    const getClassProfile = (intensity) => {
+      const normalized = normalizeIntensity(intensity);
+      return classProfiles.find((profile) => profile.intensity === normalized) || classProfiles[0];
+    };
+
+    const fallbackPractices = classProfiles.map((profile) => ({
+      ...profile,
+      intensity: profile.intensity,
+      name: profile.name,
+      description: profile.description,
+      durationMin: profile.durationMin,
+    }));
+
+    const practiceEntries = [
+      ...upcoming.map((occurrence) => {
+        const profile = getClassProfile(occurrence.classType.intensity);
+        return {
+          intensity: profile.intensity,
+          name: profile.name,
+          description: profile.description,
+          durationMin: occurrence.classType.durationMin || profile.durationMin,
+          trainerName: occurrence.trainer.displayName,
+          scheduleLabel: dayjs(occurrence.startsAt).format('DD MMM · HH:mm'),
+          availabilityLabel: `${occurrence.availableSlots} cupos`,
+          priceLabel: formatCurrency(occurrence.unitPriceCents),
+          href: buildSeatSelectionUrl(occurrence.id),
+          ctaLabel: 'Reservar práctica',
+        };
+      }),
+      ...types
+        .filter((type) => {
+          const typeProfile = getClassProfile(type.intensity);
+          return !upcoming.some((occurrence) => getClassProfile(occurrence.classType.intensity).name === typeProfile.name);
+        })
+        .map((type) => {
+          const profile = getClassProfile(type.intensity);
+          return {
+            intensity: profile.intensity,
+            name: profile.name,
+            description: profile.description,
+            durationMin: type.durationMin || profile.durationMin,
+            trainerName: 'Equipo TISA',
+            scheduleLabel: 'Agenda en actualización',
+            availabilityLabel: 'Consulta horarios',
+            priceLabel: 'Ver agenda',
+            href: '/classes',
+            ctaLabel: 'Ver agenda',
+          };
+        }),
+      ...fallbackPractices
+        .filter((fallback) => {
+          return !types.some((type) => getClassProfile(type.intensity).name === fallback.name)
+            && !upcoming.some((occurrence) => getClassProfile(occurrence.classType.intensity).name === fallback.name);
+        })
+        .map((fallback) => ({
+          ...fallback,
+          trainerName: 'Equipo TISA',
+          scheduleLabel: 'Agenda en actualización',
+          availabilityLabel: 'Consulta horarios',
+          priceLabel: 'Ver agenda',
+          href: '/classes',
+          ctaLabel: 'Ver agenda',
+        })),
+    ];
+
+    const typeCards = practiceEntries
       .map(
         (t) => `
       <article class="card tisa-card landing-practice-card reveal">
-        <span class="tag">${esc(t.intensity)}</span>
+        <div class="landing-practice-topline">
+          <span class="tag">${esc(t.intensity)}</span>
+          <span class="landing-practice-schedule">${esc(t.scheduleLabel)}</span>
+        </div>
         <h3>${esc(t.name)}</h3>
         <p>${esc(t.description)}</p>
         <div class="experience-meta">
           <span class="status-pill">${t.durationMin} min</span>
           <span class="experience-detail">Diseñada para un ritmo ${esc(t.intensity.toLowerCase())}</span>
         </div>
+        <div class="landing-practice-info">
+          <div class="landing-practice-info-row">
+            <span>Guía</span>
+            <strong>${esc(t.trainerName)}</strong>
+          </div>
+          <div class="landing-practice-info-row">
+            <span>Disponibilidad</span>
+            <strong>${esc(t.availabilityLabel)}</strong>
+          </div>
+          <div class="landing-practice-info-row">
+            <span>Precio</span>
+            <strong>${esc(t.priceLabel)}</strong>
+          </div>
+        </div>
+        <div class="landing-practice-actions">
+          <a class="btn" href="${esc(t.href)}">${esc(t.ctaLabel)}</a>
+        </div>
       </article>
     `
       )
       .join('');
 
-    const timeline = upcoming.length
-      ? upcoming
-          .map(
-            (c) => `
-        <a class="timeline-row reveal" href="${buildSeatSelectionUrl(c.id)}">
-          <div>
-            <strong>${esc(c.classType.name)}</strong>
-            <p>${esc(c.trainer.displayName)}</p>
-          </div>
-          <div class="timeline-right">
-            <span>${dayjs(c.startsAt).format('HH:mm')}</span>
-            <small>${c.availableSlots} cupos</small>
-          </div>
-        </a>
-      `
-          )
-          .join('')
-      : '<div class="timeline-row"><p>Agenda en actualización</p></div>';
-
-    const pricingCards = upcoming
+    const classGuideCards = [...classProfiles]
+      .sort((a, b) => a.intensityOrder - b.intensityOrder)
       .map(
-        (occurrence) => `
-      <article class="card tisa-card landing-price-card reveal">
-        <h3>${esc(occurrence.classType.name)}</h3>
-        <p>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')} · ${esc(occurrence.trainer.displayName)}</p>
-        <div class="metric">${formatCurrency(occurrence.unitPriceCents)}</div>
-        <p>${occurrence.availableSlots} lugares disponibles para reservar dentro del mismo recorrido.</p>
-        <a class="btn" href="${buildSeatSelectionUrl(occurrence.id)}">Elegir práctica</a>
+        (profile) => `
+      <article class="card tisa-card landing-class-guide-card reveal">
+        <span class="ritual-step">${esc(profile.intensity)}</span>
+        <h3>${esc(profile.name)}</h3>
+        <p>${esc(profile.guideText)}</p>
       </article>
     `
       )
@@ -480,22 +765,6 @@ export function createApp({ prisma }) {
         (item) => `
       <article class="card tisa-card landing-principle-card reveal">
         <span class="ritual-step">${item.label}</span>
-        <h3>${item.title}</h3>
-        <p>${item.text}</p>
-      </article>
-    `
-      )
-      .join('');
-
-    const proofCards = brand.home.journey
-      .map((item) => `<div class="proof-chip reveal">${item.step} · ${item.title}</div>`)
-      .join('');
-
-    const journeyCards = brand.home.journey
-      .map(
-        (item) => `
-      <article class="card tisa-card landing-journey-card reveal">
-        <span class="ritual-step">${item.step}</span>
         <h3>${item.title}</h3>
         <p>${item.text}</p>
       </article>
@@ -567,51 +836,33 @@ export function createApp({ prisma }) {
 
         <section class="landing-band reveal">
           <div class="landing-band-lead">
-            <p class="eyebrow">PRÁCTICAS</p>
-            <h2>Ritmos distintos, misma intención de cuidado.</h2>
-            <p>Cada práctica se presenta desde la base: claridad, duración, tono y un lenguaje que acompaña sin exagerar.</p>
+            <p class="eyebrow">TIPOS DE CLASE</p>
+            <h2>Diferentes prácticas para distintos ritmos y necesidades.</h2>
+            <p>Revisa cada clase con su enfoque, horario, guía, cupos y precio para identificar rápido la opción que mejor acompaña tu momento.</p>
           </div>
-          <div class="landing-band-body landing-practice-grid">
-            ${typeCards}
-          </div>
-        </section>
-
-        <section class="landing-band reveal">
-          <div class="landing-band-lead">
-            <p class="eyebrow">RECORRIDO</p>
-            <h2>Reservar debe sentirse continuo y claro.</h2>
-            <p>Desde la agenda hasta el QR, el sistema conserva una misma atmósfera y una misma lógica de cuidado.</p>
-          </div>
-          <div class="landing-band-body landing-journey-grid">
-            ${journeyCards}
+          <div class="landing-band-body landing-practice-carousel" data-card-carousel>
+            <div class="landing-carousel-toolbar">
+              <div class="landing-carousel-controls" aria-label="Controles de navegación de clases">
+                <button type="button" class="landing-carousel-button" data-carousel-prev aria-label="Ver clase anterior">&larr;</button>
+                <button type="button" class="landing-carousel-button" data-carousel-next aria-label="Ver siguiente clase">&rarr;</button>
+              </div>
+            </div>
+            <div class="landing-carousel-viewport" data-carousel-viewport aria-label="Tipos de clase disponibles">
+              <div class="landing-practice-grid landing-carousel-track">
+                ${typeCards}
+              </div>
+            </div>
           </div>
         </section>
 
         <section class="landing-panel reveal">
           <div class="landing-panel-head">
-            <p class="eyebrow">AGENDA DISPONIBLE</p>
-            <h2>Una lectura rápida para decidir sin fricción.</h2>
-            <p>La agenda deja ver horario, guía y disponibilidad real antes de que abras el mapa de lugares.</p>
+            <p class="eyebrow">GUÍA RÁPIDA</p>
+            <h2>Una forma simple de elegir entre las tres prácticas.</h2>
+            <p>Cada clase responde a una intención distinta: bajar el ritmo, profundizar la energía o descansar con suavidad.</p>
           </div>
-          <div class="landing-panel-body landing-schedule-layout">
-            <div class="landing-timeline">
-              ${timeline}
-            </div>
-            <aside class="landing-schedule-side">
-              <div class="proof-row">${proofCards}</div>
-              <a class="btn" href="/classes">Explorar agenda completa</a>
-            </aside>
-          </div>
-        </section>
-
-        <section class="landing-band reveal">
-          <div class="landing-band-lead">
-            <p class="eyebrow">VALOR VISIBLE</p>
-            <h2>El precio y la disponibilidad se entienden antes del clic.</h2>
-            <p>La decisión se siente acompañada porque cada horario explica su valor sin saturar la pantalla.</p>
-          </div>
-          <div class="landing-band-body landing-pricing-grid">
-            ${pricingCards || '<div class="card tisa-card home-empty-card">Próximamente aparecerán horarios disponibles para reservar.</div>'}
+          <div class="landing-panel-body landing-class-guide-grid">
+            ${classGuideCards}
           </div>
         </section>
 
@@ -1348,157 +1599,187 @@ export function createApp({ prisma }) {
 
     const prevStart = view === 'month' ? periodStart.subtract(1, 'month') : periodStart.subtract(7, 'day');
     const nextStart = view === 'month' ? periodStart.add(1, 'month') : periodStart.add(7, 'day');
-    const titleRange =
-      view === 'month'
-        ? periodStart.format('MMMM YYYY')
-        : `${periodStart.format('DD MMM')} - ${periodStart.add(6, 'day').format('DD MMM YYYY')}`;
+    const titleRange = formatAgendaRangeLabel(periodStart, view);
+    const classCount = classes.length;
+    const availableCount = classes.filter((c) => c.status !== 'CANCELLED' && c.availableSlots > 0).length;
+    const firstClass = classes[0] || null;
+    const firstBookableClass = classes.find((item) => item.status !== 'CANCELLED' && item.availableSlots > 0) || null;
+    const classesByDay = new Map(days.map((d) => [d.format('YYYY-MM-DD'), []]));
 
-    const startHour = 6;
-    const endHour = 22;
-    const totalSlots = endHour - startHour;
-    const rowHeight = 78;
-    const trackHeight = totalSlots * rowHeight;
+    classes.forEach((item) => {
+      const key = dayjs(item.startsAt).format('YYYY-MM-DD');
+      if (!classesByDay.has(key)) classesByDay.set(key, []);
+      classesByDay.get(key).push(item);
+    });
 
-    const dayHeaders = days
-      .map(
-        (d) => `
-      <div class="calendar-day-head">
-        <span>${d.format('ddd').toUpperCase()}</span>
-        <strong>${d.format(view === 'month' ? 'DD' : 'DD MMM')}</strong>
-      </div>`
-      )
-      .join('');
+    const typeLabels = Array.from(new Set(classes.map((item) => item.classType.name))).sort((a, b) => a.localeCompare(b, 'es-MX'));
+    const intensityLabels = Array.from(new Set(classes.map((item) => normalizeAgendaIntensity(item.classType.intensity)))).sort(
+      (a, b) => AGENDA_INTENSITY_ORDER.indexOf(a) - AGENDA_INTENSITY_ORDER.indexOf(b),
+    );
 
-    const timeLabels = Array.from({ length: totalSlots }, (_, idx) => startHour + idx)
-      .map((hour) => `<div class="calendar-time-label">${String(hour).padStart(2, '0')}:00</div>`)
-      .join('');
-
-    const dayColumns = days
-      .map((d) => {
-        const dayClasses = classes.filter((c) => dayjs(c.startsAt).isSame(d, 'day'));
-        if (view === 'month') {
-          const monthEvents = dayClasses
-            .map((c) => {
-              const start = dayjs(c.startsAt);
-              const isCancelled = c.status === 'CANCELLED';
-              const disabled = isCancelled || c.availableSlots <= 0;
-              return `
-              <a
-                class="month-class-chip ${isCancelled ? 'is-cancelled' : ''} ${c.availableSlots <= 0 ? 'is-full' : ''}"
-                href="${disabled ? '#' : buildSeatSelectionUrl(c.id)}"
-                ${disabled ? 'aria-disabled="true"' : ''}
-              >
-                <span>${start.format('HH:mm')}</span>
-                <strong>${esc(c.classType.name)}</strong>
-              </a>
-              `;
-            })
-            .join('');
-
-          return `
-          <div class="calendar-month-day ${!d.isSame(periodStart, 'month') ? 'is-out-month' : ''}">
-            <div class="month-day-number">${d.format('D')}</div>
-            <div class="month-day-events">${monthEvents || '<span class="month-empty">Sin clases</span>'}</div>
-          </div>
-          `;
-        }
-
-        const blocks = dayClasses
-          .map((c) => {
-            const start = dayjs(c.startsAt);
-            const end = dayjs(c.endsAt);
-            const startMinutes = (start.hour() - startHour) * 60 + start.minute();
-            const durationMinutes = Math.max(end.diff(start, 'minute'), 30);
-            const top = (startMinutes / 60) * rowHeight;
-            const height = Math.max((durationMinutes / 60) * rowHeight, 36);
-            const isCancelled = c.status === 'CANCELLED';
-            const disabled = isCancelled || c.availableSlots <= 0;
-            return `
-            <a
-              class="calendar-class-block ${isCancelled ? 'is-cancelled' : ''} ${c.availableSlots <= 0 ? 'is-full' : ''}"
-              style="top:${top}px;height:${height}px;"
-              href="${disabled ? '#' : buildSeatSelectionUrl(c.id)}"
-              ${disabled ? 'aria-disabled="true"' : ''}
-            >
-              <strong>${esc(c.classType.name)}</strong>
-              <small>${start.format('HH:mm')} · ${esc(c.trainer.displayName)}</small>
-              <small>${isCancelled ? 'Clase cancelada' : `${c.availableSlots} lugares disponibles`}</small>
-            </a>
-          `;
+    const typeChips = typeLabels.length
+      ? typeLabels.map((label) => `<span class="classes-filter-chip">${esc(label)}</span>`).join('')
+      : '<span class="classes-filter-chip is-muted">Agenda en actualización</span>';
+    const intensityChips = intensityLabels.length
+      ? intensityLabels
+          .map((label) => {
+            const meta = getAgendaIntensityMeta(label);
+            return `<span class="classes-filter-chip ${meta.className}">${esc(meta.label)}</span>`;
           })
-          .join('');
+          .join('')
+      : '<span class="classes-filter-chip is-muted">Sin intensidades en este rango</span>';
 
+    const weekColumns = days
+      .map((d) => {
+        const dayKey = d.format('YYYY-MM-DD');
+        const dayClasses = classesByDay.get(dayKey) || [];
         return `
-        <div class="calendar-day-column">
-          <div class="calendar-day-track" style="height:${trackHeight}px;">
-            ${Array.from({ length: totalSlots }, () => '<div class="calendar-hour-line"></div>').join('')}
-            ${blocks}
-          </div>
-        </div>`;
+          <section class="classes-day-column ${dayjs().isSame(d, 'day') ? 'is-today' : ''}">
+            <header class="classes-day-column__header">
+              <span>${formatAgendaDayName(d)}</span>
+              <strong>${formatAgendaDateLabel(d)}</strong>
+            </header>
+            <div class="classes-day-column__events">
+              ${
+                dayClasses.length
+                  ? dayClasses.map((occurrence) => renderClassesEditorialEventCard(occurrence)).join('')
+                  : `<article class="classes-empty-card">
+                      <span>Sin clases</span>
+                      <p>Este día queda libre para una pausa más amplia o una próxima actualización de agenda.</p>
+                    </article>`
+              }
+            </div>
+          </section>
+        `;
       })
       .join('');
 
-    const classCount = classes.length;
-    const availableCount = classes.filter((c) => c.status !== 'CANCELLED' && c.availableSlots > 0).length;
-    const firstClass = classes[0];
+    const monthGrid = days
+      .map((d) => {
+        const dayKey = d.format('YYYY-MM-DD');
+        const dayClasses = classesByDay.get(dayKey) || [];
+        return `
+          <section class="classes-month-day ${!d.isSame(periodStart, 'month') ? 'is-out-of-range' : ''} ${dayjs().isSame(d, 'day') ? 'is-today' : ''}">
+            <header class="classes-month-day__header">
+              <span>${formatAgendaDayNameShort(d)}</span>
+              <strong>${String(d.date()).padStart(2, '0')}</strong>
+            </header>
+            <div class="classes-month-day__events">
+              ${
+                dayClasses.length
+                  ? dayClasses.map((occurrence) => renderClassesEditorialEventCard(occurrence, { compact: true })).join('')
+                  : '<p class="classes-month-day__empty">Sin clases programadas.</p>'
+              }
+            </div>
+          </section>
+        `;
+      })
+      .join('');
 
-    const body = `<section class="section page-shell">
-      <div class="page-hero page-hero-grid reveal scroll-hero" data-scroll-target="classes-calendar">
-        <div class="page-hero-copy">
-          <p class="page-kicker">${brand.agenda.kicker}</p>
+    const body = `<section class="classes-editorial-shell">
+      <section class="classes-hero reveal">
+        <div class="classes-hero__copy">
+          <p class="classes-kicker">${brand.agenda.kicker}</p>
           <h1>${brand.agenda.title}</h1>
-          <p class="page-lede">${brand.agenda.lede}</p>
-          <div class="system-chip-row">
-            <button type="button" class="system-chip-button" data-scroll-target="classes-calendar">Ver agenda</button>
-            <button type="button" class="system-chip-button" data-scroll-target="classes-toolbar">Cambiar vista</button>
+          <p class="classes-lede">${brand.agenda.lede}</p>
+          <div class="classes-hero__actions">
+            <button type="button" class="classes-hero-button" data-scroll-target="classes-editorial-grid">Ver agenda</button>
+            <button type="button" class="classes-hero-button is-secondary" data-scroll-target="classes-toolbar">Cambiar vista</button>
           </div>
-          <div class="mini-stat-grid">
-            <article class="mini-stat"><span>Clases en rango</span><strong>${classCount}</strong></article>
-            <article class="mini-stat"><span>Disponibles</span><strong>${availableCount}</strong></article>
-            <article class="mini-stat"><span>Primera salida</span><strong>${firstClass ? dayjs(firstClass.startsAt).format('DD MMM · HH:mm') : 'Sin clases'}</strong></article>
+          <div class="classes-metric-row">
+            <article class="classes-metric-card">
+              <span>Clases en rango</span>
+              <strong>${classCount}</strong>
+            </article>
+            <article class="classes-metric-card">
+              <span>Disponibles</span>
+              <strong>${availableCount}</strong>
+            </article>
+            <article class="classes-metric-card">
+              <span>Primera salida</span>
+              <strong>${firstClass ? `${formatAgendaDateLabel(firstClass.startsAt)} · ${dayjs(firstClass.startsAt).format('HH:mm')}` : 'Sin clases'}</strong>
+            </article>
           </div>
         </div>
-        <aside class="page-hero-side">
-          <div class="spotlight-card">
+        <aside class="classes-hero__aside">
+          <article class="classes-spotlight-card">
             <span>${brand.agenda.howItWorksTitle}</span>
-            <strong>${brand.agenda.howItWorksText}</strong>
-            <p>La reservación se crea con hold temporal y el pago conserva el vínculo con la clase y los lugares elegidos.</p>
-          </div>
-          <div class="spotlight-card muted">
-            <span>${brand.agenda.benefitTitle}</span>
-            <strong>${brand.agenda.benefitText}</strong>
+            <strong>${firstBookableClass ? esc(firstBookableClass.classType.name) : 'Agenda en actualización'}</strong>
+            <p>${
+              firstBookableClass
+                ? `${formatAgendaDayName(firstBookableClass.startsAt)} ${formatAgendaDateLabel(firstBookableClass.startsAt)} · ${dayjs(firstBookableClass.startsAt).format('HH:mm')} · ${esc(firstBookableClass.trainer.displayName)}`
+                : esc(brand.agenda.howItWorksText)
+            }</p>
+          </article>
+          <div class="classes-hero-media">
+            <figure class="classes-hero-media__portrait">
+              <img src="${brand.assets.editorialGrid}" alt="Textura editorial TISA" />
+            </figure>
+            <figure class="classes-hero-media__landscape">
+              <img src="${brand.assets.mineralSurface}" alt="Superficie mineral TISA" />
+            </figure>
           </div>
         </aside>
-      </div>
+      </section>
 
-      <div class="calendar-toolbar page-toolbar" id="classes-toolbar">
-        <h2>Agenda de clases</h2>
-        <div class="calendar-toolbar-actions">
-          <a class="btn alt" href="/classes?view=${view}&start=${prevStart.format('YYYY-MM-DD')}">Anterior</a>
-          <span class="calendar-range">${titleRange}</span>
-          <a class="btn alt" href="/classes?view=${view}&start=${nextStart.format('YYYY-MM-DD')}">Siguiente</a>
-          <a class="btn ${view === 'week' ? '' : 'alt'}" href="/classes?view=week&start=${periodStart.format('YYYY-MM-DD')}">Semana</a>
-          <a class="btn ${view === 'month' ? '' : 'alt'}" href="/classes?view=month&start=${periodStart.format('YYYY-MM-DD')}">Mes</a>
+      <section class="classes-filter-panel">
+        <div class="classes-filter-group">
+          <span class="classes-filter-group__label">Prácticas en este rango</span>
+          <div class="classes-filter-group__chips">${typeChips}</div>
         </div>
-      </div>
-      ${req.query.error ? `<div class="ui-status-banner is-cancel"><div><p class="concept-kicker">Disponibilidad</p><h2>El mapa cambió antes de confirmar.</h2><p>${esc(String(req.query.error))}</p></div></div>` : ''}
-      <p class="calendar-subtitle">Selecciona cualquier bloque para reservar. Las clases canceladas y los espacios llenos se distinguen de inmediato.</p>
-      <div class="calendar-shell reveal" id="classes-calendar">
+        <div class="classes-filter-group">
+          <span class="classes-filter-group__label">Intensidades activas</span>
+          <div class="classes-filter-group__chips">${intensityChips}</div>
+        </div>
+      </section>
+
+      <section class="classes-toolbar" id="classes-toolbar">
+        <div class="classes-toolbar__copy">
+          <p class="classes-toolbar__eyebrow">Navegación</p>
+          <h2>${view === 'month' ? 'Mes editorial' : 'Semana editorial'}</h2>
+          <p>${titleRange}</p>
+        </div>
+        <div class="classes-toolbar__actions">
+          <a class="classes-toolbar-link" href="/classes?view=${view}&start=${prevStart.format('YYYY-MM-DD')}">Anterior</a>
+          <span class="classes-toolbar-range">${titleRange}</span>
+          <a class="classes-toolbar-link" href="/classes?view=${view}&start=${nextStart.format('YYYY-MM-DD')}">Siguiente</a>
+          <a class="classes-toolbar-link ${view === 'week' ? 'is-active' : ''}" href="/classes?view=week&start=${startOfWeekMonday(periodStart).format('YYYY-MM-DD')}">Semana</a>
+          <a class="classes-toolbar-link ${view === 'month' ? 'is-active' : ''}" href="/classes?view=month&start=${dayjs(periodStart).startOf('month').format('YYYY-MM-DD')}">Mes</a>
+        </div>
+      </section>
+
+      ${
+        req.query.error
+          ? `<div class="ui-status-banner is-cancel classes-status-banner">
+              <div>
+                <p class="concept-kicker">Disponibilidad</p>
+                <h2>El mapa cambió antes de confirmar.</h2>
+                <p>${esc(String(req.query.error))}</p>
+              </div>
+            </div>`
+          : ''
+      }
+
+      <section class="classes-board reveal" id="classes-editorial-grid">
         ${
           view === 'month'
-            ? `<div class="calendar-month-grid">${dayColumns}</div>`
-            : `<div class="calendar-grid-header">
-                <div class="calendar-time-head">Hora</div>
-                ${dayHeaders}
-              </div>
-              <div class="calendar-grid-body">
-                <div class="calendar-time-col">${timeLabels}</div>
-                ${dayColumns || '<div class="card">No hay clases próximas.</div>'}
-              </div>`
+            ? `<div class="classes-month-grid">${monthGrid}</div>`
+            : `<div class="classes-week-grid">${weekColumns}</div>`
         }
-      </div>
+      </section>
     </section>`;
-    res.send(renderLayout({ title: 'Clases', body, simulationMode: config.simulationMode }));
+    res.send(
+      renderLayout({
+        title: 'Clases',
+        body,
+        simulationMode: config.simulationMode,
+        bodyClass: 'classes-editorial-page',
+        mainClass: 'classes-editorial-main',
+        hideDefaultHeader: true,
+        customHeaderHtml: renderClassesCustomHeader(),
+        customFooterHtml: renderClassesCustomFooter({ view, periodStart }),
+      }),
+    );
   });
 
   app.get('/booking/seats', async (req, res) => {

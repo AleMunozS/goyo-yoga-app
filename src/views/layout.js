@@ -1,10 +1,22 @@
 import { esc } from '../utils.js';
 import { brand } from '../brand.js';
 
-export function renderLayout({ title, body, staff = null, staffRole = null, simulationMode = true }) {
+export function renderLayout({
+  title,
+  body,
+  staff = null,
+  staffRole = null,
+  simulationMode = true,
+  bodyClass = '',
+  mainClass = '',
+  hideDefaultHeader = false,
+  customHeaderHtml = '',
+  customFooterHtml = '',
+}) {
   const isConceptBoard = title.startsWith('Concept') && !staff;
   const isHome = title === 'Inicio' && !staff;
   const appName = brand.name;
+  const assetVersion = '20260409-classes-editorial';
   const canAccessAssistedSales = staffRole === 'ADMIN' || staffRole === 'OPS';
   const nav = staff
     ? `
@@ -36,25 +48,18 @@ export function renderLayout({ title, body, staff = null, staffRole = null, simu
         <a href="/staff/login">Staff</a>
       </nav>
     `;
-
-  return `<!doctype html>
-  <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="description" content="${esc(brand.metaDescription)}" />
-    <meta name="theme-color" content="#f4eee6" />
-    <title>${esc(title)} | ${appName}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css" />
-  </head>
-  <body
-    class="theme-tisa ${staff ? 'is-staff' : 'is-public'} ${isConceptBoard ? 'is-concept-board' : ''} ${isHome ? 'is-home has-landing-intro' : ''}"
-    style="--landing-side-emblem:url('${brand.assets.landingSideEmblem}');"
-  >
-    ${simulationMode && !isConceptBoard ? '<div class="sim-banner">Modo simulación activo (no producción)</div>' : ''}
+  const bodyClasses = [
+    'theme-tisa',
+    staff ? 'is-staff' : 'is-public',
+    isConceptBoard ? 'is-concept-board' : '',
+    isHome ? 'is-home has-landing-intro' : '',
+    bodyClass,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const defaultHeader = hideDefaultHeader
+    ? ''
+    : `
     <header class="site-header ${isConceptBoard ? 'concept-header' : ''}">
       <a class="brand" href="/">
         <img
@@ -67,8 +72,32 @@ export function renderLayout({ title, body, staff = null, staffRole = null, simu
       </a>
       ${nav}
     </header>
-    <main>${body}</main>
-    <script src="/static/app.js"></script>
+  `;
+  const mainClassAttr = mainClass ? ` class="${mainClass}"` : '';
+
+  return `<!doctype html>
+  <html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="${esc(brand.metaDescription)}" />
+    <meta name="theme-color" content="#f4eee6" />
+    <title>${esc(title)} | ${appName}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css?v=${assetVersion}" />
+  </head>
+  <body
+    class="${bodyClasses}"
+    style="--landing-side-emblem:url('${brand.assets.landingSideEmblem}');"
+  >
+    ${simulationMode && !isConceptBoard ? '<div class="sim-banner">Modo simulación activo (no producción)</div>' : ''}
+    ${defaultHeader}
+    ${customHeaderHtml}
+    <main${mainClassAttr}>${body}</main>
+    ${customFooterHtml}
+    <script src="/static/app.js?v=${assetVersion}"></script>
   </body>
   </html>`;
 }
