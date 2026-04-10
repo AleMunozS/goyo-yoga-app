@@ -1760,7 +1760,7 @@ export function createApp({ prisma }) {
           : ''
       }
 
-      <section class="classes-board reveal" id="classes-editorial-grid">
+      <section class="classes-board" id="classes-editorial-grid">
         ${
           view === 'month'
             ? `<div class="classes-month-grid">${monthGrid}</div>`

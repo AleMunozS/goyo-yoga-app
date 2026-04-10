@@ -11,6 +11,9 @@
   --bruma-azul: #828a91;
   --night-progress: 0;
   --glow-dim: 0;
+  --sim-banner-height: 0px;
+  --site-header-height: 0px;
+  --fixed-chrome-offset: 0px;
 }
 
 * {
@@ -5511,13 +5514,14 @@ body.classes-editorial-page {
 
 .classes-board {
   padding: 1rem;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
   background: rgba(255, 252, 248, 0.76);
 }
 
 .classes-week-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(210px, 1fr));
   gap: 0.85rem;
   align-items: start;
 }
@@ -5874,6 +5878,10 @@ body.classes-editorial-page {
 }
 
 @media (max-width: 760px) {
+  body.is-home:not(.has-landing-intro) main {
+    padding-top: calc(var(--fixed-chrome-offset) + 0.8rem);
+  }
+
   .classes-editorial-main {
     padding-bottom: calc(8rem + env(safe-area-inset-bottom));
   }
@@ -5939,6 +5947,7 @@ body.classes-editorial-page {
 
   .classes-week-grid {
     grid-template-columns: repeat(7, minmax(calc(100vw - 52px), 1fr));
+    align-items: stretch;
   }
 
   .classes-site-footer {

@@ -16,7 +16,7 @@ export function renderLayout({
   const isConceptBoard = title.startsWith('Concept') && !staff;
   const isHome = title === 'Inicio' && !staff;
   const appName = brand.name;
-  const assetVersion = '20260409-classes-editorial';
+  const assetVersion = '20260410-mobile-home-calendar-fix';
   const canAccessAssistedSales = staffRole === 'ADMIN' || staffRole === 'OPS';
   const nav = staff
     ? `

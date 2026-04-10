@@ -1,9 +1,20 @@
 (() => {
+  const simBanner = document.querySelector('.sim-banner');
+  const siteHeader = document.querySelector('.site-header');
+
+  const syncFixedChromeOffset = () => {
+    const simBannerHeight = simBanner ? simBanner.getBoundingClientRect().height : 0;
+    const siteHeaderHeight = siteHeader ? siteHeader.getBoundingClientRect().height : 0;
+    const totalOffset = simBannerHeight + siteHeaderHeight;
+    document.documentElement.style.setProperty('--sim-banner-height', `${simBannerHeight}px`);
+    document.documentElement.style.setProperty('--site-header-height', `${siteHeaderHeight}px`);
+    document.documentElement.style.setProperty('--fixed-chrome-offset', `${totalOffset}px`);
+  };
+
   const scrollToTarget = (id) => {
     const el = document.getElementById(id);
     if (!el) return;
-    const simBanner = document.querySelector('.sim-banner');
-    const siteHeader = document.querySelector('.site-header');
+    syncFixedChromeOffset();
     const isMobile = window.innerWidth <= 760;
     const isLandingTarget = id === 'landing-main-hero' || id === 'landing-overview';
     const extraOffset = (isMobile ? 28 : 0) + (isLandingTarget ? 18 : 0);
@@ -81,6 +92,7 @@
         window.scrollTo(0, 0);
         document.body.classList.remove('has-landing-intro');
         document.body.classList.remove('intro-pushing');
+        syncFixedChromeOffset();
       };
 
       intro.addEventListener('animationend', (ev) => {
@@ -110,6 +122,9 @@
       requestAnimationFrame(() => startIntroTransition());
     }
   }
+
+  syncFixedChromeOffset();
+  window.addEventListener('resize', syncFixedChromeOffset);
 
   const revealEls = document.querySelectorAll('.reveal');
   const previewRevealMode = new URLSearchParams(window.location.search).get('previewIntro') === '1';
