@@ -201,22 +201,30 @@ function renderClassesCustomHeader() {
 
 function renderClassesCustomFooter({ view, periodStart }) {
   const weekHref = `/classes?view=week&start=${startOfWeekMonday(periodStart).format('YYYY-MM-DD')}`;
-  const monthHref = `/classes?view=month&start=${dayjs(periodStart).startOf('month').format('YYYY-MM-DD')}`;
+  const prevHref = `/classes?view=${view}&start=${(view === 'month' ? dayjs(periodStart).subtract(1, 'month') : dayjs(periodStart).subtract(7, 'day')).format('YYYY-MM-DD')}`;
+  const nextHref = `/classes?view=${view}&start=${(view === 'month' ? dayjs(periodStart).add(1, 'month') : dayjs(periodStart).add(7, 'day')).format('YYYY-MM-DD')}`;
+  const prevLabel = view === 'month' ? 'Mes anterior' : 'Semana anterior';
+  const nextLabel = view === 'month' ? 'Mes siguiente' : 'Semana siguiente';
   return `
-    <nav class="classes-mobile-nav" aria-label="Agenda móvil">
-      <a href="/">
-        <span>Inicio</span>
+    <div class="classes-mobile-dock" aria-label="Controles móviles de agenda">
+      <a class="classes-mobile-nav-arrow" href="${prevHref}" aria-label="${prevLabel}">
+        <span aria-hidden="true">&larr;</span>
       </a>
-      <a class="${view === 'week' ? 'is-active' : ''}" href="${weekHref}">
-        <span>Semana</span>
+      <nav class="classes-mobile-nav" aria-label="Agenda móvil">
+        <a href="/">
+          <span>Inicio</span>
+        </a>
+        <a class="${view === 'week' ? 'is-active' : ''}" href="${weekHref}">
+          <span>Semana</span>
+        </a>
+        <a href="/staff/login">
+          <span>Staff</span>
+        </a>
+      </nav>
+      <a class="classes-mobile-nav-arrow" href="${nextHref}" aria-label="${nextLabel}">
+        <span aria-hidden="true">&rarr;</span>
       </a>
-      <a class="${view === 'month' ? 'is-active' : ''}" href="${monthHref}">
-        <span>Mes</span>
-      </a>
-      <a href="/staff/login">
-        <span>Staff</span>
-      </a>
-    </nav>
+    </div>
     <footer class="classes-site-footer">
       <div class="classes-site-footer__brand">
         <strong>${esc(brand.name)}</strong>
