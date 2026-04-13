@@ -16,13 +16,15 @@ export function renderLayout({
   const isConceptBoard = title.startsWith('Concept') && !staff;
   const isHome = title === 'Inicio' && !staff;
   const appName = brand.name;
-  const assetVersion = '20260410-mobile-home-calendar-fix';
+  const assetVersion = '20260413-layout-editor';
   const canAccessAssistedSales = staffRole === 'ADMIN' || staffRole === 'OPS';
+  const canAccessLayouts = staffRole === 'ADMIN' || staffRole === 'OPS';
   const nav = staff
     ? `
       <nav class="top-nav staff-nav">
         <a href="/admin/dashboard">Admin</a>
         ${canAccessAssistedSales ? '<a href="/admin/assisted-sales">Ventas WhatsApp</a>' : ''}
+        ${canAccessLayouts ? '<a href="/admin/layouts">Layouts</a>' : ''}
         <a href="/trainer/classes">Trainer</a>
         <a href="/ops/checkin">Check-in</a>
         <form action="/staff/logout" method="post"><button type="submit">Salir</button></form>

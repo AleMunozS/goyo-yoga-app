@@ -1652,6 +1652,7 @@ textarea {
 }
 
 .seat-stage {
+  position: relative;
   display: grid;
   gap: 0.85rem;
   min-width: 0;
@@ -1703,17 +1704,14 @@ textarea {
 .seat-map-canvas {
   position: absolute;
   inset: 0 auto auto 0;
-  width: 48rem;
-  height: 26rem;
+  width: max-content;
+  height: max-content;
   transform-origin: 0 0;
   will-change: transform;
 }
 
 .seat-map {
-  display: grid;
-  gap: 1rem;
-  align-content: start;
-  padding: 2rem 2.25rem 2.3rem;
+  position: relative;
   width: 100%;
   height: 100%;
   border-radius: 26px;
@@ -1722,6 +1720,19 @@ textarea {
     linear-gradient(180deg, rgba(255, 248, 237, 0.05), rgba(255, 248, 237, 0.02));
   border: 1px solid rgba(255, 237, 217, 0.08);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.seat-map-freeform {
+  background:
+    linear-gradient(rgba(255, 237, 217, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 237, 217, 0.04) 1px, transparent 1px),
+    radial-gradient(circle at 50% 0, rgba(215, 171, 129, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(255, 248, 237, 0.05), rgba(255, 248, 237, 0.02));
+  background-size:
+    var(--seat-grid, 24px) var(--seat-grid, 24px),
+    var(--seat-grid, 24px) var(--seat-grid, 24px),
+    auto,
+    auto;
 }
 
 .seat-map-row {
@@ -1768,7 +1779,12 @@ textarea {
   transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
-.seat-pill:hover {
+.seat-node {
+  position: absolute;
+  min-width: 5.3rem;
+}
+
+.seat-pill:not(.seat-node):hover {
   transform: translateY(-1px);
 }
 
@@ -1818,6 +1834,22 @@ textarea {
   justify-content: flex-end;
 }
 
+.seat-instructor-marker {
+  position: absolute;
+  z-index: 2;
+  min-width: 10rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 237, 217, 0.22);
+  background: rgba(46, 29, 26, 0.9);
+  color: #fff8f0;
+  text-align: center;
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: 0 14px 24px rgba(31, 19, 14, 0.18);
+}
+
 .legend {
   display: inline-flex;
   align-items: center;
@@ -1848,6 +1880,64 @@ textarea {
 
 .seat-inline-message {
   margin-top: 0.65rem;
+}
+
+.layout-admin-grid,
+.layout-editor-grid {
+  align-items: start;
+}
+
+.layout-editor-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.layout-editor-panel,
+.layout-inspector-panel {
+  min-width: 0;
+}
+
+.layout-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+
+.layout-editor-canvas-wrap {
+  overflow: auto;
+  border-radius: 28px;
+  background: rgba(255, 250, 245, 0.62);
+  border: 1px solid rgba(95, 69, 46, 0.12);
+}
+
+.layout-editor-stage {
+  width: max-content;
+  min-width: 100%;
+  padding: 1rem;
+}
+
+.layout-editor-stage canvas {
+  display: block;
+  border-radius: 24px;
+  box-shadow: 0 18px 40px rgba(46, 29, 26, 0.12);
+}
+
+.layout-inspector-fields {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
 }
 
 .system-inline-note {

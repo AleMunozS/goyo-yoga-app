@@ -10,6 +10,7 @@ process.env.QR_SECRET = 'test-qr-secret';
 
 const { PrismaClient } = await import('@prisma/client');
 const { createApp } = await import('../src/app.js');
+const { createDefaultLayout, serializeLayout } = await import('../src/seats.js');
 const {
   createCheckoutSessionForReservation,
   createDraftReservation,
@@ -47,6 +48,7 @@ async function resetDatabase() {
 }
 
 async function seedBaseData() {
+  const baseLayout = createDefaultLayout(20);
   const [trainer, ops, admin] = await Promise.all([
     prisma.staff_users.create({
       data: {
@@ -75,7 +77,12 @@ async function seedBaseData() {
   ]);
 
   const location = await prisma.locations.create({
-    data: { name: 'Test Studio', slug: 'test-studio', address: 'Torreón, Coahuila' },
+    data: {
+      name: 'Test Studio',
+      slug: 'test-studio',
+      address: 'Torreón, Coahuila',
+      layoutJson: serializeLayout(baseLayout),
+    },
   });
   const classType = await prisma.class_types.create({
     data: {
@@ -98,6 +105,7 @@ async function seedBaseData() {
       capacity: 18,
       availableSlots: 18,
       unitPriceCents: 35000,
+      layoutJson: serializeLayout(createDefaultLayout(18)),
     },
   });
   const farOccurrence = await prisma.class_occurrences.create({
@@ -110,6 +118,7 @@ async function seedBaseData() {
       capacity: 18,
       availableSlots: 18,
       unitPriceCents: 39000,
+      layoutJson: serializeLayout(createDefaultLayout(18)),
     },
   });
   const checkinOccurrence = await prisma.class_occurrences.create({
@@ -122,6 +131,7 @@ async function seedBaseData() {
       capacity: 18,
       availableSlots: 18,
       unitPriceCents: 41000,
+      layoutJson: serializeLayout(createDefaultLayout(18)),
     },
   });
 
@@ -136,6 +146,18 @@ function formBody(payload) {
   return new URLSearchParams(payload).toString();
 }
 
+async function loginAs(email, password) {
+  const response = await request('/staff/login', {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: formBody({ email, password }),
+    redirect: 'manual',
+  });
+
+  assert.equal(response.status, 302);
+  return response.headers.getSetCookie()[0].split(';')[0];
+}
+
 test.beforeEach(async () => {
   await resetDatabase();
 });
@@ -143,6 +165,22 @@ test.beforeEach(async () => {
 test.after(async () => {
   await prisma.$disconnect();
   await new Promise((resolve) => server.close(resolve));
+});
+
+test('classes page renders the editorial shell in week and month views with live booking links', { concurrency: false }, async () => {
+  const { soonOccurrence } = await seedBaseData();
+
+  const weekResponse = await request('/classes');
+  assert.equal(weekResponse.status, 200);
+  const weekHtml = await weekResponse.text();
+  assert.match(weekHtml, /classes-site-header/);
+  assert.match(weekHtml, /classes-week-grid/);
+  assert.match(weekHtml, new RegExp(`/booking/seats\\?occurrenceId=${soonOccurrence.id}`));
+
+  const monthResponse = await request('/classes?view=month');
+  assert.equal(monthResponse.status, 200);
+  const monthHtml = await monthResponse.text();
+  assert.match(monthHtml, /classes-month-grid/);
 });
 
 test('reservation API creates a draft hold without QR', { concurrency: false }, async () => {
@@ -256,6 +294,56 @@ test('active holds reject duplicate seats until they expire, then free them agai
 
   const expiredBooking = await prisma.bookings.findUnique({ where: { id: firstReservation.id } });
   assert.equal(expiredBooking.status, 'EXPIRED');
+});
+
+test('admin class layout save recalculates capacity when the class has no active reservations', { concurrency: false }, async () => {
+  const { soonOccurrence } = await seedBaseData();
+  const sessionCookie = await loginAs('admin@test.local', 'admin1234');
+  const nextLayout = JSON.parse(serializeLayout(createDefaultLayout(18)));
+  nextLayout.seats = nextLayout.seats.map((seat) => (seat.id === 'seat-e3' ? { ...seat, enabled: false } : seat));
+
+  const response = await request(`/admin/class-layouts/${soonOccurrence.id}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      cookie: sessionCookie,
+    },
+    body: formBody({ layoutJson: JSON.stringify(nextLayout) }),
+    redirect: 'manual',
+  });
+
+  assert.equal(response.status, 302);
+  const updatedOccurrence = await prisma.class_occurrences.findUnique({ where: { id: soonOccurrence.id } });
+  assert.equal(updatedOccurrence.capacity, 17);
+  assert.equal(updatedOccurrence.availableSlots, 17);
+});
+
+test('admin class layout save blocks structural seat edits after an active reservation exists', { concurrency: false }, async () => {
+  const { soonOccurrence } = await seedBaseData();
+  await createDraftReservation(prisma, {
+    occurrenceId: soonOccurrence.id,
+    seatCodes: ['A1'],
+    customerName: 'Layout Lock',
+    customerEmail: 'layout-lock@test.local',
+    customerPhone: '+525500000099',
+    salesChannel: 'web',
+  });
+  const sessionCookie = await loginAs('admin@test.local', 'admin1234');
+  const nextLayout = JSON.parse(serializeLayout(createDefaultLayout(18)));
+  nextLayout.seats = nextLayout.seats.map((seat) => (seat.id === 'seat-a2' ? { ...seat, x: seat.x + 96 } : seat));
+
+  const response = await request(`/admin/class-layouts/${soonOccurrence.id}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      cookie: sessionCookie,
+    },
+    body: formBody({ layoutJson: JSON.stringify(nextLayout) }),
+  });
+
+  assert.equal(response.status, 409);
+  const html = await response.text();
+  assert.match(html, /Solo puedes mover la instructora/i);
 });
 
 test('async method eligibility only enables mx bank transfer for far-future reservations', { concurrency: false }, async () => {

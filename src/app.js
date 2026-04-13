@@ -11,11 +11,16 @@ import { renderLayout } from './views/layout.js';
 import { config } from './config.js';
 import { esc, hashToken, isWithinCheckinWindow, signPayload } from './utils.js';
 import {
-  MAX_LAYOUT_CAPACITY,
   MAX_SEATS_PER_BOOKING,
-  describeSeatCodes,
+  cloneLayout,
+  createDefaultLayout,
+  describeReservedSeats,
   formatSeatLabels,
+  getLayoutCapacity,
   getSeatLayout,
+  hasStructuralSeatChanges,
+  parseLayoutJson,
+  serializeLayout,
 } from './seats.js';
 import {
   ReservationError,
@@ -107,6 +112,240 @@ function parseSeatCodesInput(value) {
         .filter(Boolean),
     ),
   ).slice(0, MAX_SEATS_PER_BOOKING);
+}
+
+function safeJsonForHtml(value) {
+  return JSON.stringify(value).replace(/</g, '\\u003c');
+}
+
+function createOccurrenceLayoutSnapshot(layoutJson, requestedCapacity) {
+  const baseLayout = cloneLayout(parseLayoutJson(layoutJson, requestedCapacity));
+  const seatLimit = Number(requestedCapacity || getLayoutCapacity(baseLayout, baseLayout.seats.length));
+  const bookableSeats = baseLayout.seats.filter((seat) => seat.bookable);
+  if (seatLimit > bookableSeats.length) {
+    throw new Error(`El layout base solo soporta ${bookableSeats.length} lugares habilitables.`);
+  }
+
+  let enabledCount = 0;
+  baseLayout.seats = baseLayout.seats.map((seat) => {
+    if (!seat.bookable) return { ...seat, enabled: false };
+    enabledCount += 1;
+    return { ...seat, enabled: enabledCount <= seatLimit };
+  });
+
+  return baseLayout;
+}
+
+function renderSeatMapMarkup({
+  layoutJson,
+  fallbackCapacity,
+  occupiedSeatIds = [],
+  selectedSeatCodes = [],
+  inputName = 'seatCodes',
+  interactive = true,
+}) {
+  const layout = getSeatLayout(layoutJson, fallbackCapacity);
+  const occupiedSet = new Set((occupiedSeatIds || []).map((value) => String(value)));
+  const selectedSet = new Set((selectedSeatCodes || []).map((value) => String(value)));
+  const seatNodes = layout.seats
+    .map((seat) => {
+      const isOccupied = occupiedSet.has(seat.id);
+      const isSelected = selectedSet.has(seat.id) || selectedSet.has(seat.label);
+      const disabled = isOccupied || !seat.enabled || !interactive;
+      const stateClass = isOccupied
+        ? 'is-occupied'
+        : !seat.enabled || !seat.bookable
+        ? 'is-disabled'
+        : isSelected
+        ? 'is-selected'
+        : 'is-available';
+      const seatStyle = `left:${seat.x}px;top:${seat.y}px;transform:translate(-50%, -50%) rotate(${seat.rotation}deg);`;
+
+      if (!interactive) {
+        return `<div class="seat-node seat-pill ${stateClass}" style="${seatStyle}"><span>${seat.label}</span></div>`;
+      }
+
+      return `
+        <label class="seat-node seat-pill ${stateClass}" data-seat-option="${seat.id}" style="${seatStyle}">
+          <input
+            type="checkbox"
+            name="${inputName}"
+            value="${seat.id}"
+            data-seat-zone="${seat.zone}"
+            data-seat-label="${seat.label}"
+            ${isSelected ? 'checked' : ''}
+            ${disabled ? 'disabled' : ''}
+          />
+          <span>${seat.label}</span>
+        </label>
+      `;
+    })
+    .join('');
+
+  return `
+    <div class="seat-stage">
+      <div class="seat-stage-guide">${esc(layout.instructor.label || 'Instructora')}</div>
+      <div class="seat-stage-screen" aria-hidden="true"></div>
+      <div class="seat-map-viewport" data-seat-viewport>
+        <div class="seat-map-canvas" data-seat-canvas>
+          <div
+            class="seat-map seat-map-freeform"
+            style="width:${layout.canvas.width}px;height:${layout.canvas.height}px;--seat-grid:${layout.canvas.grid}px;"
+          >
+            <div
+              class="seat-instructor-marker"
+              style="left:${layout.instructor.x}px;top:${layout.instructor.y}px;transform:translate(-50%, -50%) rotate(${layout.instructor.rotation}deg);"
+            >${esc(layout.instructor.label || 'Instructora')}</div>
+            ${seatNodes}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderLayoutsIndexBody({ locations, occurrences }) {
+  const locationRows = locations
+    .map((location) => {
+      const capacity = getLayoutCapacity(location.layoutJson, 18);
+      return `<div class="admin-list-row">
+        <div>
+          <strong>${esc(location.name)}</strong>
+          <p>${esc(location.address)} · ${capacity} lugares habilitados en base</p>
+        </div>
+        <a class="btn alt" href="/admin/layouts/${location.id}">Editar layout base</a>
+      </div>`;
+    })
+    .join('');
+
+  const classRows = occurrences
+    .map((occurrence) => {
+      const capacity = getLayoutCapacity(occurrence.layoutJson, occurrence.capacity);
+      return `<div class="admin-list-row">
+        <div>
+          <strong>${esc(occurrence.classType.name)}</strong>
+          <p>${dayjs(occurrence.startsAt).format('DD MMM YYYY · HH:mm')} · ${esc(occurrence.location.name)} · ${capacity} lugares</p>
+        </div>
+        <a class="btn alt" href="/admin/class-layouts/${occurrence.id}">Editar layout de clase</a>
+      </div>`;
+    })
+    .join('');
+
+  return `<section class="section">
+    <div class="system-shell">
+      <section class="system-hero scroll-hero" data-scroll-target="layout-admin-grid">
+        <p class="concept-kicker">TISA / LAYOUTS</p>
+        <h1>El salón ya no depende de un mapa fijo.</h1>
+        <p>Admin y operación pueden mantener layouts base por sede y preparar overrides por clase antes de abrir ventas o check-in.</p>
+      </section>
+      <div class="system-grid layout-admin-grid" id="layout-admin-grid">
+        <article class="system-panel system-panel-light">
+          <h2>Layouts base por sede</h2>
+          <div class="admin-list">${locationRows || '<div class="admin-list-row"><div><strong>Sin sedes</strong><p>No hay sedes activas todavía.</p></div></div>'}</div>
+        </article>
+        <article class="system-panel system-panel-dark">
+          <h2>Overrides por clase</h2>
+          <div class="admin-list">${classRows || '<div class="admin-list-row"><div><strong>Sin clases próximas</strong><p>No hay clases programadas para ajustar layout.</p></div></div>'}</div>
+        </article>
+      </div>
+    </div>
+  </section>`;
+}
+
+function renderLayoutEditorBody({
+  title,
+  kicker,
+  subtitle,
+  details,
+  savePath,
+  backPath,
+  layout,
+  baseLayout = null,
+  structureLocked = false,
+  canResetToBase = false,
+}) {
+  const payload = {
+    layout,
+    baseLayout,
+    structureLocked,
+  };
+
+  return `<section class="section">
+    <div class="system-shell">
+      <section class="system-hero scroll-hero" data-scroll-target="layout-editor-form">
+        <p class="concept-kicker">${esc(kicker)}</p>
+        <h1>${esc(title)}</h1>
+        <p>${esc(subtitle)}</p>
+      </section>
+      <form method="post" action="${savePath}" class="layout-editor-form" id="layout-editor-form">
+        <input type="hidden" name="layoutJson" id="layout-editor-json" value="${esc(serializeLayout(layout))}" />
+        <div class="system-grid layout-editor-grid">
+          <article class="system-panel system-panel-light layout-editor-panel">
+            <div class="layout-editor-toolbar">
+              <button class="btn alt" type="button" data-layout-action="select-instructor">Mover instructora</button>
+              <button class="btn alt" type="button" data-layout-action="add-seat" ${structureLocked ? 'disabled' : ''}>Agregar asiento</button>
+              <button class="btn alt" type="button" data-layout-action="delete-seat" ${structureLocked ? 'disabled' : ''}>Eliminar asiento</button>
+              <button class="btn alt" type="button" data-layout-action="renumber-rows" ${structureLocked ? 'disabled' : ''}>Renumerar filas</button>
+              <button class="btn alt" type="button" data-layout-action="reorder-rows" ${structureLocked ? 'disabled' : ''}>Reordenar filas</button>
+              ${canResetToBase ? `<button class="btn alt" type="button" data-layout-action="reset-base" ${structureLocked ? 'disabled' : ''}>Resetear al base</button>` : ''}
+            </div>
+            <div class="layout-editor-canvas-wrap">
+              <div id="layout-editor-stage" class="layout-editor-stage" aria-label="Editor del layout"></div>
+            </div>
+            <p class="system-inline-note">
+              ${structureLocked
+                ? 'Esta clase ya tiene reservas activas. Solo puedes mover la instructora; la estructura de asientos queda congelada.'
+                : 'Arrastra asientos e instructora sobre la retícula. El guardado recalcula capacidad y disponibilidad desde el layout.'}
+            </p>
+          </article>
+          <article class="system-panel system-panel-dark layout-inspector-panel">
+            <h2>Inspector</h2>
+            <div class="system-detail-list">${details}</div>
+            <div class="layout-inspector-fields">
+              <label class="form-row">
+                <span>Selección actual</span>
+                <input class="admin-input" type="text" data-layout-output="selection" value="Instructora" readonly />
+              </label>
+              <label class="form-row">
+                <span>Etiqueta</span>
+                <input class="admin-input" type="text" data-layout-input="label" ${structureLocked ? 'disabled' : ''} />
+              </label>
+              <label class="form-row">
+                <span>Fila</span>
+                <input class="admin-input" type="text" maxlength="2" data-layout-input="row" ${structureLocked ? 'disabled' : ''} />
+              </label>
+              <label class="form-row">
+                <span>Orden</span>
+                <input class="admin-input" type="number" min="1" data-layout-input="order" ${structureLocked ? 'disabled' : ''} />
+              </label>
+              <label class="form-row">
+                <span>Zona</span>
+                <select class="admin-input" data-layout-input="zone" ${structureLocked ? 'disabled' : ''}>
+                  <option value="near">Cerca</option>
+                  <option value="middle">Media</option>
+                  <option value="back">Trasera</option>
+                </select>
+              </label>
+              <label class="form-row checkbox-row">
+                <span>Reservable</span>
+                <input type="checkbox" data-layout-input="bookable" ${structureLocked ? 'disabled' : ''} />
+              </label>
+              <label class="form-row checkbox-row">
+                <span>Habilitado</span>
+                <input type="checkbox" data-layout-input="enabled" ${structureLocked ? 'disabled' : ''} />
+              </label>
+            </div>
+            <div class="system-action-stack">
+              <button class="btn" type="submit">Guardar layout</button>
+              <a class="btn alt" href="${backPath}">Volver</a>
+            </div>
+          </article>
+        </div>
+      </form>
+    </div>
+    <script src="/vendor/konva/konva.min.js"></script>
+    <script type="application/json" id="layout-editor-payload">${safeJsonForHtml(payload)}</script>
+  </section>`;
 }
 
 const SPANISH_DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
@@ -306,50 +545,19 @@ function renderSeatSelectionBody({
   message = '',
   messageType = 'error',
 }) {
-  const layout = getSeatLayout(occurrence.capacity);
-  if (!layout.supported) {
-    return `<section class="section"><div class="system-shell">${renderError(layout.error)}</div></section>`;
-  }
-
-  const selectedSet = new Set(selectedSeatCodes);
-  const occupiedSet = new Set(occupiedSeatCodes);
-  const enabledSeats = layout.seats.filter((seat) => seat.enabled);
-  const availableCount = enabledSeats.filter((seat) => !occupiedSet.has(seat.code)).length;
-  const selectedSummary = formatSeatLabels(selectedSeatCodes, occurrence.capacity);
-  const seatRows = layout.rows
-    .map(({ row, seats }, index) => {
-      const rowClass = seats.length === 4 ? 'is-wide' : seats.length === 3 ? 'is-compact' : 'is-standard';
-
-      return `
-        <div class="seat-map-row ${rowClass}" data-seat-row="${row}" data-seat-count="${seats.length}" style="--seat-row-index:${index};">
-          <span class="seat-map-row-label">${row}</span>
-          <div class="seat-map-row-track">
-            ${seats
-              .map((seat) => {
-                const isOccupied = occupiedSet.has(seat.code);
-                const isSelected = selectedSet.has(seat.code);
-                const disabled = isOccupied || !seat.enabled;
-                const stateClass = isOccupied ? 'is-occupied' : !seat.enabled ? 'is-disabled' : isSelected ? 'is-selected' : 'is-available';
-                return `
-                  <label class="seat-pill ${stateClass}" data-seat-option="${seat.code}">
-                    <input
-                      type="checkbox"
-                      name="seatCodes"
-                      value="${seat.code}"
-                      data-seat-zone="${seat.zone}"
-                      ${isSelected ? 'checked' : ''}
-                      ${disabled ? 'disabled' : ''}
-                    />
-                    <span>${seat.label}</span>
-                  </label>
-                `;
-              })
-              .join('')}
-          </div>
-        </div>
-      `;
-    })
-    .join('');
+  const layout = getSeatLayout(occurrence.layoutJson, occurrence.capacity);
+  const occupiedSet = new Set((occupiedSeatCodes || []).map((value) => String(value)));
+  const enabledSeats = layout.seats.filter((seat) => seat.enabled && seat.bookable);
+  const availableCount = enabledSeats.filter((seat) => !occupiedSet.has(seat.id)).length;
+  const selectedSummary = formatSeatLabels(selectedSeatCodes, occurrence.layoutJson, occurrence.capacity);
+  const seatMapHtml = renderSeatMapMarkup({
+    layoutJson: occurrence.layoutJson,
+    fallbackCapacity: occurrence.capacity,
+    occupiedSeatIds: occupiedSeatCodes,
+    selectedSeatCodes,
+    inputName: 'seatCodes',
+    interactive: true,
+  });
 
   return `
     <section class="section seat-selection-page">
@@ -387,17 +595,7 @@ function renderSeatSelectionBody({
                     <span class="legend seat-occupied">Ocupado</span>
                   </div>
                 </div>
-                <div class="seat-stage">
-                  <div class="seat-stage-guide">Instructora</div>
-                  <div class="seat-stage-screen" aria-hidden="true"></div>
-                  <div class="seat-map-viewport" data-seat-viewport>
-                    <div class="seat-map-canvas" data-seat-canvas>
-                      <div class="seat-map">
-                        ${seatRows}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                ${seatMapHtml}
               </div>
               <div class="ui-status-banner ${message ? `is-${messageType === 'success' ? 'success' : 'cancel'}` : 'is-muted'} seat-status-banner">
                 <div>
@@ -443,6 +641,9 @@ function renderAssistedSalesBody({
     .join('');
   const selectedOccurrence = occurrences.find((occurrence) => occurrence.id === form.occurrenceId) || occurrences[0] || null;
   const selectedSeatCodes = parseSeatCodesInput(form.seatCodesText || '');
+  const selectedSeatLabels = selectedOccurrence
+    ? formatSeatLabels(selectedSeatCodes, selectedOccurrence.layoutJson, selectedOccurrence.capacity)
+    : '';
 
   return `<section class="section">
     <div class="system-shell">
@@ -489,7 +690,7 @@ function renderAssistedSalesBody({
                   <div><span>Horario</span><strong>${dayjs(selectedOccurrence.startsAt).format('DD MMM YYYY · HH:mm')}</strong></div>
                   <div><span>Sede</span><strong>${esc(selectedOccurrence.location.name)}</strong></div>
                   <div><span>Precio</span><strong>${formatCurrency(selectedOccurrence.unitPriceCents)}</strong></div>
-                  <div><span>Lugares elegidos</span><strong>${esc(selectedSeatCodes.join(', ') || 'Pendientes')}</strong></div>
+                  <div><span>Lugares elegidos</span><strong>${esc(selectedSeatLabels || selectedSeatCodes.join(', ') || 'Pendientes')}</strong></div>
                   <div><span>Métodos</span><strong>${isAsyncMethodEligible(selectedOccurrence.startsAt) ? 'Tarjeta y SPEI' : 'Tarjeta y wallets'}</strong></div>
                 </div>`
               : '<p class="system-inline-note">No hay clases próximas para ventas asistidas.</p>'
@@ -517,12 +718,14 @@ function renderAssistedSalesBody({
 }
 
 const publicDir = fileURLToPath(new URL('./public', import.meta.url));
+const konvaDir = fileURLToPath(new URL('../node_modules/konva', import.meta.url));
 
 export function createApp({ prisma }) {
   const app = express();
 
   app.use(morgan('dev'));
   app.use('/static', express.static(publicDir));
+  app.use('/vendor/konva', express.static(konvaDir));
   app.use(session({
     secret: config.sessionSecret,
     resave: false,
@@ -2087,7 +2290,7 @@ export function createApp({ prisma }) {
     const qrDataUrl = booking.qrPayload && booking.qrSignature
       ? await QRCode.toDataURL(JSON.stringify({ ...parseJson(booking.qrPayload, {}), signature: booking.qrSignature }))
       : null;
-    const seatSummary = describeSeatCodes(booking.reservedSeats.map((seat) => seat.seatCode), booking.classOccurrence.capacity);
+    const seatSummary = describeReservedSeats(booking.reservedSeats, booking.classOccurrence.layoutJson, booking.classOccurrence.capacity);
     const seatLabels = seatSummary.map((seat) => seat.label).join(', ');
 
     const body = `<section class="section">
@@ -2304,6 +2507,180 @@ export function createApp({ prisma }) {
         simulationMode: config.simulationMode,
       }));
     }
+  });
+
+  app.get('/admin/layouts', requireStaff, requireRole('ADMIN', 'OPS'), async (req, res) => {
+    const [locations, occurrences] = await Promise.all([
+      prisma.locations.findMany({
+        where: { isActive: true },
+        orderBy: { name: 'asc' },
+      }),
+      prisma.class_occurrences.findMany({
+        where: {
+          status: { not: 'CANCELLED' },
+          startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) },
+        },
+        include: {
+          classType: true,
+          location: true,
+        },
+        orderBy: { startsAt: 'asc' },
+        take: 24,
+      }),
+    ]);
+
+    const body = renderLayoutsIndexBody({ locations, occurrences });
+    res.send(renderLayout({
+      title: 'Layouts',
+      body,
+      staff: req.session.staffName,
+      staffRole: req.session.staffRole,
+      simulationMode: config.simulationMode,
+    }));
+  });
+
+  app.get('/admin/layouts/:locationId', requireStaff, requireRole('ADMIN', 'OPS'), async (req, res) => {
+    const location = await prisma.locations.findUnique({
+      where: { id: req.params.locationId },
+      include: { classes: { orderBy: { startsAt: 'asc' }, take: 3 } },
+    });
+    if (!location) return res.status(404).send(renderError('Sede no encontrada.'));
+
+    const fallbackCapacity = Math.max(location.classes[0]?.capacity || 18, 1);
+    const layout = parseLayoutJson(location.layoutJson, fallbackCapacity);
+    const body = renderLayoutEditorBody({
+      title: `Layout base · ${location.name}`,
+      kicker: 'TISA / LAYOUT BASE',
+      subtitle: 'Este layout se clona cuando se programa una clase nueva en esta sede.',
+      details: `
+        <div><span>Sede</span><strong>${esc(location.name)}</strong></div>
+        <div><span>Dirección</span><strong>${esc(location.address)}</strong></div>
+        <div><span>Capacidad base</span><strong>${getLayoutCapacity(layout, fallbackCapacity)} lugares</strong></div>
+      `,
+      savePath: `/admin/layouts/${location.id}`,
+      backPath: '/admin/layouts',
+      layout,
+      structureLocked: false,
+    });
+
+    res.send(renderLayout({
+      title: 'Editar Layout Base',
+      body,
+      staff: req.session.staffName,
+      staffRole: req.session.staffRole,
+      simulationMode: config.simulationMode,
+    }));
+  });
+
+  app.post('/admin/layouts/:locationId', requireStaff, requireRole('ADMIN', 'OPS'), async (req, res) => {
+    const location = await prisma.locations.findUnique({ where: { id: req.params.locationId } });
+    if (!location) return res.status(404).send(renderError('Sede no encontrada.'));
+
+    const rawLayout = parseJson(req.body.layoutJson);
+    if (!rawLayout) return res.status(400).send(renderError('El layout recibido no es JSON válido.'));
+    const nextLayout = parseLayoutJson(rawLayout, 18);
+    await prisma.locations.update({
+      where: { id: location.id },
+      data: { layoutJson: serializeLayout(nextLayout) },
+    });
+
+    res.redirect(`/admin/layouts/${location.id}`);
+  });
+
+  app.get('/admin/class-layouts/:occurrenceId', requireStaff, requireRole('ADMIN', 'OPS'), async (req, res) => {
+    const occurrence = await prisma.class_occurrences.findUnique({
+      where: { id: req.params.occurrenceId },
+      include: {
+        classType: true,
+        trainer: true,
+        location: true,
+        bookings: {
+          where: {
+            OR: [
+              { status: { in: ['PAID', 'CHECKED_IN'] } },
+              { status: { in: OPEN_RESERVATION_STATUSES }, expiresAt: { gt: new Date() } },
+            ],
+          },
+          select: { id: true },
+        },
+      },
+    });
+    if (!occurrence) return res.status(404).send(renderError('Clase no encontrada.'));
+
+    const baseLayout = parseLayoutJson(occurrence.location.layoutJson, occurrence.capacity);
+    const layout = parseLayoutJson(occurrence.layoutJson || baseLayout, occurrence.capacity);
+    const structureLocked = occurrence.bookings.length > 0;
+    const body = renderLayoutEditorBody({
+      title: `Layout de clase · ${occurrence.classType.name}`,
+      kicker: 'TISA / OVERRIDE POR CLASE',
+      subtitle: 'Este snapshot lo usan la selección pública, ventas asistidas y check-in de esta clase.',
+      details: `
+        <div><span>Clase</span><strong>${esc(occurrence.classType.name)}</strong></div>
+        <div><span>Horario</span><strong>${dayjs(occurrence.startsAt).format('DD MMM YYYY · HH:mm')}</strong></div>
+        <div><span>Sede</span><strong>${esc(occurrence.location.name)}</strong></div>
+        <div><span>Estado</span><strong>${structureLocked ? 'Bloqueado por reservas activas' : 'Editable'}</strong></div>
+      `,
+      savePath: `/admin/class-layouts/${occurrence.id}`,
+      backPath: '/admin/layouts',
+      layout,
+      baseLayout,
+      structureLocked,
+      canResetToBase: true,
+    });
+
+    res.send(renderLayout({
+      title: 'Editar Layout de Clase',
+      body,
+      staff: req.session.staffName,
+      staffRole: req.session.staffRole,
+      simulationMode: config.simulationMode,
+    }));
+  });
+
+  app.post('/admin/class-layouts/:occurrenceId', requireStaff, requireRole('ADMIN', 'OPS'), async (req, res) => {
+    const occurrence = await prisma.class_occurrences.findUnique({
+      where: { id: req.params.occurrenceId },
+      include: {
+        location: true,
+        bookings: {
+          where: {
+            OR: [
+              { status: { in: ['PAID', 'CHECKED_IN'] } },
+              { status: { in: OPEN_RESERVATION_STATUSES }, expiresAt: { gt: new Date() } },
+            ],
+          },
+          select: { id: true },
+        },
+      },
+    });
+    if (!occurrence) return res.status(404).send(renderError('Clase no encontrada.'));
+
+    const currentLayout = parseLayoutJson(occurrence.layoutJson || occurrence.location.layoutJson, occurrence.capacity);
+    const rawLayout = parseJson(req.body.layoutJson);
+    if (!rawLayout) return res.status(400).send(renderError('El layout recibido no es JSON válido.'));
+    const nextLayout = parseLayoutJson(rawLayout, occurrence.capacity);
+    const structureLocked = occurrence.bookings.length > 0;
+
+    if (structureLocked && hasStructuralSeatChanges(currentLayout, nextLayout, occurrence.capacity)) {
+      return res.status(409).send(renderError('La clase ya tiene reservas activas. Solo puedes mover la instructora en este punto.'));
+    }
+
+    const occupiedSeatIds = await getActiveSeatCodes(prisma, occurrence.id);
+    const nextCapacity = structureLocked ? occurrence.capacity : getLayoutCapacity(nextLayout, occurrence.capacity);
+    const nextAvailableSlots = structureLocked
+      ? occurrence.availableSlots
+      : Math.max(nextCapacity - occupiedSeatIds.length, 0);
+
+    await prisma.class_occurrences.update({
+      where: { id: occurrence.id },
+      data: {
+        layoutJson: serializeLayout(nextLayout),
+        capacity: nextCapacity,
+        availableSlots: nextAvailableSlots,
+      },
+    });
+
+    res.redirect(`/admin/class-layouts/${occurrence.id}`);
   });
 
   app.get('/admin/dashboard', requireStaff, requireRole('ADMIN'), async (req, res) => {
@@ -2548,9 +2925,18 @@ export function createApp({ prisma }) {
     const startsAt = dayjs(`${date}T${startTime}`);
     if (!startsAt.isValid()) return res.status(400).send(renderError('Fecha u hora inválida.'));
     if (startsAt.isBefore(dayjs().subtract(5, 'minute'))) return res.status(400).send(renderError('No se puede crear una clase en el pasado.'));
-    if (capacity > MAX_LAYOUT_CAPACITY) {
-      return res.status(400).send(renderError(`La capacidad máxima para el mapa fijo actual es ${MAX_LAYOUT_CAPACITY} lugares.`));
+
+    const location = await prisma.locations.findUnique({ where: { id: locationId } });
+    if (!location) return res.status(404).send(renderError('Sede no encontrada.'));
+
+    let occurrenceLayout;
+    try {
+      occurrenceLayout = createOccurrenceLayoutSnapshot(location.layoutJson || createDefaultLayout(capacity), capacity);
+    } catch (error) {
+      return res.status(400).send(renderError(error.message || 'No se pudo preparar el layout para esta clase.'));
     }
+
+    const derivedCapacity = getLayoutCapacity(occurrenceLayout, capacity);
 
     const endsAt = startsAt.add(durationMin, 'minute');
     await prisma.class_occurrences.create({
@@ -2560,10 +2946,11 @@ export function createApp({ prisma }) {
         trainerId: req.session.staffId,
         startsAt: startsAt.toDate(),
         endsAt: endsAt.toDate(),
-        capacity,
-        availableSlots: capacity,
+        capacity: derivedCapacity,
+        availableSlots: derivedCapacity,
         unitPriceCents: Math.round(unitPriceMxn * 100),
         status: 'SCHEDULED',
+        layoutJson: serializeLayout(occurrenceLayout),
       },
     });
 
@@ -2712,7 +3099,7 @@ export function createApp({ prisma }) {
       await tx.checkins.create({ data: { bookingId: booking.id, staffId: req.session.staffId, method: 'QR_CAMERA_OR_MANUAL' } });
     });
 
-    const seatLabels = describeSeatCodes(booking.reservedSeats.map((seat) => seat.seatCode), booking.classOccurrence.capacity)
+    const seatLabels = describeReservedSeats(booking.reservedSeats, booking.classOccurrence.layoutJson, booking.classOccurrence.capacity)
       .map((seat) => seat.label)
       .join(', ');
 

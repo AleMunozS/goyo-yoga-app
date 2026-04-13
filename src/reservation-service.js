@@ -4,7 +4,12 @@ import Stripe from 'stripe';
 import { config } from './config.js';
 import { sendBookingConfirmationEmail } from './mailer.js';
 import { createToken, hashToken, signPayload, makeBookingRef } from './utils.js';
-import { describeSeatCodes, formatSeatLabels, validateSeatSelection } from './seats.js';
+import {
+  describeReservedSeats,
+  formatSeatLabels,
+  getLayoutCapacity,
+  validateSeatSelection,
+} from './seats.js';
 
 const QR_SECRET = process.env.QR_SECRET || 'local-qr-secret';
 
@@ -64,8 +69,17 @@ function normalizeSalesChannel(value) {
   return String(value || 'web').trim().toLowerCase() === 'whatsapp' ? 'whatsapp' : 'web';
 }
 
-function seatSummaryToJson(seatCodes, capacity) {
-  return JSON.stringify(describeSeatCodes(seatCodes, capacity));
+function seatSummaryToJson(seats) {
+  return JSON.stringify(
+    seats.map((seat) => ({
+      id: seat.id,
+      label: seat.label,
+      zone: seat.zone,
+      zoneLabel: seat.zoneLabel,
+      row: seat.row,
+      order: seat.order,
+    })),
+  );
 }
 
 function aggregateByOccurrence(bookings) {
@@ -77,10 +91,7 @@ function aggregateByOccurrence(bookings) {
 }
 
 function parseSeatSummary(booking) {
-  return describeSeatCodes(
-    booking.reservedSeats.map((seat) => seat.seatCode),
-    booking.classOccurrence.capacity,
-  );
+  return describeReservedSeats(booking.reservedSeats, booking.classOccurrence.layoutJson, booking.classOccurrence.capacity);
 }
 
 async function getReservationOrThrow(prisma, reservationId) {
@@ -107,11 +118,11 @@ export async function getActiveSeatCodes(prisma, occurrenceId, now = new Date())
         ],
       },
     },
-    select: { seatCode: true },
+    select: { seatId: true, seatCode: true, seatLabelSnapshot: true },
     orderBy: { seatCode: 'asc' },
   });
 
-  return activeSeats.map((seat) => seat.seatCode);
+  return activeSeats.map((seat) => seat.seatId || seat.seatLabelSnapshot || seat.seatCode);
 }
 
 async function createManageLink(prisma, booking, baseUrl) {
@@ -176,7 +187,8 @@ async function finalizePaidReservation(prisma, reservation, payment, baseUrl, pa
   const qrPayload = JSON.stringify(qrPayloadObj);
   const qrSignature = signPayload(qrPayload, QR_SECRET);
   const seatLabels = formatSeatLabels(
-    reservation.reservedSeats.map((seat) => seat.seatCode),
+    reservation.reservedSeats.map((seat) => seat.seatId || seat.seatLabelSnapshot || seat.seatCode),
+    reservation.classOccurrence.layoutJson,
     reservation.classOccurrence.capacity,
   );
 
@@ -280,7 +292,9 @@ function buildReservationJson(reservation, baseUrl, manageUrl = null) {
       currency: payment?.currency || 'mxn',
     },
     seats: reservation.reservedSeats.map((seat) => ({
-      code: seat.seatCode,
+      id: seat.seatId || null,
+      code: seat.seatLabelSnapshot || seat.seatCode,
+      label: seat.seatLabelSnapshot || seat.seatCode,
       zone: seat.zone,
     })),
     schedule: {
@@ -402,12 +416,26 @@ export async function createDraftReservation(prisma, input) {
     const occupiedSeatCodes = await getActiveSeatCodes(tx, occurrence.id, now);
     const validation = validateSeatSelection({
       seatCodes: input.seatCodes,
-      capacity: occurrence.capacity,
-      occupiedSeatCodes,
+      layoutJson: occurrence.layoutJson,
+      occupiedSeatIds: occupiedSeatCodes,
+      fallbackCapacity: occurrence.capacity,
     });
 
     if (!validation.ok) {
       throw new ReservationError('INVALID_SEAT_SELECTION', validation.message, 409);
+    }
+
+    const derivedCapacity = getLayoutCapacity(occurrence.layoutJson, occurrence.capacity);
+    if (occurrence.capacity !== derivedCapacity || occurrence.availableSlots > derivedCapacity) {
+      await tx.class_occurrences.update({
+        where: { id: occurrence.id },
+        data: {
+          capacity: derivedCapacity,
+          availableSlots: Math.min(occurrence.availableSlots, derivedCapacity),
+        },
+      });
+      occurrence.capacity = derivedCapacity;
+      occurrence.availableSlots = Math.min(occurrence.availableSlots, derivedCapacity);
     }
 
     if (occurrence.availableSlots < validation.seats.length) {
@@ -457,10 +485,7 @@ export async function createDraftReservation(prisma, input) {
         classOccurrenceId: occurrence.id,
         status: 'PENDING_PAYMENT',
         quantity,
-        seatSummaryJson: seatSummaryToJson(
-          validation.seats.map((seat) => seat.code),
-          occurrence.capacity,
-        ),
+        seatSummaryJson: seatSummaryToJson(validation.seats),
         expiresAt,
         salesChannel,
         customerNameSnapshot: input.customerName,
@@ -477,7 +502,9 @@ export async function createDraftReservation(prisma, input) {
       data: validation.seats.map((seat) => ({
         bookingId: booking.id,
         classOccurrenceId: occurrence.id,
-        seatCode: seat.code,
+        seatId: seat.id,
+        seatCode: seat.label,
+        seatLabelSnapshot: seat.label,
         zone: seat.zone,
       })),
     });
@@ -527,7 +554,7 @@ export async function createCheckoutSessionForReservation(prisma, input) {
 
   const stripeCustomerId = await ensureStripeCustomer(prisma, reservation.client);
   const { paymentMethodTypes, paymentMethodOptions } = paymentTypesForReservation(reservation.classOccurrence);
-  const seatCodes = reservation.reservedSeats.map((seat) => seat.seatCode);
+  const seatCodes = reservation.reservedSeats.map((seat) => seat.seatId || seat.seatLabelSnapshot || seat.seatCode);
   const paymentRecord = await prisma.payments.create({
     data: {
       clientId: reservation.clientId,
@@ -568,7 +595,7 @@ export async function createCheckoutSessionForReservation(prisma, input) {
           unit_amount: reservation.totalCents,
           product_data: {
             name: `${reservation.classOccurrence.classType.name} · ${dayjs(reservation.classOccurrence.startsAt).format('DD MMM · HH:mm')}`,
-            description: `Lugares ${formatSeatLabels(seatCodes, reservation.classOccurrence.capacity)}`,
+            description: `Lugares ${formatSeatLabels(seatCodes, reservation.classOccurrence.layoutJson, reservation.classOccurrence.capacity)}`,
           },
         },
       },

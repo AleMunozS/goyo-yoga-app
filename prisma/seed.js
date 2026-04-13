@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import dayjs from 'dayjs';
 import { PrismaClient } from '@prisma/client';
 import { makeBookingRef, hashToken, signPayload } from '../src/utils.js';
-import { describeSeatCodes } from '../src/seats.js';
+import { createDefaultLayout, describeSeatCodes, serializeLayout } from '../src/seats.js';
 
 const prisma = new PrismaClient();
 const QR_SECRET = process.env.QR_SECRET || 'local-qr-secret';
@@ -64,8 +64,14 @@ async function createStaffUsers() {
 }
 
 async function createClassCatalog() {
+  const baseLayout = createDefaultLayout(20);
   const location = await prisma.locations.create({
-    data: { name: 'TISA Torreón', slug: 'tisa-torreon', address: 'Torreón, Coahuila' },
+    data: {
+      name: 'TISA Torreón',
+      slug: 'tisa-torreon',
+      address: 'Torreón, Coahuila',
+      layoutJson: serializeLayout(baseLayout),
+    },
   });
 
   const classTypes = await Promise.all([
@@ -120,6 +126,7 @@ async function createUpcomingOccurrences({ location, classTypes, trainer1, train
         capacity: 18,
         availableSlots: 18,
         unitPriceCents: prices[index % prices.length],
+        layoutJson: serializeLayout(createDefaultLayout(18)),
       },
     });
     occurrences.push(morning);
@@ -134,6 +141,7 @@ async function createUpcomingOccurrences({ location, classTypes, trainer1, train
         capacity: 20,
         availableSlots: 20,
         unitPriceCents: prices[(index + 1) % prices.length],
+        layoutJson: serializeLayout(createDefaultLayout(20)),
       },
     });
     occurrences.push(evening);
@@ -175,7 +183,7 @@ async function main() {
       qrPayload: paidQrPayload,
       qrSignature: paidQrSignature,
       quantity: 1,
-      seatSummaryJson: JSON.stringify(describeSeatCodes(['A1'], paidOccurrence.capacity)),
+      seatSummaryJson: JSON.stringify(describeSeatCodes(['A1'], paidOccurrence.layoutJson, paidOccurrence.capacity)),
       salesChannel: 'web',
       customerNameSnapshot: ana.fullName,
       customerEmailSnapshot: ana.email,
@@ -192,8 +200,10 @@ async function main() {
     data: {
       bookingId: paidBooking.id,
       classOccurrenceId: paidOccurrence.id,
+      seatId: 'seat-a1',
       seatCode: 'A1',
-      zone: 'front',
+      seatLabelSnapshot: 'A1',
+      zone: 'near',
     },
   });
   await prisma.payments.create({
@@ -232,7 +242,7 @@ async function main() {
       classOccurrenceId: pendingOccurrence.id,
       status: 'PENDING_PAYMENT',
       quantity: 2,
-      seatSummaryJson: JSON.stringify(describeSeatCodes(['B1', 'B2'], pendingOccurrence.capacity)),
+      seatSummaryJson: JSON.stringify(describeSeatCodes(['B1', 'B2'], pendingOccurrence.layoutJson, pendingOccurrence.capacity)),
       expiresAt: pendingExpiresAt,
       salesChannel: 'whatsapp',
       customerNameSnapshot: leo.fullName,
@@ -248,8 +258,10 @@ async function main() {
     data: ['B1', 'B2'].map((seatCode) => ({
       bookingId: pendingBooking.id,
       classOccurrenceId: pendingOccurrence.id,
+      seatId: `seat-${seatCode.toLowerCase()}`,
       seatCode,
-      zone: 'center',
+      seatLabelSnapshot: seatCode,
+      zone: 'middle',
     })),
   });
   await prisma.payments.create({
@@ -278,7 +290,7 @@ async function main() {
         classOccurrenceId: asyncOccurrence.id,
         status: 'PAYMENT_PENDING_ASYNC',
         quantity: 1,
-        seatSummaryJson: JSON.stringify(describeSeatCodes(['C1'], asyncOccurrence.capacity)),
+        seatSummaryJson: JSON.stringify(describeSeatCodes(['C1'], asyncOccurrence.layoutJson, asyncOccurrence.capacity)),
         expiresAt: dayjs().add(2, 'day').toDate(),
         salesChannel: 'web',
         customerNameSnapshot: leo.fullName,
@@ -294,8 +306,10 @@ async function main() {
       data: {
         bookingId: asyncBooking.id,
         classOccurrenceId: asyncOccurrence.id,
+        seatId: 'seat-c1',
         seatCode: 'C1',
-        zone: 'rear',
+        seatLabelSnapshot: 'C1',
+        zone: 'back',
       },
     });
     await prisma.payments.create({

@@ -60,6 +60,7 @@ model locations {
   address   String
   timezone  String               @default("America/Mexico_City")
   isActive  Boolean              @default(true)
+  layoutJson String?
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
   schedules schedule_templates[]
@@ -168,6 +169,7 @@ model class_occurrences {
   availableSlots Int
   unitPriceCents Int         @default(35000)
   status         String      @default("SCHEDULED")
+  layoutJson     String?
   createdAt      DateTime    @default(now())
   location       locations   @relation(fields: [locationId], references: [id])
   classType      class_types @relation(fields: [classTypeId], references: [id])
@@ -215,7 +217,9 @@ model reserved_seats {
   id                String            @id @default(cuid())
   bookingId         String
   classOccurrenceId String
+  seatId            String?
   seatCode          String
+  seatLabelSnapshot String?
   zone              String
   createdAt         DateTime          @default(now())
   booking           bookings          @relation(fields: [bookingId], references: [id])
