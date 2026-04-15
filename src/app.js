@@ -208,12 +208,15 @@ function renderLayoutsIndexBody({ locations, occurrences }) {
   const locationRows = locations
     .map((location) => {
       const capacity = getLayoutCapacity(location.layoutJson, 18);
-      return `<div class="admin-list-row">
-        <div>
+      return `<div class="admin-list-row layout-list-row">
+        <div class="admin-list-row__meta">
+          <span class="admin-list-row__eyebrow">Layout base</span>
           <strong>${esc(location.name)}</strong>
           <p>${esc(location.address)} · ${capacity} lugares habilitados en base</p>
         </div>
-        <a class="btn alt" href="/admin/layouts/${location.id}">Editar layout base</a>
+        <div class="admin-list-row__action">
+          <a class="btn alt" href="/admin/layouts/${location.id}">Editar layout base</a>
+        </div>
       </div>`;
     })
     .join('');
@@ -221,12 +224,15 @@ function renderLayoutsIndexBody({ locations, occurrences }) {
   const classRows = occurrences
     .map((occurrence) => {
       const capacity = getLayoutCapacity(occurrence.layoutJson, occurrence.capacity);
-      return `<div class="admin-list-row">
-        <div>
+      return `<div class="admin-list-row layout-list-row">
+        <div class="admin-list-row__meta">
+          <span class="admin-list-row__eyebrow">Override activo</span>
           <strong>${esc(occurrence.classType.name)}</strong>
           <p>${dayjs(occurrence.startsAt).format('DD MMM YYYY · HH:mm')} · ${esc(occurrence.location.name)} · ${capacity} lugares</p>
         </div>
-        <a class="btn alt" href="/admin/class-layouts/${occurrence.id}">Editar layout de clase</a>
+        <div class="admin-list-row__action">
+          <a class="btn alt" href="/admin/class-layouts/${occurrence.id}">Editar layout de clase</a>
+        </div>
       </div>`;
     })
     .join('');
@@ -239,11 +245,13 @@ function renderLayoutsIndexBody({ locations, occurrences }) {
         <p>Admin y operación pueden mantener layouts base por sede y preparar overrides por clase antes de abrir ventas o check-in.</p>
       </section>
       <div class="system-grid layout-admin-grid" id="layout-admin-grid">
-        <article class="system-panel system-panel-light">
+        <article class="system-panel system-panel-light layout-admin-panel">
+          <p class="concept-kicker">Sedes activas</p>
           <h2>Layouts base por sede</h2>
           <div class="admin-list">${locationRows || '<div class="admin-list-row"><div><strong>Sin sedes</strong><p>No hay sedes activas todavía.</p></div></div>'}</div>
         </article>
-        <article class="system-panel system-panel-dark">
+        <article class="system-panel system-panel-dark layout-admin-panel">
+          <p class="concept-kicker">Próximas clases</p>
           <h2>Overrides por clase</h2>
           <div class="admin-list">${classRows || '<div class="admin-list-row"><div><strong>Sin clases próximas</strong><p>No hay clases programadas para ajustar layout.</p></div></div>'}</div>
         </article>
@@ -281,13 +289,19 @@ function renderLayoutEditorBody({
         <input type="hidden" name="layoutJson" id="layout-editor-json" value="${esc(serializeLayout(layout))}" />
         <div class="system-grid layout-editor-grid">
           <article class="system-panel system-panel-light layout-editor-panel">
-            <div class="layout-editor-toolbar">
-              <button class="btn alt" type="button" data-layout-action="select-instructor">Mover instructora</button>
-              <button class="btn alt" type="button" data-layout-action="add-seat" ${structureLocked ? 'disabled' : ''}>Agregar asiento</button>
-              <button class="btn alt" type="button" data-layout-action="delete-seat" ${structureLocked ? 'disabled' : ''}>Eliminar asiento</button>
-              <button class="btn alt" type="button" data-layout-action="renumber-rows" ${structureLocked ? 'disabled' : ''}>Renumerar filas</button>
-              <button class="btn alt" type="button" data-layout-action="reorder-rows" ${structureLocked ? 'disabled' : ''}>Reordenar filas</button>
-              ${canResetToBase ? `<button class="btn alt" type="button" data-layout-action="reset-base" ${structureLocked ? 'disabled' : ''}>Resetear al base</button>` : ''}
+            <div class="layout-editor-panel__head">
+              <p class="concept-kicker">Canvas editorial</p>
+              <h2>Mapa del salón</h2>
+            </div>
+            <div class="layout-editor-toolbar-wrap">
+              <div class="layout-editor-toolbar">
+                <button class="btn alt" type="button" data-layout-action="select-instructor">Mover instructora</button>
+                <button class="btn alt" type="button" data-layout-action="add-seat" ${structureLocked ? 'disabled' : ''}>Agregar asiento</button>
+                <button class="btn alt" type="button" data-layout-action="delete-seat" ${structureLocked ? 'disabled' : ''}>Eliminar asiento</button>
+                <button class="btn alt" type="button" data-layout-action="renumber-rows" ${structureLocked ? 'disabled' : ''}>Renumerar filas</button>
+                <button class="btn alt" type="button" data-layout-action="reorder-rows" ${structureLocked ? 'disabled' : ''}>Reordenar filas</button>
+                ${canResetToBase ? `<button class="btn alt" type="button" data-layout-action="reset-base" ${structureLocked ? 'disabled' : ''}>Resetear al base</button>` : ''}
+              </div>
             </div>
             <div class="layout-editor-canvas-wrap">
               <div id="layout-editor-stage" class="layout-editor-stage" aria-label="Editor del layout"></div>
@@ -299,6 +313,7 @@ function renderLayoutEditorBody({
             </p>
           </article>
           <article class="system-panel system-panel-dark layout-inspector-panel">
+            <p class="concept-kicker">Ajustes finos</p>
             <h2>Inspector</h2>
             <div class="system-detail-list">${details}</div>
             <div class="layout-inspector-fields">
@@ -418,15 +433,21 @@ function renderClassesCustomHeader() {
   return `
     <header class="classes-site-header">
       <div class="classes-site-header__inner">
-        <a class="classes-site-brand" href="/">
-          <img
-            class="classes-site-brand__lockup"
-            src="${brand.assets.headerLogo}"
-            alt="${esc(brand.name)}"
-            width="1130"
-            height="384"
-          />
-        </a>
+        <div class="classes-site-header__lead">
+          <a class="classes-site-brand" href="/">
+            <img
+              class="classes-site-brand__lockup"
+              src="${brand.assets.headerLogo}"
+              alt="${esc(brand.name)}"
+              width="1130"
+              height="384"
+            />
+          </a>
+          <div class="classes-site-header__meta">
+            <span>Agenda Editorial</span>
+            <strong>Reserva clase y lugar desde una sola lectura visual.</strong>
+          </div>
+        </div>
         <nav class="classes-site-nav" aria-label="Agenda TISA">
           <a href="/">Inicio</a>
           <a class="is-active" href="/classes">Agenda</a>
@@ -449,17 +470,23 @@ function renderClassesCustomFooter({ view, periodStart }) {
       <a class="classes-mobile-nav-arrow" href="${prevHref}" aria-label="${prevLabel}">
         <span aria-hidden="true">&larr;</span>
       </a>
-      <nav class="classes-mobile-nav" aria-label="Agenda móvil">
-        <a href="/">
-          <span>Inicio</span>
-        </a>
-        <a class="${view === 'week' ? 'is-active' : ''}" href="${weekHref}">
-          <span>Semana</span>
-        </a>
-        <a href="/staff/login">
-          <span>Staff</span>
-        </a>
-      </nav>
+      <div class="classes-mobile-dock__sheet">
+        <div class="classes-mobile-dock__meta">
+          <span>${view === 'month' ? 'Vista mes' : 'Vista semana'}</span>
+          <strong>${formatAgendaRangeLabel(periodStart, view)}</strong>
+        </div>
+        <nav class="classes-mobile-nav" aria-label="Agenda móvil">
+          <a href="/">
+            <span>Inicio</span>
+          </a>
+          <a class="${view === 'week' ? 'is-active' : ''}" href="${weekHref}">
+            <span>Semana</span>
+          </a>
+          <a href="/staff/login">
+            <span>Staff</span>
+          </a>
+        </nav>
+      </div>
       <a class="classes-mobile-nav-arrow" href="${nextHref}" aria-label="${nextLabel}">
         <span aria-hidden="true">&rarr;</span>
       </a>
@@ -568,27 +595,37 @@ function renderSeatSelectionBody({
           <p>${brand.seatSelection.lede}</p>
         </section>
         <div class="system-grid seat-selection-grid" id="seat-selection-grid">
-          <article class="system-panel system-panel-light system-panel-texture">
-            <h2>${esc(occurrence.classType.name)}</h2>
-            <div class="system-detail-list">
+          <article class="system-panel system-panel-light system-panel-texture seat-selection-context">
+            <div class="seat-selection-context__header">
+              <p class="concept-kicker">Sesión elegida</p>
+              <h2>${esc(occurrence.classType.name)}</h2>
+              <p>Visualiza el salón, confirma disponibilidad real y reserva sin cambiar de contexto.</p>
+            </div>
+            <div class="system-detail-list seat-selection-detail-list">
               <div><span>Horario</span><strong>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')}</strong></div>
               <div><span>Guía</span><strong>${esc(occurrence.trainer.displayName)}</strong></div>
               <div><span>Estudio</span><strong>${esc(occurrence.location.name)}</strong></div>
               <div><span>Mapa</span><strong>${enabledSeats.length} lugares habilitados · ${availableCount} disponibles</strong></div>
               <div><span>Precio por lugar</span><strong>MXN ${(occurrence.unitPriceCents / 100).toLocaleString('es-MX')}</strong></div>
             </div>
-            <p class="system-inline-note">${brand.seatSelection.note}</p>
-            <figure class="system-media-card">
+            <div class="seat-selection-note-card">
+              <p class="system-inline-note">${brand.seatSelection.note}</p>
+            </div>
+            <figure class="system-media-card seat-selection-media-card">
               <img src="${brand.assets.editorialGrid}" alt="Atmósfera visual de TISA" />
               <figcaption>Una lectura clara del espacio para decidir con tranquilidad antes de pagar.</figcaption>
             </figure>
           </article>
-          <article class="system-panel system-panel-dark">
+          <article class="system-panel system-panel-dark seat-selection-panel">
             <form action="/reservations/web-checkout" method="post" id="seat-selection-form" class="seat-selection-form">
               <input type="hidden" name="occurrenceId" value="${occurrence.id}" />
               <input type="hidden" name="salesChannel" value="web" />
-              <div class="seat-map-module">
-                <div class="seat-map-module-header">
+              <div class="seat-map-module seat-selection-map-shell">
+                <div class="seat-map-module-header seat-selection-map-shell__header">
+                  <div class="seat-selection-map-shell__title">
+                    <p class="concept-kicker">Layout activo</p>
+                    <h2>Selecciona tu lugar</h2>
+                  </div>
                   <div class="seat-legend">
                     <span class="legend seat-available">Disponible</span>
                     <span class="legend seat-selected">Seleccionado</span>
@@ -597,28 +634,34 @@ function renderSeatSelectionBody({
                 </div>
                 ${seatMapHtml}
               </div>
-              <div class="ui-status-banner ${message ? `is-${messageType === 'success' ? 'success' : 'cancel'}` : 'is-muted'} seat-status-banner">
-                <div>
-                  <p class="concept-kicker">Tu selección</p>
-                  <h3 id="seat-selection-count">${selectedSeatCodes.length} de ${MAX_SEATS_PER_BOOKING} lugares elegidos</h3>
-                  <p id="seat-selection-summary">${selectedSummary || brand.seatSelection.summaryEmpty}</p>
-                  ${message ? `<p class="seat-inline-message">${esc(message)}</p>` : ''}
+              <div class="seat-selection-bottom-sheet">
+                <div class="ui-status-banner ${message ? `is-${messageType === 'success' ? 'success' : 'cancel'}` : 'is-muted'} seat-status-banner">
+                  <div>
+                    <p class="concept-kicker">Tu selección</p>
+                    <h3 id="seat-selection-count">${selectedSeatCodes.length} de ${MAX_SEATS_PER_BOOKING} lugares elegidos</h3>
+                    <p id="seat-selection-summary">${selectedSummary || brand.seatSelection.summaryEmpty}</p>
+                    ${message ? `<p class="seat-inline-message">${esc(message)}</p>` : ''}
+                  </div>
+                </div>
+                <div class="seat-selection-customer-grid">
+                  <label class="form-row seat-selection-field">
+                    <span>Nombre</span>
+                    <input type="text" name="customerName" value="${esc(customerName)}" placeholder="Nombre completo" required />
+                  </label>
+                  <label class="form-row seat-selection-field">
+                    <span>Correo</span>
+                    <input type="email" name="customerEmail" value="${esc(customerEmail)}" placeholder="tu@correo.com" required />
+                  </label>
+                  <label class="form-row seat-selection-field seat-selection-field-full">
+                    <span>Teléfono</span>
+                    <input type="tel" name="customerPhone" value="${esc(customerPhone)}" placeholder="55..." />
+                  </label>
+                </div>
+                <div class="seat-selection-actions">
+                  <button class="btn" type="submit">${brand.seatSelection.cta}</button>
+                  <a class="btn alt" href="/classes">Volver a la agenda</a>
                 </div>
               </div>
-              <div class="form-row">
-                <label>Nombre</label>
-                <input type="text" name="customerName" value="${esc(customerName)}" placeholder="Nombre completo" required />
-              </div>
-              <div class="form-row">
-                <label>Correo</label>
-                <input type="email" name="customerEmail" value="${esc(customerEmail)}" placeholder="tu@correo.com" required />
-              </div>
-              <div class="form-row">
-                <label>Teléfono</label>
-                <input type="tel" name="customerPhone" value="${esc(customerPhone)}" placeholder="55..." />
-              </div>
-              <button class="btn" type="submit">${brand.seatSelection.cta}</button>
-              <a class="btn alt" href="/classes">Volver a la agenda</a>
             </form>
           </article>
         </div>
