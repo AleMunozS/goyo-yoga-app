@@ -46,6 +46,16 @@ const seatSchema = z.object({
   enabled: z.boolean().default(true),
 });
 
+const backgroundSchema = z.object({
+  assetUrl: z.string().min(1),
+  assetWidth: z.number().positive(),
+  assetHeight: z.number().positive(),
+  x: z.number().default(0),
+  y: z.number().default(0),
+  scale: z.number().positive().default(1),
+  opacity: z.number().min(0).max(1).default(1),
+});
+
 const layoutSchema = z.object({
   version: z.literal(DEFAULT_LAYOUT_VERSION).default(DEFAULT_LAYOUT_VERSION),
   canvas: z.object({
@@ -60,6 +70,7 @@ const layoutSchema = z.object({
     label: z.string().min(1).default('Instructora'),
   }),
   seats: z.array(seatSchema).min(1),
+  background: backgroundSchema.nullish().default(null),
 });
 
 function safeUpper(value, fallback = '') {
@@ -84,6 +95,20 @@ function toSeatId(label, index = 0) {
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function normalizeBackground(background) {
+  if (!background) return null;
+  const parsed = backgroundSchema.parse(background);
+  return {
+    assetUrl: String(parsed.assetUrl),
+    assetWidth: roundCoord(parsed.assetWidth),
+    assetHeight: roundCoord(parsed.assetHeight),
+    x: roundCoord(parsed.x),
+    y: roundCoord(parsed.y),
+    scale: Number(parsed.scale || 1),
+    opacity: Number(parsed.opacity ?? 1),
+  };
 }
 
 function withSeatMeta(seat) {
@@ -137,6 +162,7 @@ function normalizeLayout(layout) {
       rotation: Number(parsed.instructor.rotation || 0),
       label: String(parsed.instructor.label || 'Instructora'),
     },
+    background: normalizeBackground(parsed.background),
     seats,
   };
 }
@@ -163,6 +189,7 @@ export function createDefaultLayout(enabledSeatCount = DEFAULT_LAYOUT_BLUEPRINT.
     version: DEFAULT_LAYOUT_VERSION,
     canvas: DEFAULT_CANVAS,
     instructor: { x: 600, y: 80, rotation: 0, label: 'Instructora' },
+    background: null,
     seats: DEFAULT_LAYOUT_BLUEPRINT.map((seat, index) => ({
       ...seat,
       id: toSeatId(seat.label, index),
@@ -203,6 +230,7 @@ export function getSeatLayout(layoutJson, fallbackCapacity = DEFAULT_LAYOUT_BLUE
     supported: true,
     canvas: layout.canvas,
     instructor: layout.instructor,
+    background: layout.background,
     seats: sortSeats(layout.seats),
     rows,
   };
@@ -329,7 +357,9 @@ export function validateSeatSelection({
 }
 
 export function hasStructuralSeatChanges(currentLayoutJson, nextLayoutJson, fallbackCapacity = DEFAULT_LAYOUT_BLUEPRINT.length) {
-  const current = getSeatLayout(currentLayoutJson, fallbackCapacity).seats.map((seat) => ({
+  const currentLayout = getSeatLayout(currentLayoutJson, fallbackCapacity);
+  const nextLayout = getSeatLayout(nextLayoutJson, fallbackCapacity);
+  const current = currentLayout.seats.map((seat) => ({
     id: seat.id,
     label: seat.label,
     x: seat.x,
@@ -341,7 +371,7 @@ export function hasStructuralSeatChanges(currentLayoutJson, nextLayoutJson, fall
     bookable: seat.bookable,
     enabled: seat.enabled,
   }));
-  const next = getSeatLayout(nextLayoutJson, fallbackCapacity).seats.map((seat) => ({
+  const next = nextLayout.seats.map((seat) => ({
     id: seat.id,
     label: seat.label,
     x: seat.x,
@@ -353,5 +383,11 @@ export function hasStructuralSeatChanges(currentLayoutJson, nextLayoutJson, fall
     bookable: seat.bookable,
     enabled: seat.enabled,
   }));
-  return JSON.stringify(current) !== JSON.stringify(next);
+  return JSON.stringify({
+    background: currentLayout.background,
+    seats: current,
+  }) !== JSON.stringify({
+    background: nextLayout.background,
+    seats: next,
+  });
 }

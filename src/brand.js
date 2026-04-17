@@ -7,6 +7,7 @@ export const brand = {
   assets: {
     headerLogo: '/static/tisa-header-lockup.png',
     landingSideEmblem: '/static/tisa-side-emblem.png',
+    matMark: '/static/tisa-mat-mark.svg',
     editorialGrid: '/static/tisa-editorial-grid.jpg',
     conceptGrid: '/static/tisa-concept-grid.jpg',
     mineralSurface: '/static/tisa-mineral-surface.jpg',

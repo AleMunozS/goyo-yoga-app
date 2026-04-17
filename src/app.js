@@ -5,6 +5,11 @@ import dayjs from 'dayjs';
 import bcrypt from 'bcryptjs';
 import QRCode from 'qrcode';
 import { z } from 'zod';
+import formidable from 'formidable';
+import { imageSize } from 'image-size';
+import { randomUUID } from 'crypto';
+import { mkdir, readFile, rename, unlink } from 'fs/promises';
+import path from 'path';
 import { fileURLToPath } from 'url';
 import { brand, getCheckoutStateCopy } from './brand.js';
 import { renderLayout } from './views/layout.js';
@@ -41,6 +46,13 @@ const QR_SECRET = process.env.QR_SECRET || 'local-qr-secret';
 const ACTIVE_RESERVATION_STATUSES = ['PENDING_PAYMENT', 'PAYMENT_PENDING_ASYNC', 'PAID', 'CHECKED_IN'];
 const CONFIRMED_RESERVATION_STATUSES = ['PAID', 'CHECKED_IN'];
 const OPEN_RESERVATION_STATUSES = ['PENDING_PAYMENT', 'PAYMENT_PENDING_ASYNC'];
+const LAYOUT_BACKGROUND_MAX_BYTES = 8 * 1024 * 1024;
+const LAYOUT_BACKGROUND_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const LAYOUT_BACKGROUND_EXTENSIONS = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+};
 
 function requireStaff(req, res, next) {
   if (!req.session.staffId) return res.redirect('/staff/login');
@@ -64,6 +76,54 @@ function renderError(message) {
       <p>${esc(message)}</p>
     </div>
   </section>`;
+}
+
+function getLayoutBackgroundDestination(mimetype, originalFilename = '') {
+  const originalExt = path.extname(String(originalFilename || '')).toLowerCase();
+  const fallbackExt = LAYOUT_BACKGROUND_EXTENSIONS[mimetype] || '.img';
+  const safeExt = originalExt && /^[.][a-z0-9]+$/.test(originalExt) ? originalExt : fallbackExt;
+  return {
+    filename: `${randomUUID()}${safeExt}`,
+    extension: safeExt,
+  };
+}
+
+async function parseBackgroundUpload(req, uploadDir) {
+  const form = formidable({
+    multiples: false,
+    maxFiles: 1,
+    maxFileSize: LAYOUT_BACKGROUND_MAX_BYTES,
+    allowEmptyFiles: false,
+    filter: ({ mimetype }) => LAYOUT_BACKGROUND_MIME_TYPES.has(String(mimetype || '')),
+  });
+
+  const [, files] = await form.parse(req);
+  const file = Array.isArray(files.backgroundImage) ? files.backgroundImage[0] : files.backgroundImage;
+  if (!file?.filepath) {
+    throw new Error('Selecciona una imagen JPG, PNG o WebP para continuar.');
+  }
+
+  if (!LAYOUT_BACKGROUND_MIME_TYPES.has(String(file.mimetype || ''))) {
+    await unlink(file.filepath).catch(() => {});
+    throw new Error('Solo se aceptan imágenes JPG, PNG o WebP.');
+  }
+
+  const size = imageSize(await readFile(file.filepath));
+  if (!size.width || !size.height) {
+    await unlink(file.filepath).catch(() => {});
+    throw new Error('No pudimos leer las dimensiones de la imagen.');
+  }
+
+  await mkdir(uploadDir, { recursive: true });
+  const { filename } = getLayoutBackgroundDestination(file.mimetype, file.originalFilename);
+  const destination = path.join(uploadDir, filename);
+  await rename(file.filepath, destination);
+
+  return {
+    assetUrl: `/static/uploads/layouts/${filename}`,
+    assetWidth: size.width,
+    assetHeight: size.height,
+  };
 }
 
 function startOfWeekMonday(value) {
@@ -147,11 +207,22 @@ function renderSeatMapMarkup({
   const layout = getSeatLayout(layoutJson, fallbackCapacity);
   const occupiedSet = new Set((occupiedSeatIds || []).map((value) => String(value)));
   const selectedSet = new Set((selectedSeatCodes || []).map((value) => String(value)));
+  const backgroundMarkup = layout.background
+    ? `
+      <div
+        class="seat-map-background"
+        style="left:${layout.background.x}px;top:${layout.background.y}px;width:${layout.background.assetWidth * layout.background.scale}px;height:${layout.background.assetHeight * layout.background.scale}px;opacity:${layout.background.opacity};"
+        aria-hidden="true"
+      >
+        <img src="${layout.background.assetUrl}" alt="" />
+      </div>
+    `
+    : '';
   const seatNodes = layout.seats
     .map((seat) => {
       const isOccupied = occupiedSet.has(seat.id);
       const isSelected = selectedSet.has(seat.id) || selectedSet.has(seat.label);
-      const disabled = isOccupied || !seat.enabled || !interactive;
+      const disabled = isOccupied || !seat.enabled || !seat.bookable || !interactive;
       const stateClass = isOccupied
         ? 'is-occupied'
         : !seat.enabled || !seat.bookable
@@ -162,11 +233,16 @@ function renderSeatMapMarkup({
       const seatStyle = `left:${seat.x}px;top:${seat.y}px;transform:translate(-50%, -50%) rotate(${seat.rotation}deg);`;
 
       if (!interactive) {
-        return `<div class="seat-node seat-pill ${stateClass}" style="${seatStyle}"><span>${seat.label}</span></div>`;
+        return `
+          <div class="seat-node seat-mat ${stateClass}" style="${seatStyle}">
+            <span class="seat-mat__mark" aria-hidden="true"><img src="${brand.assets.matMark}" alt="" /></span>
+            <span class="seat-mat__label">${seat.label}</span>
+          </div>
+        `;
       }
 
       return `
-        <label class="seat-node seat-pill ${stateClass}" data-seat-option="${seat.id}" style="${seatStyle}">
+        <label class="seat-node seat-mat ${stateClass}" data-seat-option="${seat.id}" style="${seatStyle}">
           <input
             type="checkbox"
             name="${inputName}"
@@ -176,7 +252,8 @@ function renderSeatMapMarkup({
             ${isSelected ? 'checked' : ''}
             ${disabled ? 'disabled' : ''}
           />
-          <span>${seat.label}</span>
+          <span class="seat-mat__mark" aria-hidden="true"><img src="${brand.assets.matMark}" alt="" /></span>
+          <span class="seat-mat__label">${seat.label}</span>
         </label>
       `;
     })
@@ -189,9 +266,10 @@ function renderSeatMapMarkup({
       <div class="seat-map-viewport" data-seat-viewport>
         <div class="seat-map-canvas" data-seat-canvas>
           <div
-            class="seat-map seat-map-freeform"
+            class="seat-map seat-map-freeform ${layout.background ? 'seat-map--with-background' : ''}"
             style="width:${layout.canvas.width}px;height:${layout.canvas.height}px;--seat-grid:${layout.canvas.grid}px;"
           >
+            ${backgroundMarkup}
             <div
               class="seat-instructor-marker"
               style="left:${layout.instructor.x}px;top:${layout.instructor.y}px;transform:translate(-50%, -50%) rotate(${layout.instructor.rotation}deg);"
@@ -204,7 +282,82 @@ function renderSeatMapMarkup({
   `;
 }
 
-function renderLayoutsIndexBody({ locations, occurrences }) {
+function renderStudioWorkspace({
+  activeKey = 'dashboard',
+  staffRole = null,
+  eyebrow = 'Studio Workspace',
+  title = '',
+  subtitle = '',
+  content = '',
+  footerActionLabel = 'Abrir agenda',
+  footerActionHref = '/classes',
+}) {
+  const canAccessDashboard = staffRole === 'ADMIN';
+  const canAccessSales = staffRole === 'ADMIN' || staffRole === 'OPS';
+  const canAccessLayouts = staffRole === 'ADMIN' || staffRole === 'OPS';
+  const canAccessTrainer = staffRole === 'TRAINER';
+  const canAccessCheckin = staffRole === 'ADMIN' || staffRole === 'OPS';
+  const items = [
+    canAccessDashboard ? { key: 'dashboard', href: '/admin/dashboard', label: 'Dashboard' } : null,
+    canAccessSales ? { key: 'sales', href: '/admin/assisted-sales', label: 'Ventas' } : null,
+    canAccessLayouts ? { key: 'layouts', href: '/admin/layouts', label: 'Layouts' } : null,
+    canAccessTrainer ? { key: 'trainer', href: '/trainer/classes', label: 'Trainer' } : null,
+    canAccessCheckin ? { key: 'checkin', href: '/ops/checkin', label: 'Check-in' } : null,
+  ].filter(Boolean);
+
+  const nav = items
+    .map((item) => `<a class="${item.key === activeKey ? 'is-active' : ''}" href="${item.href}">${item.label}</a>`)
+    .join('');
+
+  return `<section class="studio-workspace">
+    <aside class="studio-workspace__sidebar">
+      <div class="studio-workspace__brand">
+        <p>${esc(eyebrow)}</p>
+        <h2>Main Wing</h2>
+        <span>Operational floor</span>
+      </div>
+      <nav class="studio-workspace__nav" aria-label="Studio navigation">${nav}</nav>
+      <div class="studio-workspace__footer">
+        <a class="btn" href="${footerActionHref}">${footerActionLabel}</a>
+      </div>
+    </aside>
+    <div class="studio-workspace__main">
+      <header class="studio-workspace__header">
+        <div>
+          <p class="concept-kicker">${esc(eyebrow)}</p>
+          <h1>${esc(title)}</h1>
+        </div>
+        <p>${esc(subtitle)}</p>
+      </header>
+      ${content}
+    </div>
+  </section>`;
+}
+
+function renderSeatSelectionHeader() {
+  return `
+    <header class="seat-floorplan-header">
+      <div class="seat-floorplan-header__inner">
+        <a class="seat-floorplan-header__brand" href="/">
+          <img
+            class="brand-lockup"
+            src="${brand.assets.headerLogo}"
+            alt="${esc(brand.name)}"
+            width="1130"
+            height="384"
+          />
+        </a>
+        <nav class="seat-floorplan-header__nav" aria-label="Reserva">
+          <a href="/classes">Agenda</a>
+          <a class="is-active" href="/classes">Reservar</a>
+          <a href="/staff/login">Staff</a>
+        </nav>
+      </div>
+    </header>
+  `;
+}
+
+function renderLayoutsIndexBody({ locations, occurrences, staffRole = null }) {
   const locationRows = locations
     .map((location) => {
       const capacity = getLayoutCapacity(location.layoutJson, 18);
@@ -237,14 +390,7 @@ function renderLayoutsIndexBody({ locations, occurrences }) {
     })
     .join('');
 
-  return `<section class="section">
-    <div class="system-shell">
-      <section class="system-hero scroll-hero" data-scroll-target="layout-admin-grid">
-        <p class="concept-kicker">TISA / LAYOUTS</p>
-        <h1>El salón ya no depende de un mapa fijo.</h1>
-        <p>Admin y operación pueden mantener layouts base por sede y preparar overrides por clase antes de abrir ventas o check-in.</p>
-      </section>
-      <div class="system-grid layout-admin-grid" id="layout-admin-grid">
+  const content = `<div class="system-grid layout-admin-grid" id="layout-admin-grid">
         <article class="system-panel system-panel-light layout-admin-panel">
           <p class="concept-kicker">Sedes activas</p>
           <h2>Layouts base por sede</h2>
@@ -255,8 +401,19 @@ function renderLayoutsIndexBody({ locations, occurrences }) {
           <h2>Overrides por clase</h2>
           <div class="admin-list">${classRows || '<div class="admin-list-row"><div><strong>Sin clases próximas</strong><p>No hay clases programadas para ajustar layout.</p></div></div>'}</div>
         </article>
-      </div>
-    </div>
+      </div>`;
+
+  return `<section class="section studio-workspace-section">
+    ${renderStudioWorkspace({
+      activeKey: 'layouts',
+      staffRole,
+      eyebrow: 'TISA / LAYOUTS',
+      title: 'El salón ya no depende de un mapa fijo.',
+      subtitle: 'Admin y operación pueden mantener layouts base por sede y preparar overrides por clase antes de abrir ventas o check-in.',
+      content,
+      footerActionLabel: 'Ventas asistidas',
+      footerActionHref: '/admin/assisted-sales',
+    })}
   </section>`;
 }
 
@@ -264,6 +421,7 @@ function renderLayoutEditorBody({
   title,
   kicker,
   subtitle,
+  staffRole = null,
   details,
   savePath,
   backPath,
@@ -276,16 +434,10 @@ function renderLayoutEditorBody({
     layout,
     baseLayout,
     structureLocked,
+    matMarkAsset: brand.assets.matMark,
   };
 
-  return `<section class="section">
-    <div class="system-shell">
-      <section class="system-hero scroll-hero" data-scroll-target="layout-editor-form">
-        <p class="concept-kicker">${esc(kicker)}</p>
-        <h1>${esc(title)}</h1>
-        <p>${esc(subtitle)}</p>
-      </section>
-      <form method="post" action="${savePath}" class="layout-editor-form" id="layout-editor-form">
+  const content = `<form method="post" action="${savePath}" class="layout-editor-form" id="layout-editor-form">
         <input type="hidden" name="layoutJson" id="layout-editor-json" value="${esc(serializeLayout(layout))}" />
         <div class="system-grid layout-editor-grid">
           <article class="system-panel system-panel-light layout-editor-panel">
@@ -296,6 +448,7 @@ function renderLayoutEditorBody({
             <div class="layout-editor-toolbar-wrap">
               <div class="layout-editor-toolbar">
                 <button class="btn alt" type="button" data-layout-action="select-instructor">Mover instructora</button>
+                <button class="btn alt" type="button" data-layout-action="select-background">Seleccionar fondo</button>
                 <button class="btn alt" type="button" data-layout-action="add-seat" ${structureLocked ? 'disabled' : ''}>Agregar asiento</button>
                 <button class="btn alt" type="button" data-layout-action="delete-seat" ${structureLocked ? 'disabled' : ''}>Eliminar asiento</button>
                 <button class="btn alt" type="button" data-layout-action="renumber-rows" ${structureLocked ? 'disabled' : ''}>Renumerar filas</button>
@@ -349,6 +502,40 @@ function renderLayoutEditorBody({
                 <span>Habilitado</span>
                 <input type="checkbox" data-layout-input="enabled" ${structureLocked ? 'disabled' : ''} />
               </label>
+              <div class="layout-background-tools">
+                <div class="layout-background-tools__header">
+                  <span>Foto del salón</span>
+                  <p data-layout-output="background-status">${layout.background ? 'Foto cargada y lista para ajustar.' : 'Aún no hay foto cargada.'}</p>
+                </div>
+                <input
+                  type="file"
+                  id="layout-background-file"
+                  class="layout-background-file"
+                  accept="image/jpeg,image/png,image/webp"
+                  ${structureLocked ? 'disabled' : ''}
+                />
+                <div class="layout-background-tools__actions">
+                  <button class="btn alt" type="button" data-layout-action="upload-background" ${structureLocked ? 'disabled' : ''}>Subir foto</button>
+                  <button class="btn alt" type="button" data-layout-action="replace-background" ${structureLocked ? 'disabled' : ''}>Reemplazar</button>
+                  <button class="btn alt" type="button" data-layout-action="clear-background" ${structureLocked ? 'disabled' : ''}>Quitar fondo</button>
+                </div>
+              </div>
+              <label class="form-row">
+                <span>Fondo X</span>
+                <input class="admin-input" type="number" data-layout-input="background-x" ${structureLocked ? 'disabled' : ''} />
+              </label>
+              <label class="form-row">
+                <span>Fondo Y</span>
+                <input class="admin-input" type="number" data-layout-input="background-y" ${structureLocked ? 'disabled' : ''} />
+              </label>
+              <label class="form-row">
+                <span>Escala fondo</span>
+                <input class="admin-input" type="number" min="0.1" max="4" step="0.05" data-layout-input="background-scale" ${structureLocked ? 'disabled' : ''} />
+              </label>
+              <label class="form-row">
+                <span>Opacidad fondo</span>
+                <input class="admin-input" type="number" min="0.1" max="1" step="0.05" data-layout-input="background-opacity" ${structureLocked ? 'disabled' : ''} />
+              </label>
             </div>
             <div class="system-action-stack">
               <button class="btn" type="submit">Guardar layout</button>
@@ -356,8 +543,19 @@ function renderLayoutEditorBody({
             </div>
           </article>
         </div>
-      </form>
-    </div>
+      </form>`;
+
+  return `<section class="section studio-workspace-section">
+    ${renderStudioWorkspace({
+      activeKey: 'layouts',
+      staffRole,
+      eyebrow: kicker,
+      title,
+      subtitle,
+      content,
+      footerActionLabel: 'Volver a layouts',
+      footerActionHref: backPath,
+    })}
     <script src="/vendor/konva/konva.min.js"></script>
     <script type="application/json" id="layout-editor-payload">${safeJsonForHtml(payload)}</script>
   </section>`;
@@ -587,84 +785,97 @@ function renderSeatSelectionBody({
   });
 
   return `
-    <section class="section seat-selection-page">
-      <div class="system-shell">
-        <section class="system-hero scroll-hero" data-scroll-target="seat-selection-grid">
-          <p class="concept-kicker">${brand.seatSelection.kicker}</p>
-          <h1>${brand.seatSelection.title}</h1>
-          <p>${brand.seatSelection.lede}</p>
-        </section>
-        <div class="system-grid seat-selection-grid" id="seat-selection-grid">
-          <article class="system-panel system-panel-light system-panel-texture seat-selection-context">
-            <div class="seat-selection-context__header">
-              <p class="concept-kicker">Sesión elegida</p>
-              <h2>${esc(occurrence.classType.name)}</h2>
-              <p>Visualiza el salón, confirma disponibilidad real y reserva sin cambiar de contexto.</p>
-            </div>
-            <div class="system-detail-list seat-selection-detail-list">
+    <section class="section seat-floorplan-page">
+      <div class="seat-floorplan-app">
+        <aside class="seat-floorplan-sidebar">
+          <article class="seat-floorplan-sidebar__card">
+            <p class="seat-floorplan-eyebrow">Sesión elegida</p>
+            <h1>${esc(occurrence.classType.name)}</h1>
+            <p>Visualiza el salón, confirma disponibilidad real y reserva sin cambiar de contexto.</p>
+            <div class="seat-floorplan-sidebar__meta">
               <div><span>Horario</span><strong>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')}</strong></div>
               <div><span>Guía</span><strong>${esc(occurrence.trainer.displayName)}</strong></div>
               <div><span>Estudio</span><strong>${esc(occurrence.location.name)}</strong></div>
               <div><span>Mapa</span><strong>${enabledSeats.length} lugares habilitados · ${availableCount} disponibles</strong></div>
               <div><span>Precio por lugar</span><strong>MXN ${(occurrence.unitPriceCents / 100).toLocaleString('es-MX')}</strong></div>
             </div>
-            <div class="seat-selection-note-card">
-              <p class="system-inline-note">${brand.seatSelection.note}</p>
+            <div class="seat-floorplan-sidebar__note">
+              <p>${brand.seatSelection.note}</p>
             </div>
-            <figure class="system-media-card seat-selection-media-card">
+            <figure class="seat-floorplan-sidebar__media">
               <img src="${brand.assets.editorialGrid}" alt="Atmósfera visual de TISA" />
-              <figcaption>Una lectura clara del espacio para decidir con tranquilidad antes de pagar.</figcaption>
             </figure>
           </article>
-          <article class="system-panel system-panel-dark seat-selection-panel">
-            <form action="/reservations/web-checkout" method="post" id="seat-selection-form" class="seat-selection-form">
-              <input type="hidden" name="occurrenceId" value="${occurrence.id}" />
-              <input type="hidden" name="salesChannel" value="web" />
-              <div class="seat-map-module seat-selection-map-shell">
-                <div class="seat-map-module-header seat-selection-map-shell__header">
-                  <div class="seat-selection-map-shell__title">
-                    <p class="concept-kicker">Layout activo</p>
-                    <h2>Selecciona tu lugar</h2>
-                  </div>
-                  <div class="seat-legend">
-                    <span class="legend seat-available">Disponible</span>
-                    <span class="legend seat-selected">Seleccionado</span>
-                    <span class="legend seat-occupied">Ocupado</span>
-                  </div>
-                </div>
-                ${seatMapHtml}
+        </aside>
+        <form action="/reservations/web-checkout" method="post" id="seat-selection-form" class="seat-floorplan-form">
+          <input type="hidden" name="occurrenceId" value="${occurrence.id}" />
+          <input type="hidden" name="salesChannel" value="web" />
+          <section class="seat-floorplan-board">
+            <div class="seat-floorplan-board__header">
+              <div>
+                <p class="seat-floorplan-eyebrow">Layout activo</p>
+                <h2>Selecciona tu lugar</h2>
               </div>
-              <div class="seat-selection-bottom-sheet">
-                <div class="ui-status-banner ${message ? `is-${messageType === 'success' ? 'success' : 'cancel'}` : 'is-muted'} seat-status-banner">
-                  <div>
-                    <p class="concept-kicker">Tu selección</p>
-                    <h3 id="seat-selection-count">${selectedSeatCodes.length} de ${MAX_SEATS_PER_BOOKING} lugares elegidos</h3>
-                    <p id="seat-selection-summary">${selectedSummary || brand.seatSelection.summaryEmpty}</p>
-                    ${message ? `<p class="seat-inline-message">${esc(message)}</p>` : ''}
-                  </div>
-                </div>
-                <div class="seat-selection-customer-grid">
-                  <label class="form-row seat-selection-field">
-                    <span>Nombre</span>
-                    <input type="text" name="customerName" value="${esc(customerName)}" placeholder="Nombre completo" required />
-                  </label>
-                  <label class="form-row seat-selection-field">
-                    <span>Correo</span>
-                    <input type="email" name="customerEmail" value="${esc(customerEmail)}" placeholder="tu@correo.com" required />
-                  </label>
-                  <label class="form-row seat-selection-field seat-selection-field-full">
-                    <span>Teléfono</span>
-                    <input type="tel" name="customerPhone" value="${esc(customerPhone)}" placeholder="55..." />
-                  </label>
-                </div>
-                <div class="seat-selection-actions">
-                  <button class="btn" type="submit">${brand.seatSelection.cta}</button>
-                  <a class="btn alt" href="/classes">Volver a la agenda</a>
+              <div class="seat-legend">
+                <span class="legend seat-available">Disponible</span>
+                <span class="legend seat-selected">Seleccionado</span>
+                <span class="legend seat-occupied">Ocupado</span>
+              </div>
+            </div>
+            <div class="seat-floorplan-board__stage">
+              ${seatMapHtml}
+            </div>
+          </section>
+          <aside class="seat-floorplan-summary">
+            <article class="seat-floorplan-summary__card">
+              <div class="seat-floorplan-summary__handle" aria-hidden="true"></div>
+              <div class="seat-floorplan-summary__top">
+                <div>
+                  <p class="seat-floorplan-eyebrow">Tu selección</p>
+                  <h3 id="seat-selection-count">${selectedSeatCodes.length} de ${MAX_SEATS_PER_BOOKING} lugares elegidos</h3>
+                  <p id="seat-selection-summary">${selectedSummary || brand.seatSelection.summaryEmpty}</p>
+                  ${message ? `<p class="seat-inline-message">${esc(message)}</p>` : ''}
                 </div>
               </div>
-            </form>
-          </article>
-        </div>
+              <div class="seat-floorplan-summary__session">
+                <div>
+                  <span>Clase</span>
+                  <strong>${esc(occurrence.classType.name)}</strong>
+                </div>
+                <div>
+                  <span>Horario</span>
+                  <strong>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')}</strong>
+                </div>
+                <div>
+                  <span>Guía</span>
+                  <strong>${esc(occurrence.trainer.displayName)}</strong>
+                </div>
+                <div>
+                  <span>Total</span>
+                  <strong>MXN ${(occurrence.unitPriceCents / 100).toLocaleString('es-MX')}</strong>
+                </div>
+              </div>
+              <div class="seat-floorplan-summary__fields">
+                <label class="form-row seat-floorplan-field">
+                  <span>Nombre</span>
+                  <input type="text" name="customerName" value="${esc(customerName)}" placeholder="Nombre completo" required />
+                </label>
+                <label class="form-row seat-floorplan-field">
+                  <span>Correo</span>
+                  <input type="email" name="customerEmail" value="${esc(customerEmail)}" placeholder="tu@correo.com" required />
+                </label>
+                <label class="form-row seat-floorplan-field">
+                  <span>Teléfono</span>
+                  <input type="tel" name="customerPhone" value="${esc(customerPhone)}" placeholder="55..." />
+                </label>
+              </div>
+              <div class="seat-floorplan-summary__actions">
+                <button class="btn" type="submit">${brand.seatSelection.cta}</button>
+                <a class="btn alt" href="/classes">Volver a la agenda</a>
+              </div>
+            </article>
+          </aside>
+        </form>
       </div>
     </section>
   `;
@@ -762,6 +973,7 @@ function renderAssistedSalesBody({
 
 const publicDir = fileURLToPath(new URL('./public', import.meta.url));
 const konvaDir = fileURLToPath(new URL('../node_modules/konva', import.meta.url));
+const layoutUploadsDir = path.join(publicDir, 'uploads', 'layouts');
 
 export function createApp({ prisma }) {
   const app = express();
@@ -775,6 +987,22 @@ export function createApp({ prisma }) {
     saveUninitialized: false,
     cookie: { httpOnly: true, sameSite: 'lax' },
   }));
+
+  app.post('/admin/layout-assets/background', async (req, res) => {
+    if (!req.session.staffId) {
+      return res.status(401).json({ error: 'Necesitas iniciar sesión para subir una foto.' });
+    }
+    if (!['ADMIN', 'OPS'].includes(String(req.session.staffRole || ''))) {
+      return res.status(403).json({ error: 'No autorizado para subir fondos de layout.' });
+    }
+
+    try {
+      const upload = await parseBackgroundUpload(req, layoutUploadsDir);
+      return res.json(upload);
+    } catch (error) {
+      return res.status(400).json({ error: error.message || 'No se pudo subir la imagen.' });
+    }
+  });
 
   const handleStripeWebhook = async (req, res) => {
     try {
@@ -2060,7 +2288,15 @@ export function createApp({ prisma }) {
       messageType: 'error',
     });
 
-    res.send(renderLayout({ title: 'Elegir lugares', body, simulationMode: config.simulationMode }));
+    res.send(renderLayout({
+      title: 'Elegir lugares',
+      body,
+      simulationMode: config.simulationMode,
+      bodyClass: 'seat-floorplan-body',
+      mainClass: 'seat-floorplan-main',
+      hideDefaultHeader: true,
+      customHeaderHtml: renderSeatSelectionHeader(),
+    }));
   });
 
   const reservationSchema = z.object({
@@ -2197,7 +2433,15 @@ export function createApp({ prisma }) {
         message: error instanceof ReservationError ? error.message : 'No se pudo iniciar la reservación.',
       });
       return res.status(error instanceof ReservationError ? error.status : 500).send(
-        renderLayout({ title: 'Elegir lugares', body, simulationMode: config.simulationMode }),
+        renderLayout({
+          title: 'Elegir lugares',
+          body,
+          simulationMode: config.simulationMode,
+          bodyClass: 'seat-floorplan-body',
+          mainClass: 'seat-floorplan-main',
+          hideDefaultHeader: true,
+          customHeaderHtml: renderSeatSelectionHeader(),
+        }),
       );
     }
   });
@@ -2572,7 +2816,11 @@ export function createApp({ prisma }) {
       }),
     ]);
 
-    const body = renderLayoutsIndexBody({ locations, occurrences });
+    const body = renderLayoutsIndexBody({
+      locations,
+      occurrences,
+      staffRole: req.session.staffRole,
+    });
     res.send(renderLayout({
       title: 'Layouts',
       body,
@@ -2595,6 +2843,7 @@ export function createApp({ prisma }) {
       title: `Layout base · ${location.name}`,
       kicker: 'TISA / LAYOUT BASE',
       subtitle: 'Este layout se clona cuando se programa una clase nueva en esta sede.',
+      staffRole: req.session.staffRole,
       details: `
         <div><span>Sede</span><strong>${esc(location.name)}</strong></div>
         <div><span>Dirección</span><strong>${esc(location.address)}</strong></div>
@@ -2657,6 +2906,7 @@ export function createApp({ prisma }) {
       title: `Layout de clase · ${occurrence.classType.name}`,
       kicker: 'TISA / OVERRIDE POR CLASE',
       subtitle: 'Este snapshot lo usan la selección pública, ventas asistidas y check-in de esta clase.',
+      staffRole: req.session.staffRole,
       details: `
         <div><span>Clase</span><strong>${esc(occurrence.classType.name)}</strong></div>
         <div><span>Horario</span><strong>${dayjs(occurrence.startsAt).format('DD MMM YYYY · HH:mm')}</strong></div>
@@ -2740,34 +2990,33 @@ export function createApp({ prisma }) {
       orderBy: { startsAt: 'asc' },
     });
 
-    const body = `<section class="section">
-      <div class="system-shell">
-        <section class="system-hero scroll-hero" data-scroll-target="admin-metrics">
-          <p class="concept-kicker">TISA / ADMIN</p>
-          <h1>La operación también debe sentirse precisa, elegante y confiable.</h1>
-          <p>Lectura clara de métricas, seguimiento de ocupación y acceso directo a la agenda activa del estudio dentro de una sola superficie.</p>
-          <div class="system-chip-row">
-            <button type="button" class="system-chip-button" data-scroll-target="admin-metrics">Métricas</button>
-            <button type="button" class="system-chip-button" data-scroll-target="admin-occupancy">Ocupación</button>
-            <a class="system-chip-button" href="/admin/assisted-sales">Ventas WhatsApp</a>
-          </div>
-        </section>
-        <div class="system-grid">
-          <article class="system-panel system-panel-dark" id="admin-metrics">
-            <h2>Señales principales del día</h2>
-            <div class="admin-metric-grid">
-              <div><span>Reservas activas</span><strong>${bookings}</strong></div>
-              <div><span>Clientes</span><strong>${clients}</strong></div>
-              <div><span>Pagos aprobados</span><strong>${paid}</strong></div>
-              <div><span>Prácticas próximas</span><strong>${classes}</strong></div>
-            </div>
-          </article>
-          <article class="system-panel system-panel-light" id="admin-occupancy">
-            <h2>Lectura de ocupación</h2>
-            <div class="admin-list">${topClasses.map((c) => `<div class="admin-list-row"><div><strong>${esc(c.classType.name)}</strong><p>${esc(c.trainer.displayName)}</p></div><strong>${c.capacity - c.availableSlots}/${c.capacity}</strong></div>`).join('')}</div>
-          </article>
+    const content = `<div class="system-grid studio-dashboard-grid">
+      <article class="system-panel system-panel-dark" id="admin-metrics">
+        <h2>Señales principales del día</h2>
+        <div class="admin-metric-grid">
+          <div><span>Reservas activas</span><strong>${bookings}</strong></div>
+          <div><span>Clientes</span><strong>${clients}</strong></div>
+          <div><span>Pagos aprobados</span><strong>${paid}</strong></div>
+          <div><span>Prácticas próximas</span><strong>${classes}</strong></div>
         </div>
-      </div>
+      </article>
+      <article class="system-panel system-panel-light" id="admin-occupancy">
+        <h2>Lectura de ocupación</h2>
+        <div class="admin-list">${topClasses.map((c) => `<div class="admin-list-row"><div><strong>${esc(c.classType.name)}</strong><p>${esc(c.trainer.displayName)}</p></div><strong>${c.capacity - c.availableSlots}/${c.capacity}</strong></div>`).join('')}</div>
+      </article>
+    </div>`;
+
+    const body = `<section class="section studio-workspace-section">
+      ${renderStudioWorkspace({
+        activeKey: 'dashboard',
+        staffRole: req.session.staffRole,
+        eyebrow: 'TISA / ADMIN',
+        title: 'La operación también debe sentirse precisa, elegante y confiable.',
+        subtitle: 'Lectura clara de métricas, seguimiento de ocupación y acceso directo a la agenda activa del estudio dentro de una sola superficie.',
+        content,
+        footerActionLabel: 'Ventas WhatsApp',
+        footerActionHref: '/admin/assisted-sales',
+      })}
     </section>`;
 
     res.send(renderLayout({

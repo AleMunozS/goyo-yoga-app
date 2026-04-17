@@ -426,38 +426,78 @@
     if (stageContainer && jsonField) {
       const payload = JSON.parse(layoutPayload.textContent || '{}');
       const baseLayout = payload.baseLayout ? JSON.parse(JSON.stringify(payload.baseLayout)) : null;
+      const matMarkAsset = payload.matMarkAsset || '/static/tisa-mat-mark.svg';
       const state = {
         layout: JSON.parse(JSON.stringify(payload.layout || {})),
         selection: { type: 'instructor', id: null },
         locked: payload.structureLocked === true,
       };
+      state.layout.background = state.layout.background || null;
 
       const actionButtons = {
         selectInstructor: document.querySelector('[data-layout-action="select-instructor"]'),
+        selectBackground: document.querySelector('[data-layout-action="select-background"]'),
         addSeat: document.querySelector('[data-layout-action="add-seat"]'),
         deleteSeat: document.querySelector('[data-layout-action="delete-seat"]'),
         renumberRows: document.querySelector('[data-layout-action="renumber-rows"]'),
         reorderRows: document.querySelector('[data-layout-action="reorder-rows"]'),
         resetBase: document.querySelector('[data-layout-action="reset-base"]'),
+        uploadBackground: document.querySelector('[data-layout-action="upload-background"]'),
+        replaceBackground: document.querySelector('[data-layout-action="replace-background"]'),
+        clearBackground: document.querySelector('[data-layout-action="clear-background"]'),
       };
       const inspectorFields = {
         selection: document.querySelector('[data-layout-output="selection"]'),
+        backgroundStatus: document.querySelector('[data-layout-output="background-status"]'),
         label: document.querySelector('[data-layout-input="label"]'),
         row: document.querySelector('[data-layout-input="row"]'),
         order: document.querySelector('[data-layout-input="order"]'),
         zone: document.querySelector('[data-layout-input="zone"]'),
         bookable: document.querySelector('[data-layout-input="bookable"]'),
         enabled: document.querySelector('[data-layout-input="enabled"]'),
+        backgroundFile: document.getElementById('layout-background-file'),
+        backgroundX: document.querySelector('[data-layout-input="background-x"]'),
+        backgroundY: document.querySelector('[data-layout-input="background-y"]'),
+        backgroundScale: document.querySelector('[data-layout-input="background-scale"]'),
+        backgroundOpacity: document.querySelector('[data-layout-input="background-opacity"]'),
       };
 
-      const seatRadius = 34;
+      const seatWidth = 114;
+      const seatHeight = 58;
+      const seatHalfWidth = seatWidth / 2;
+      const seatHalfHeight = seatHeight / 2;
       const grid = Number(state.layout.canvas?.grid || 24);
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
       const snap = (value) => Math.round(value / grid) * grid;
       const clone = (value) => JSON.parse(JSON.stringify(value));
       const isSeatSelection = () => state.selection.type === 'seat';
+      const isBackgroundSelection = () => state.selection.type === 'background' && Boolean(state.layout.background);
       const selectedSeat = () => state.layout.seats.find((seat) => seat.id === state.selection.id) || null;
+      const selectedBackground = () => state.layout.background || null;
       const nextSeatId = () => `seat-${Math.random().toString(36).slice(2, 10)}`;
+      const imageCache = new Map();
+
+      const stage = new window.Konva.Stage({
+        container: stageContainer,
+        width: Number(state.layout.canvas?.width || 1200),
+        height: Number(state.layout.canvas?.height || 800),
+      });
+      const backgroundLayer = new window.Konva.Layer();
+      const gridLayer = new window.Konva.Layer();
+      const layer = new window.Konva.Layer();
+      stage.add(backgroundLayer);
+      stage.add(gridLayer);
+      stage.add(layer);
+
+      const loadImage = (src) => {
+        if (!src) return null;
+        if (imageCache.has(src)) return imageCache.get(src);
+        const image = new window.Image();
+        image.src = src;
+        image.addEventListener('load', () => drawLayout());
+        imageCache.set(src, image);
+        return image;
+      };
 
       const syncJson = () => {
         jsonField.value = JSON.stringify(state.layout);
@@ -473,6 +513,22 @@
       };
 
       const rowLetterByIndex = (index) => String.fromCharCode('A'.charCodeAt(0) + index);
+      const setFieldDisabled = (field, disabled) => {
+        if (field) field.disabled = disabled;
+      };
+      const fitBackgroundToStage = (background) => {
+        const widthLimit = Math.max(stage.width() - grid * 4, grid * 8);
+        const heightLimit = Math.max(stage.height() - grid * 4, grid * 8);
+        const fittedScale = Math.min(widthLimit / background.assetWidth, heightLimit / background.assetHeight, 1);
+        const scale = Number(clamp(fittedScale, 0.2, 2).toFixed(2));
+        return {
+          ...background,
+          x: snap((stage.width() - background.assetWidth * scale) / 2),
+          y: snap((stage.height() - background.assetHeight * scale) / 2),
+          scale,
+          opacity: 0.58,
+        };
+      };
 
       const renumberRows = () => {
         const groups = new Map();
@@ -515,66 +571,6 @@
         renumberRows();
       };
 
-      const selectInstructor = () => {
-        state.selection = { type: 'instructor', id: null };
-        syncInspector();
-        layer.draw();
-      };
-
-      const selectSeat = (seatId) => {
-        state.selection = { type: 'seat', id: seatId };
-        syncInspector();
-        layer.draw();
-      };
-
-      const syncInspector = () => {
-        const seat = selectedSeat();
-        if (inspectorFields.selection) {
-          inspectorFields.selection.value = seat ? `Asiento ${seat.label}` : 'Instructora';
-        }
-        if (!seat) {
-          if (inspectorFields.label) inspectorFields.label.value = state.layout.instructor?.label || 'Instructora';
-          if (inspectorFields.row) inspectorFields.row.value = '';
-          if (inspectorFields.order) inspectorFields.order.value = '';
-          if (inspectorFields.zone) inspectorFields.zone.value = 'near';
-          if (inspectorFields.bookable) inspectorFields.bookable.checked = false;
-          if (inspectorFields.enabled) inspectorFields.enabled.checked = true;
-          return;
-        }
-
-        if (inspectorFields.label) inspectorFields.label.value = seat.label || '';
-        if (inspectorFields.row) inspectorFields.row.value = seat.row || '';
-        if (inspectorFields.order) inspectorFields.order.value = String(seat.order || 1);
-        if (inspectorFields.zone) inspectorFields.zone.value = seat.zone || 'middle';
-        if (inspectorFields.bookable) inspectorFields.bookable.checked = seat.bookable !== false;
-        if (inspectorFields.enabled) inspectorFields.enabled.checked = seat.enabled !== false;
-      };
-
-      const updateSeatFromInspector = () => {
-        const seat = selectedSeat();
-        if (!seat || state.locked) return;
-        seat.label = (inspectorFields.label?.value || seat.label).trim().toUpperCase() || seat.label;
-        seat.row = (inspectorFields.row?.value || seat.row).trim().toUpperCase() || seat.row;
-        seat.order = Math.max(1, Number.parseInt(inspectorFields.order?.value || seat.order, 10) || 1);
-        seat.zone = inspectorFields.zone?.value || seat.zone;
-        seat.bookable = Boolean(inspectorFields.bookable?.checked);
-        seat.enabled = Boolean(inspectorFields.enabled?.checked);
-        normalizeSeatOrder();
-        syncJson();
-        drawLayout();
-        syncInspector();
-      };
-
-      const stage = new window.Konva.Stage({
-        container: stageContainer,
-        width: Number(state.layout.canvas?.width || 1200),
-        height: Number(state.layout.canvas?.height || 800),
-      });
-      const gridLayer = new window.Konva.Layer();
-      const layer = new window.Konva.Layer();
-      stage.add(gridLayer);
-      stage.add(layer);
-
       const drawGrid = () => {
         gridLayer.destroyChildren();
         const width = stage.width();
@@ -596,20 +592,199 @@
         gridLayer.draw();
       };
 
-      const draggableSeat = !state.locked;
-      const clampNodePosition = (position) => ({
-        x: clamp(snap(position.x), seatRadius, stage.width() - seatRadius),
-        y: clamp(snap(position.y), seatRadius, stage.height() - seatRadius),
+      const clampSeatPosition = (position) => ({
+        x: clamp(snap(position.x), seatHalfWidth, stage.width() - seatHalfWidth),
+        y: clamp(snap(position.y), seatHalfHeight, stage.height() - seatHalfHeight),
       });
+      const clampInstructorPosition = (position) => ({
+        x: clamp(snap(position.x), 76, stage.width() - 76),
+        y: clamp(snap(position.y), 26, stage.height() - 26),
+      });
+      const clampBackgroundPosition = (position, background = selectedBackground()) => {
+        if (!background) return { x: snap(position.x), y: snap(position.y) };
+        const width = background.assetWidth * background.scale;
+        const height = background.assetHeight * background.scale;
+        return {
+          x: clamp(snap(position.x), -width + grid * 2, stage.width() - grid * 2),
+          y: clamp(snap(position.y), -height + grid * 2, stage.height() - grid * 2),
+        };
+      };
+
+      const syncInspector = () => {
+        const seat = selectedSeat();
+        const background = selectedBackground();
+        if (inspectorFields.selection) {
+          inspectorFields.selection.value = seat
+            ? `Tapete ${seat.label}`
+            : isBackgroundSelection()
+            ? 'Fondo del salón'
+            : 'Instructora';
+        }
+
+        const seatEditable = Boolean(seat) && !state.locked;
+        const backgroundEditable = Boolean(background) && !state.locked;
+        setFieldDisabled(inspectorFields.label, !seatEditable);
+        setFieldDisabled(inspectorFields.row, !seatEditable);
+        setFieldDisabled(inspectorFields.order, !seatEditable);
+        setFieldDisabled(inspectorFields.zone, !seatEditable);
+        setFieldDisabled(inspectorFields.bookable, !seatEditable);
+        setFieldDisabled(inspectorFields.enabled, !seatEditable);
+        setFieldDisabled(inspectorFields.backgroundX, !backgroundEditable);
+        setFieldDisabled(inspectorFields.backgroundY, !backgroundEditable);
+        setFieldDisabled(inspectorFields.backgroundScale, !backgroundEditable);
+        setFieldDisabled(inspectorFields.backgroundOpacity, !backgroundEditable);
+
+        if (inspectorFields.backgroundStatus) {
+          inspectorFields.backgroundStatus.textContent = background
+            ? state.locked
+              ? 'La foto está bloqueada porque esta clase ya tiene reservas activas.'
+              : 'Foto cargada. Puedes arrastrarla o ajustar posición, escala y opacidad.'
+            : 'Aún no hay foto cargada.';
+        }
+        if (actionButtons.selectBackground) actionButtons.selectBackground.disabled = !background;
+        if (actionButtons.clearBackground) actionButtons.clearBackground.disabled = !background || state.locked;
+        if (actionButtons.replaceBackground) actionButtons.replaceBackground.disabled = state.locked;
+        if (actionButtons.uploadBackground) actionButtons.uploadBackground.disabled = state.locked;
+
+        if (seat) {
+          if (inspectorFields.label) inspectorFields.label.value = seat.label || '';
+          if (inspectorFields.row) inspectorFields.row.value = seat.row || '';
+          if (inspectorFields.order) inspectorFields.order.value = String(seat.order || 1);
+          if (inspectorFields.zone) inspectorFields.zone.value = seat.zone || 'middle';
+          if (inspectorFields.bookable) inspectorFields.bookable.checked = seat.bookable !== false;
+          if (inspectorFields.enabled) inspectorFields.enabled.checked = seat.enabled !== false;
+        } else {
+          if (inspectorFields.label) inspectorFields.label.value = state.layout.instructor?.label || 'Instructora';
+          if (inspectorFields.row) inspectorFields.row.value = '';
+          if (inspectorFields.order) inspectorFields.order.value = '';
+          if (inspectorFields.zone) inspectorFields.zone.value = 'near';
+          if (inspectorFields.bookable) inspectorFields.bookable.checked = false;
+          if (inspectorFields.enabled) inspectorFields.enabled.checked = true;
+        }
+
+        if (background) {
+          if (inspectorFields.backgroundX) inspectorFields.backgroundX.value = String(background.x || 0);
+          if (inspectorFields.backgroundY) inspectorFields.backgroundY.value = String(background.y || 0);
+          if (inspectorFields.backgroundScale) inspectorFields.backgroundScale.value = String(background.scale || 1);
+          if (inspectorFields.backgroundOpacity) inspectorFields.backgroundOpacity.value = String(background.opacity ?? 1);
+        } else {
+          if (inspectorFields.backgroundX) inspectorFields.backgroundX.value = '';
+          if (inspectorFields.backgroundY) inspectorFields.backgroundY.value = '';
+          if (inspectorFields.backgroundScale) inspectorFields.backgroundScale.value = '';
+          if (inspectorFields.backgroundOpacity) inspectorFields.backgroundOpacity.value = '';
+        }
+      };
+
+      const selectInstructor = () => {
+        state.selection = { type: 'instructor', id: null };
+        syncInspector();
+        drawLayout();
+      };
+
+      const selectBackground = () => {
+        if (!state.layout.background) return;
+        state.selection = { type: 'background', id: null };
+        syncInspector();
+        drawLayout();
+      };
+
+      const selectSeat = (seatId) => {
+        state.selection = { type: 'seat', id: seatId };
+        syncInspector();
+        drawLayout();
+      };
+
+      const updateSeatFromInspector = () => {
+        const seat = selectedSeat();
+        if (!seat || state.locked) return;
+        seat.label = (inspectorFields.label?.value || seat.label).trim().toUpperCase() || seat.label;
+        seat.row = (inspectorFields.row?.value || seat.row).trim().toUpperCase() || seat.row;
+        seat.order = Math.max(1, Number.parseInt(inspectorFields.order?.value || seat.order, 10) || 1);
+        seat.zone = inspectorFields.zone?.value || seat.zone;
+        seat.bookable = Boolean(inspectorFields.bookable?.checked);
+        seat.enabled = Boolean(inspectorFields.enabled?.checked);
+        normalizeSeatOrder();
+        syncJson();
+        drawLayout();
+        syncInspector();
+      };
+
+      const updateBackgroundFromInspector = () => {
+        const background = selectedBackground();
+        if (!background || state.locked) return;
+        background.x = Number.parseInt(inspectorFields.backgroundX?.value || background.x, 10) || 0;
+        background.y = Number.parseInt(inspectorFields.backgroundY?.value || background.y, 10) || 0;
+        background.scale = clamp(Number.parseFloat(inspectorFields.backgroundScale?.value || background.scale) || background.scale || 1, 0.1, 4);
+        background.opacity = clamp(Number.parseFloat(inspectorFields.backgroundOpacity?.value || background.opacity) || background.opacity || 1, 0.1, 1);
+        syncJson();
+        drawLayout();
+        syncInspector();
+      };
 
       const drawLayout = () => {
+        backgroundLayer.destroyChildren();
         layer.destroyChildren();
+
+        const background = selectedBackground();
+        if (background) {
+          const backgroundImage = loadImage(background.assetUrl);
+          const width = background.assetWidth * background.scale;
+          const height = background.assetHeight * background.scale;
+          const backgroundGroup = new window.Konva.Group({
+            x: background.x,
+            y: background.y,
+            draggable: !state.locked,
+            dragBoundFunc: (position) => clampBackgroundPosition(position, background),
+          });
+
+          if (backgroundImage?.complete) {
+            backgroundGroup.add(new window.Konva.Image({
+              image: backgroundImage,
+              x: 0,
+              y: 0,
+              width,
+              height,
+              opacity: background.opacity,
+            }));
+          } else {
+            backgroundGroup.add(new window.Konva.Rect({
+              x: 0,
+              y: 0,
+              width,
+              height,
+              fill: 'rgba(217, 224, 210, 0.38)',
+            }));
+          }
+
+          if (isBackgroundSelection()) {
+            backgroundGroup.add(new window.Konva.Rect({
+              x: -6,
+              y: -6,
+              width: width + 12,
+              height: height + 12,
+              stroke: '#4f6245',
+              dash: [10, 8],
+              strokeWidth: 3,
+              listening: false,
+            }));
+          }
+
+          backgroundGroup.on('click tap', () => selectBackground());
+          backgroundGroup.on('dragmove', () => {
+            background.x = backgroundGroup.x();
+            background.y = backgroundGroup.y();
+            syncJson();
+            syncInspector();
+          });
+          backgroundLayer.add(backgroundGroup);
+          backgroundLayer.draw();
+        }
 
         const instructorGroup = new window.Konva.Group({
           x: state.layout.instructor.x,
           y: state.layout.instructor.y,
           draggable: true,
-          dragBoundFunc: clampNodePosition,
+          dragBoundFunc: clampInstructorPosition,
         });
         instructorGroup.add(new window.Konva.Rect({
           x: -76,
@@ -643,27 +818,60 @@
           const seatGroup = new window.Konva.Group({
             x: seat.x,
             y: seat.y,
-            draggable: draggableSeat,
-            dragBoundFunc: clampNodePosition,
+            draggable: !state.locked,
+            dragBoundFunc: clampSeatPosition,
+            rotation: seat.rotation || 0,
           });
           const isSelected = state.selection.type === 'seat' && state.selection.id === seat.id;
-          const fill = !seat.enabled || seat.bookable === false ? '#d4cdc4' : isSelected ? '#2e1d1a' : '#efe5d8';
-          const textFill = !seat.enabled || seat.bookable === false ? '#6d6358' : isSelected ? '#fff8f0' : '#2e1d1a';
-          seatGroup.add(new window.Konva.Circle({
-            radius: seatRadius,
+          const fill = !seat.enabled || seat.bookable === false ? '#d8d2c8' : isSelected ? '#5a6f4d' : '#f4f0e8';
+          const textFill = !seat.enabled || seat.bookable === false ? '#7b7268' : isSelected ? '#f7faf3' : '#3e4637';
+          const markImage = loadImage(matMarkAsset);
+
+          seatGroup.add(new window.Konva.Rect({
+            x: -seatHalfWidth,
+            y: -seatHalfHeight,
+            width: seatWidth,
+            height: seatHeight,
+            cornerRadius: 24,
             fill,
             stroke: seat.zone === 'near' ? '#9d6646' : seat.zone === 'back' ? '#64724f' : '#827d5b',
             strokeWidth: isSelected ? 4 : 2,
           }));
+
+          if (markImage?.complete) {
+            seatGroup.add(new window.Konva.Image({
+              image: markImage,
+              x: -32,
+              y: -18,
+              width: 64,
+              height: 24,
+              opacity: !seat.enabled || seat.bookable === false ? 0.42 : isSelected ? 0.22 : 0.38,
+              listening: false,
+            }));
+          } else {
+            seatGroup.add(new window.Konva.Text({
+              x: -36,
+              y: -14,
+              width: 72,
+              align: 'center',
+              text: 'TISA',
+              fill: isSelected ? 'rgba(247, 250, 243, 0.28)' : 'rgba(92, 101, 81, 0.42)',
+              fontStyle: 'bold',
+              fontSize: 14,
+              listening: false,
+            }));
+          }
+
           seatGroup.add(new window.Konva.Text({
-            x: -40,
-            y: -10,
-            width: 80,
+            x: -42,
+            y: 9,
+            width: 84,
             align: 'center',
             text: seat.label,
             fill: textFill,
             fontStyle: 'bold',
-            fontSize: 16,
+            fontSize: 15,
+            listening: false,
           }));
           seatGroup.on('click tap', () => selectSeat(seat.id));
           seatGroup.on('dragmove', () => {
@@ -677,7 +885,13 @@
         layer.draw();
       };
 
+      const openBackgroundPicker = () => {
+        if (state.locked) return;
+        inspectorFields.backgroundFile?.click();
+      };
+
       actionButtons.selectInstructor?.addEventListener('click', () => selectInstructor());
+      actionButtons.selectBackground?.addEventListener('click', () => selectBackground());
       actionButtons.addSeat?.addEventListener('click', () => {
         if (state.locked) return;
         const seat = selectedSeat();
@@ -689,8 +903,8 @@
           row,
           order: nextOrder,
           zone: seat?.zone || 'middle',
-          x: clamp(snap((seat?.x || stage.width() / 2) + grid * 2), seatRadius, stage.width() - seatRadius),
-          y: clamp(snap(seat?.y || stage.height() / 2), seatRadius, stage.height() - seatRadius),
+          x: clamp(snap((seat?.x || stage.width() / 2) + grid * 2), seatHalfWidth, stage.width() - seatHalfWidth),
+          y: clamp(snap(seat?.y || stage.height() / 2), seatHalfHeight, stage.height() - seatHalfHeight),
           rotation: 0,
           bookable: true,
           enabled: true,
@@ -723,13 +937,63 @@
       actionButtons.resetBase?.addEventListener('click', () => {
         if (state.locked || !baseLayout) return;
         state.layout = clone(baseLayout);
+        state.layout.background = state.layout.background || null;
         selectInstructor();
         syncJson();
         drawLayout();
       });
+      actionButtons.uploadBackground?.addEventListener('click', openBackgroundPicker);
+      actionButtons.replaceBackground?.addEventListener('click', openBackgroundPicker);
+      actionButtons.clearBackground?.addEventListener('click', () => {
+        if (state.locked || !state.layout.background) return;
+        state.layout.background = null;
+        if (state.selection.type === 'background') {
+          state.selection = { type: 'instructor', id: null };
+        }
+        syncJson();
+        drawLayout();
+        syncInspector();
+      });
+
+      inspectorFields.backgroundFile?.addEventListener('change', async () => {
+        const file = inspectorFields.backgroundFile.files?.[0];
+        if (!file) return;
+        if (inspectorFields.backgroundStatus) {
+          inspectorFields.backgroundStatus.textContent = 'Subiendo foto del salón...';
+        }
+        try {
+          const formData = new window.FormData();
+          formData.append('backgroundImage', file);
+          const response = await window.fetch('/admin/layout-assets/background', {
+            method: 'POST',
+            body: formData,
+            headers: { Accept: 'application/json' },
+          });
+          const upload = await response.json();
+          if (!response.ok) {
+            throw new Error(upload.error || 'No se pudo subir la foto.');
+          }
+          state.layout.background = fitBackgroundToStage(upload);
+          state.selection = { type: 'background', id: null };
+          syncJson();
+          drawLayout();
+          syncInspector();
+        } catch (error) {
+          if (inspectorFields.backgroundStatus) {
+            inspectorFields.backgroundStatus.textContent = error.message || 'No se pudo subir la foto.';
+          }
+        } finally {
+          inspectorFields.backgroundFile.value = '';
+        }
+      });
 
       Object.entries(inspectorFields).forEach(([key, element]) => {
-        if (!element || key === 'selection') return;
+        if (!element || ['selection', 'backgroundStatus', 'backgroundFile'].includes(key)) return;
+        if (key.startsWith('background')) {
+          element.addEventListener('input', updateBackgroundFromInspector);
+          element.addEventListener('change', updateBackgroundFromInspector);
+          return;
+        }
         element.addEventListener('input', updateSeatFromInspector);
         element.addEventListener('change', updateSeatFromInspector);
       });

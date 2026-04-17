@@ -1,0 +1,13 @@
+<svg width="128" height="48" viewBox="0 0 128 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M35 12C44.5 7 57 4.5 64 4.5C71 4.5 83.5 7 93 12" stroke="#5C6551" stroke-width="2.2" stroke-linecap="round"/>
+  <text
+    x="64"
+    y="30"
+    text-anchor="middle"
+    fill="#5C6551"
+    font-family="'Cormorant Garamond', serif"
+    font-size="22"
+    font-weight="600"
+    letter-spacing="3.6"
+  >TISA</text>
+</svg>

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import bcrypt from 'bcryptjs';
 import dayjs from 'dayjs';
+import { rm } from 'node:fs/promises';
 
 process.env.SIMULATION_MODE = 'true';
 process.env.APP_URL = 'http://127.0.0.1:3000';
@@ -10,7 +11,7 @@ process.env.QR_SECRET = 'test-qr-secret';
 
 const { PrismaClient } = await import('@prisma/client');
 const { createApp } = await import('../src/app.js');
-const { createDefaultLayout, serializeLayout } = await import('../src/seats.js');
+const { createDefaultLayout, parseLayoutJson, serializeLayout } = await import('../src/seats.js');
 const {
   createCheckoutSessionForReservation,
   createDraftReservation,
@@ -18,6 +19,11 @@ const {
 } = await import('../src/reservation-service.js');
 
 const prisma = new PrismaClient();
+const layoutUploadsDir = new URL('../src/public/uploads/layouts/', import.meta.url);
+const tinyPngBuffer = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO2pWq8AAAAASUVORK5CYII=',
+  'base64',
+);
 
 const app = createApp({ prisma });
 const server = app.listen(0);
@@ -45,6 +51,7 @@ async function resetDatabase() {
   await prisma.staff_users.deleteMany();
   await prisma.locations.deleteMany();
   await prisma.audit_events.deleteMany();
+  await rm(layoutUploadsDir, { recursive: true, force: true });
 }
 
 async function seedBaseData() {
@@ -296,11 +303,65 @@ test('active holds reject duplicate seats until they expire, then free them agai
   assert.equal(expiredBooking.status, 'EXPIRED');
 });
 
+test('layout schema round-trips background metadata', () => {
+  const layout = createDefaultLayout(18);
+  layout.background = {
+    assetUrl: '/static/uploads/layouts/room.png',
+    assetWidth: 1280,
+    assetHeight: 720,
+    x: 24,
+    y: 48,
+    scale: 0.75,
+    opacity: 0.58,
+  };
+
+  const parsed = parseLayoutJson(serializeLayout(layout), 18);
+  assert.deepEqual(parsed.background, layout.background);
+});
+
+test('layout background upload accepts images and rejects non-images', { concurrency: false }, async () => {
+  await seedBaseData();
+  const sessionCookie = await loginAs('admin@test.local', 'admin1234');
+
+  const okForm = new FormData();
+  okForm.append('backgroundImage', new Blob([tinyPngBuffer], { type: 'image/png' }), 'room.png');
+  const okResponse = await request('/admin/layout-assets/background', {
+    method: 'POST',
+    headers: { cookie: sessionCookie },
+    body: okForm,
+  });
+  assert.equal(okResponse.status, 200);
+  const okPayload = await okResponse.json();
+  assert.match(okPayload.assetUrl, /\/static\/uploads\/layouts\/.+\.png/);
+  assert.equal(okPayload.assetWidth, 1);
+  assert.equal(okPayload.assetHeight, 1);
+
+  const badForm = new FormData();
+  badForm.append('backgroundImage', new Blob(['not-an-image'], { type: 'text/plain' }), 'room.txt');
+  const badResponse = await request('/admin/layout-assets/background', {
+    method: 'POST',
+    headers: { cookie: sessionCookie },
+    body: badForm,
+  });
+  assert.equal(badResponse.status, 400);
+  const badPayload = await badResponse.json();
+  assert.match(badPayload.error, /imagen|JPG|PNG|WebP/i);
+});
+
 test('admin class layout save recalculates capacity when the class has no active reservations', { concurrency: false }, async () => {
   const { soonOccurrence } = await seedBaseData();
   const sessionCookie = await loginAs('admin@test.local', 'admin1234');
   const nextLayout = JSON.parse(serializeLayout(createDefaultLayout(18)));
   nextLayout.seats = nextLayout.seats.map((seat) => (seat.id === 'seat-e3' ? { ...seat, enabled: false } : seat));
+  nextLayout.background = {
+    assetUrl: '/static/uploads/layouts/test-room.png',
+    assetWidth: 1280,
+    assetHeight: 720,
+    x: 24,
+    y: 48,
+    scale: 0.75,
+    opacity: 0.58,
+  };
 
   const response = await request(`/admin/class-layouts/${soonOccurrence.id}`, {
     method: 'POST',
@@ -316,6 +377,7 @@ test('admin class layout save recalculates capacity when the class has no active
   const updatedOccurrence = await prisma.class_occurrences.findUnique({ where: { id: soonOccurrence.id } });
   assert.equal(updatedOccurrence.capacity, 17);
   assert.equal(updatedOccurrence.availableSlots, 17);
+  assert.deepEqual(parseLayoutJson(updatedOccurrence.layoutJson, 18).background, nextLayout.background);
 });
 
 test('admin class layout save blocks structural seat edits after an active reservation exists', { concurrency: false }, async () => {
@@ -344,6 +406,97 @@ test('admin class layout save blocks structural seat edits after an active reser
   assert.equal(response.status, 409);
   const html = await response.text();
   assert.match(html, /Solo puedes mover la instructora/i);
+});
+
+test('admin class layout save blocks background edits after an active reservation exists', { concurrency: false }, async () => {
+  const { soonOccurrence } = await seedBaseData();
+  await createDraftReservation(prisma, {
+    occurrenceId: soonOccurrence.id,
+    seatCodes: ['A1'],
+    customerName: 'Background Lock',
+    customerEmail: 'background-lock@test.local',
+    customerPhone: '+525500000100',
+    salesChannel: 'web',
+  });
+  const sessionCookie = await loginAs('admin@test.local', 'admin1234');
+  const nextLayout = JSON.parse(serializeLayout(createDefaultLayout(18)));
+  nextLayout.background = {
+    assetUrl: '/static/uploads/layouts/locked-room.png',
+    assetWidth: 1200,
+    assetHeight: 800,
+    x: 12,
+    y: 36,
+    scale: 0.8,
+    opacity: 0.6,
+  };
+
+  const response = await request(`/admin/class-layouts/${soonOccurrence.id}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      cookie: sessionCookie,
+    },
+    body: formBody({ layoutJson: JSON.stringify(nextLayout) }),
+  });
+
+  assert.equal(response.status, 409);
+  const html = await response.text();
+  assert.match(html, /Solo puedes mover la instructora/i);
+});
+
+test('ops layouts workspace hides admin-only navigation links', { concurrency: false }, async () => {
+  await seedBaseData();
+  const sessionCookie = await loginAs('ops@test.local', 'ops1234');
+
+  const response = await request('/admin/layouts', {
+    headers: {
+      cookie: sessionCookie,
+    },
+  });
+
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /studio-workspace__nav/);
+  assert.doesNotMatch(html, /href="\/admin\/dashboard"/);
+  assert.match(html, /href="\/admin\/assisted-sales"/);
+  assert.match(html, /href="\/admin\/layouts"/);
+  assert.match(html, /href="\/ops\/checkin"/);
+});
+
+test('booking and admin layout pages render mat markup and persisted background metadata', { concurrency: false }, async () => {
+  const { soonOccurrence } = await seedBaseData();
+  const layout = createDefaultLayout(18);
+  layout.background = {
+    assetUrl: '/static/uploads/layouts/render-room.png',
+    assetWidth: 1000,
+    assetHeight: 600,
+    x: 36,
+    y: 60,
+    scale: 0.9,
+    opacity: 0.55,
+  };
+  await prisma.class_occurrences.update({
+    where: { id: soonOccurrence.id },
+    data: { layoutJson: serializeLayout(layout) },
+  });
+
+  const bookingResponse = await request(`/booking/seats?occurrenceId=${soonOccurrence.id}`);
+  assert.equal(bookingResponse.status, 200);
+  const bookingHtml = await bookingResponse.text();
+  assert.match(bookingHtml, /seat-map-background/);
+  assert.match(bookingHtml, /seat-mat__label/);
+  assert.match(bookingHtml, /tisa-mat-mark\.svg/);
+  assert.match(bookingHtml, /render-room\.png/);
+
+  const sessionCookie = await loginAs('admin@test.local', 'admin1234');
+  const editorResponse = await request(`/admin/class-layouts/${soonOccurrence.id}`, {
+    headers: { cookie: sessionCookie },
+  });
+  assert.equal(editorResponse.status, 200);
+  const editorHtml = await editorResponse.text();
+  assert.match(editorHtml, /layout-background-file/);
+  assert.match(editorHtml, /Seleccionar fondo/);
+  assert.match(editorHtml, /render-room\.png/);
 });
 
 test('async method eligibility only enables mx bank transfer for far-future reservations', { concurrency: false }, async () => {
