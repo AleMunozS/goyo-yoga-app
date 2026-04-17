@@ -9,3 +9,4 @@ services:
       - .env
     volumes:
       - ./prisma:/app/prisma
+      - ./storage/layout-backgrounds:/app/src/public/uploads/layouts
