@@ -284,6 +284,7 @@
     if (seatViewport && seatCanvas) {
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
       const isSeatTarget = (target) => target instanceof Element && Boolean(target.closest('[data-seat-option]'));
+      const seatMap = seatCanvas.querySelector('.seat-map');
       const pointers = new Map();
       let scale = 1;
       let minScale = 1;
@@ -310,14 +311,96 @@
         seatCanvas.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
       };
 
+      const getInlineNumber = (element, property) => {
+        if (!element) return 0;
+        const rawValue = element.style?.[property];
+        const numeric = Number.parseFloat(rawValue || '0');
+        return Number.isFinite(numeric) ? numeric : 0;
+      };
+
+      const getContentBounds = () => {
+        if (!seatMap) {
+          return {
+            minX: 0,
+            minY: 0,
+            maxX: seatCanvas.offsetWidth,
+            maxY: seatCanvas.offsetHeight,
+          };
+        }
+
+        const bounds = {
+          minX: Number.POSITIVE_INFINITY,
+          minY: Number.POSITIVE_INFINITY,
+          maxX: Number.NEGATIVE_INFINITY,
+          maxY: Number.NEGATIVE_INFINITY,
+        };
+
+        const includeBounds = (minX, minY, maxX, maxY) => {
+          bounds.minX = Math.min(bounds.minX, minX);
+          bounds.minY = Math.min(bounds.minY, minY);
+          bounds.maxX = Math.max(bounds.maxX, maxX);
+          bounds.maxY = Math.max(bounds.maxY, maxY);
+        };
+
+        const background = seatMap.querySelector('.seat-map-background');
+        if (background) {
+          const left = getInlineNumber(background, 'left');
+          const top = getInlineNumber(background, 'top');
+          includeBounds(left, top, left + background.offsetWidth, top + background.offsetHeight);
+        }
+
+        const instructor = seatMap.querySelector('.seat-instructor-marker');
+        if (instructor) {
+          const centerX = getInlineNumber(instructor, 'left');
+          const centerY = getInlineNumber(instructor, 'top');
+          includeBounds(
+            centerX - instructor.offsetWidth / 2,
+            centerY - instructor.offsetHeight / 2,
+            centerX + instructor.offsetWidth / 2,
+            centerY + instructor.offsetHeight / 2,
+          );
+        }
+
+        seatMap.querySelectorAll('.seat-node').forEach((node) => {
+          const centerX = getInlineNumber(node, 'left');
+          const centerY = getInlineNumber(node, 'top');
+          includeBounds(
+            centerX - node.offsetWidth / 2,
+            centerY - node.offsetHeight / 2,
+            centerX + node.offsetWidth / 2,
+            centerY + node.offsetHeight / 2,
+          );
+        });
+
+        if (!Number.isFinite(bounds.minX) || !Number.isFinite(bounds.minY)) {
+          return {
+            minX: 0,
+            minY: 0,
+            maxX: seatCanvas.offsetWidth,
+            maxY: seatCanvas.offsetHeight,
+          };
+        }
+
+        return {
+          minX: clamp(bounds.minX, 0, seatCanvas.offsetWidth),
+          minY: clamp(bounds.minY, 0, seatCanvas.offsetHeight),
+          maxX: clamp(bounds.maxX, 0, seatCanvas.offsetWidth),
+          maxY: clamp(bounds.maxY, 0, seatCanvas.offsetHeight),
+        };
+      };
+
       const fitCanvas = () => {
-        const widthScale = seatViewport.clientWidth / seatCanvas.offsetWidth;
-        const heightScale = seatViewport.clientHeight / seatCanvas.offsetHeight;
-        minScale = Math.min(widthScale, heightScale, 1);
-        maxScale = Math.max(minScale * 2.8, 1.8);
+        const bounds = getContentBounds();
+        const padding = Math.max(24, Math.min(seatViewport.clientWidth, seatViewport.clientHeight) * 0.06);
+        const safeWidth = Math.max(1, bounds.maxX - bounds.minX);
+        const safeHeight = Math.max(1, bounds.maxY - bounds.minY);
+        const widthScale = Math.max(0.1, (seatViewport.clientWidth - padding * 2) / safeWidth);
+        const heightScale = Math.max(0.1, (seatViewport.clientHeight - padding * 2) / safeHeight);
+        minScale = Math.min(widthScale, heightScale);
+        maxScale = Math.max(minScale * 2.8, minScale + 1, 1.8);
         scale = minScale;
-        x = (seatViewport.clientWidth - seatCanvas.offsetWidth * scale) / 2;
-        y = (seatViewport.clientHeight - seatCanvas.offsetHeight * scale) / 2;
+        x = (seatViewport.clientWidth - safeWidth * scale) / 2 - bounds.minX * scale;
+        y = (seatViewport.clientHeight - safeHeight * scale) / 2 - bounds.minY * scale;
         applyTransform();
       };
 

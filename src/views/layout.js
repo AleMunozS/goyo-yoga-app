@@ -16,7 +16,7 @@ export function renderLayout({
   const isConceptBoard = title.startsWith('Concept') && !staff;
   const isHome = title === 'Inicio' && !staff;
   const appName = brand.name;
-  const assetVersion = '20260417-seat-node-fix';
+  const assetVersion = '20260417-seat-content-fit';
   const canAccessAssistedSales = staffRole === 'ADMIN' || staffRole === 'OPS';
   const canAccessLayouts = staffRole === 'ADMIN' || staffRole === 'OPS';
   const nav = staff
