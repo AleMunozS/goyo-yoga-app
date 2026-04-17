@@ -7635,26 +7635,85 @@ body.classes-editorial-page {
 }
 
 .studio-workspace--layout-editor {
-  grid-template-columns: 210px minmax(0, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: 224px minmax(0, 1fr);
+  gap: 0.65rem;
 }
 
 .studio-workspace--layout-editor .studio-workspace__sidebar {
-  padding: 0.95rem;
+  padding: 0.82rem;
 }
 
 .studio-workspace--layout-editor .studio-workspace__nav a {
-  padding: 0.8rem 0.9rem;
-  font-size: 0.76rem;
+  padding: 0.72rem 0.82rem;
+  font-size: 0.74rem;
 }
 
 .studio-workspace--layout-editor .layout-editor-canvas-shell {
-  padding: 1rem;
+  min-height: 72vh;
+  padding: 0.9rem;
 }
 
 .studio-workspace--layout-editor .layout-editor-shell-head,
 .studio-workspace--layout-editor .layout-editor-toolbar-row {
-  padding-inline: 0.9rem;
+  padding: 0.85rem 0.9rem;
+}
+
+.studio-workspace--layout-editor .layout-editor-canvas-wrap {
+  height: min(70vh, 920px);
+  min-height: 66vh;
+  padding: 0.85rem;
+}
+
+.studio-workspace--layout-editor .layout-inspector-panel--sidebar {
+  padding: 0.85rem;
+  border-radius: 24px;
+  background: rgba(255, 252, 247, 0.92);
+  border: 1px solid rgba(95, 102, 86, 0.12);
+  box-shadow: 0 14px 30px rgba(77, 70, 54, 0.08);
+}
+
+.studio-workspace--layout-editor .layout-inspector-panel--sidebar h2 {
+  margin: 0.25rem 0 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.95rem;
+  line-height: 0.95;
+}
+
+.studio-workspace--layout-editor .layout-inspector-fields {
+  margin-top: 0.7rem;
+}
+
+.theme-tisa .studio-workspace--layout-editor .layout-inspector-fields {
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.studio-workspace--layout-editor .layout-inspector-section {
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border-radius: 18px;
+}
+
+.theme-tisa .studio-workspace--layout-editor .layout-inspector-section {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(95, 102, 86, 0.1);
+}
+
+.studio-workspace--layout-editor .layout-inspector-inline-grid {
+  gap: 0.55rem;
+}
+
+.studio-workspace--layout-editor .layout-inspector-panel--sidebar .form-row {
+  gap: 0.35rem;
+}
+
+.studio-workspace--layout-editor .layout-inspector-panel--sidebar .admin-input {
+  width: 100%;
+}
+
+.studio-workspace--layout-editor .layout-editor-note {
+  padding: 0.8rem 0.9rem;
 }
 
 .studio-workspace__sidebar {
