@@ -447,6 +447,110 @@ function renderLayoutEditorBody({
   const content = `<form method="post" action="${savePath}" class="layout-editor-form" id="layout-editor-form">
         <input type="hidden" name="layoutJson" id="layout-editor-json" value="${esc(serializeLayout(layout))}" />
         <div class="layout-editor-workspace">
+          <aside class="layout-editor-sidebar">
+            <article class="system-panel system-panel-dark layout-inspector-panel layout-inspector-panel--floating">
+              <p class="concept-kicker">Ajustes finos</p>
+              <h2>Inspector</h2>
+              <div class="layout-inspector-fields">
+                <div class="layout-inspector-section">
+                  <span class="layout-inspector-section__title">Lienzo</span>
+                  <div class="layout-inspector-inline-grid">
+                    <label class="form-row">
+                      <span>Ancho</span>
+                      <input class="admin-input" type="number" min="640" max="2400" step="20" data-layout-input="canvas-width" value="${Number(layout.canvas?.width || 1200)}" ${structureLocked ? 'disabled' : ''} />
+                    </label>
+                    <label class="form-row">
+                      <span>Alto</span>
+                      <input class="admin-input" type="number" min="480" max="1800" step="20" data-layout-input="canvas-height" value="${Number(layout.canvas?.height || 800)}" ${structureLocked ? 'disabled' : ''} />
+                    </label>
+                  </div>
+                  <label class="form-row">
+                    <span>Retícula</span>
+                    <input class="admin-input" type="number" min="12" max="64" step="2" data-layout-input="canvas-grid" value="${Number(layout.canvas?.grid || 24)}" ${structureLocked ? 'disabled' : ''} />
+                  </label>
+                </div>
+                <div class="layout-inspector-section">
+                  <span class="layout-inspector-section__title">Selección</span>
+                  <label class="form-row">
+                    <span>Selección actual</span>
+                    <input class="admin-input" type="text" data-layout-output="selection" value="Instructora" readonly />
+                  </label>
+                  <label class="form-row">
+                    <span>Etiqueta</span>
+                    <input class="admin-input" type="text" data-layout-input="label" ${structureLocked ? 'disabled' : ''} />
+                  </label>
+                  <div class="layout-inspector-inline-grid">
+                    <label class="form-row">
+                      <span>Fila</span>
+                      <input class="admin-input" type="text" maxlength="2" data-layout-input="row" ${structureLocked ? 'disabled' : ''} />
+                    </label>
+                    <label class="form-row">
+                      <span>Orden</span>
+                      <input class="admin-input" type="number" min="1" data-layout-input="order" ${structureLocked ? 'disabled' : ''} />
+                    </label>
+                  </div>
+                  <label class="form-row">
+                    <span>Zona</span>
+                    <select class="admin-input" data-layout-input="zone" ${structureLocked ? 'disabled' : ''}>
+                      <option value="near">Cerca</option>
+                      <option value="middle">Media</option>
+                      <option value="back">Trasera</option>
+                    </select>
+                  </label>
+                  <label class="form-row checkbox-row">
+                    <span>Reservable</span>
+                    <input type="checkbox" data-layout-input="bookable" ${structureLocked ? 'disabled' : ''} />
+                  </label>
+                  <label class="form-row checkbox-row">
+                    <span>Habilitado</span>
+                    <input type="checkbox" data-layout-input="enabled" ${structureLocked ? 'disabled' : ''} />
+                  </label>
+                </div>
+                <div class="layout-inspector-section layout-background-tools">
+                  <div class="layout-background-tools__header">
+                    <span>Foto del salón</span>
+                    <p data-layout-output="background-status">${layout.background ? 'Foto cargada y lista para ajustar.' : 'Aún no hay foto cargada.'}</p>
+                  </div>
+                  <input
+                    type="file"
+                    id="layout-background-file"
+                    class="layout-background-file"
+                    accept="image/jpeg,image/png,image/webp"
+                    ${structureLocked ? 'disabled' : ''}
+                  />
+                  <div class="layout-background-tools__actions">
+                    <button class="btn alt" type="button" data-layout-action="upload-background" ${structureLocked ? 'disabled' : ''}>Subir foto</button>
+                    <button class="btn alt" type="button" data-layout-action="replace-background" ${structureLocked ? 'disabled' : ''}>Reemplazar</button>
+                    <button class="btn alt" type="button" data-layout-action="clear-background" ${structureLocked ? 'disabled' : ''}>Quitar fondo</button>
+                  </div>
+                  <div class="layout-inspector-inline-grid">
+                    <label class="form-row">
+                      <span>Fondo X</span>
+                      <input class="admin-input" type="number" data-layout-input="background-x" ${structureLocked ? 'disabled' : ''} />
+                    </label>
+                    <label class="form-row">
+                      <span>Fondo Y</span>
+                      <input class="admin-input" type="number" data-layout-input="background-y" ${structureLocked ? 'disabled' : ''} />
+                    </label>
+                  </div>
+                  <div class="layout-inspector-inline-grid">
+                    <label class="form-row">
+                      <span>Escala fondo</span>
+                      <input class="admin-input" type="number" min="0.1" max="4" step="0.05" data-layout-input="background-scale" ${structureLocked ? 'disabled' : ''} />
+                    </label>
+                    <label class="form-row">
+                      <span>Opacidad fondo</span>
+                      <input class="admin-input" type="number" min="0.1" max="1" step="0.05" data-layout-input="background-opacity" ${structureLocked ? 'disabled' : ''} />
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="system-action-stack">
+                <button class="btn" type="submit">Guardar layout</button>
+                <a class="btn alt" href="${backPath}">Volver</a>
+              </div>
+            </article>
+          </aside>
           <article class="system-panel system-panel-light layout-editor-canvas-shell">
             <div class="layout-editor-shell-head">
               <div class="layout-editor-panel__head">
@@ -481,110 +585,8 @@ function renderLayoutEditorBody({
             <p class="system-inline-note layout-editor-note">
               ${structureLocked
                 ? 'Esta clase ya tiene reservas activas. Solo puedes mover la instructora; la estructura del salón y el fondo quedan congelados.'
-                : 'El lienzo ocupa el área principal. Usa el inspector lateral para tamaño, retícula y ajustes del fondo.'}
+                : 'El lienzo ocupa el área principal. Usa el panel izquierdo para tamaño, retícula y ajustes del fondo.'}
             </p>
-          </article>
-          <article class="system-panel system-panel-dark layout-inspector-panel layout-inspector-panel--floating">
-            <p class="concept-kicker">Ajustes finos</p>
-            <h2>Inspector</h2>
-            <div class="layout-inspector-fields">
-              <div class="layout-inspector-section">
-                <span class="layout-inspector-section__title">Lienzo</span>
-                <div class="layout-inspector-inline-grid">
-                  <label class="form-row">
-                    <span>Ancho</span>
-                    <input class="admin-input" type="number" min="640" max="2400" step="20" data-layout-input="canvas-width" value="${Number(layout.canvas?.width || 1200)}" ${structureLocked ? 'disabled' : ''} />
-                  </label>
-                  <label class="form-row">
-                    <span>Alto</span>
-                    <input class="admin-input" type="number" min="480" max="1800" step="20" data-layout-input="canvas-height" value="${Number(layout.canvas?.height || 800)}" ${structureLocked ? 'disabled' : ''} />
-                  </label>
-                </div>
-                <label class="form-row">
-                  <span>Retícula</span>
-                  <input class="admin-input" type="number" min="12" max="64" step="2" data-layout-input="canvas-grid" value="${Number(layout.canvas?.grid || 24)}" ${structureLocked ? 'disabled' : ''} />
-                </label>
-              </div>
-              <div class="layout-inspector-section">
-                <span class="layout-inspector-section__title">Selección</span>
-                <label class="form-row">
-                  <span>Selección actual</span>
-                  <input class="admin-input" type="text" data-layout-output="selection" value="Instructora" readonly />
-                </label>
-                <label class="form-row">
-                  <span>Etiqueta</span>
-                  <input class="admin-input" type="text" data-layout-input="label" ${structureLocked ? 'disabled' : ''} />
-                </label>
-                <div class="layout-inspector-inline-grid">
-                  <label class="form-row">
-                    <span>Fila</span>
-                    <input class="admin-input" type="text" maxlength="2" data-layout-input="row" ${structureLocked ? 'disabled' : ''} />
-                  </label>
-                  <label class="form-row">
-                    <span>Orden</span>
-                    <input class="admin-input" type="number" min="1" data-layout-input="order" ${structureLocked ? 'disabled' : ''} />
-                  </label>
-                </div>
-                <label class="form-row">
-                  <span>Zona</span>
-                  <select class="admin-input" data-layout-input="zone" ${structureLocked ? 'disabled' : ''}>
-                    <option value="near">Cerca</option>
-                    <option value="middle">Media</option>
-                    <option value="back">Trasera</option>
-                  </select>
-                </label>
-                <label class="form-row checkbox-row">
-                  <span>Reservable</span>
-                  <input type="checkbox" data-layout-input="bookable" ${structureLocked ? 'disabled' : ''} />
-                </label>
-                <label class="form-row checkbox-row">
-                  <span>Habilitado</span>
-                  <input type="checkbox" data-layout-input="enabled" ${structureLocked ? 'disabled' : ''} />
-                </label>
-              </div>
-              <div class="layout-inspector-section layout-background-tools">
-                <div class="layout-background-tools__header">
-                  <span>Foto del salón</span>
-                  <p data-layout-output="background-status">${layout.background ? 'Foto cargada y lista para ajustar.' : 'Aún no hay foto cargada.'}</p>
-                </div>
-                <input
-                  type="file"
-                  id="layout-background-file"
-                  class="layout-background-file"
-                  accept="image/jpeg,image/png,image/webp"
-                  ${structureLocked ? 'disabled' : ''}
-                />
-                <div class="layout-background-tools__actions">
-                  <button class="btn alt" type="button" data-layout-action="upload-background" ${structureLocked ? 'disabled' : ''}>Subir foto</button>
-                  <button class="btn alt" type="button" data-layout-action="replace-background" ${structureLocked ? 'disabled' : ''}>Reemplazar</button>
-                  <button class="btn alt" type="button" data-layout-action="clear-background" ${structureLocked ? 'disabled' : ''}>Quitar fondo</button>
-                </div>
-                <div class="layout-inspector-inline-grid">
-                  <label class="form-row">
-                    <span>Fondo X</span>
-                    <input class="admin-input" type="number" data-layout-input="background-x" ${structureLocked ? 'disabled' : ''} />
-                  </label>
-                  <label class="form-row">
-                    <span>Fondo Y</span>
-                    <input class="admin-input" type="number" data-layout-input="background-y" ${structureLocked ? 'disabled' : ''} />
-                  </label>
-                </div>
-                <div class="layout-inspector-inline-grid">
-                  <label class="form-row">
-                    <span>Escala fondo</span>
-                    <input class="admin-input" type="number" min="0.1" max="4" step="0.05" data-layout-input="background-scale" ${structureLocked ? 'disabled' : ''} />
-                  </label>
-                  <label class="form-row">
-                    <span>Opacidad fondo</span>
-                    <input class="admin-input" type="number" min="0.1" max="1" step="0.05" data-layout-input="background-opacity" ${structureLocked ? 'disabled' : ''} />
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div class="system-action-stack">
-              <button class="btn" type="submit">Guardar layout</button>
-              <a class="btn alt" href="${backPath}">Volver</a>
-            </div>
           </article>
         </div>
       </form>`;

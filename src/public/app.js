@@ -946,6 +946,19 @@
         syncInspector();
       };
 
+      const deleteSeatById = (seatId) => {
+        if (state.locked || !seatId) return;
+        const seatExists = state.layout.seats.some((seat) => seat.id === seatId);
+        if (!seatExists) return;
+        state.layout.seats = state.layout.seats.filter((seat) => seat.id !== seatId);
+        if (state.selection.type === 'seat' && state.selection.id === seatId) {
+          state.selection = { type: 'instructor', id: null };
+        }
+        syncJson();
+        drawLayout();
+        syncInspector();
+      };
+
       const drawLayout = () => {
         backgroundLayer.destroyChildren();
         layer.destroyChildren();
@@ -1098,6 +1111,39 @@
             fontSize: 15,
             listening: false,
           }));
+
+          if (!state.locked) {
+            const deleteButton = new window.Konva.Group({
+              x: seatHalfWidth - 14,
+              y: -seatHalfHeight + 14,
+            });
+            deleteButton.add(new window.Konva.Circle({
+              radius: 11,
+              fill: '#f8f3ef',
+              stroke: '#9d4f3d',
+              strokeWidth: 2,
+              shadowColor: 'rgba(46, 29, 26, 0.18)',
+              shadowBlur: 8,
+              shadowOffsetY: 2,
+            }));
+            deleteButton.add(new window.Konva.Text({
+              x: -5,
+              y: -7,
+              width: 10,
+              align: 'center',
+              text: '×',
+              fill: '#8b2f21',
+              fontStyle: 'bold',
+              fontSize: 14,
+              listening: false,
+            }));
+            deleteButton.on('click tap mousedown touchstart', (event) => {
+              event.cancelBubble = true;
+              deleteSeatById(seat.id);
+            });
+            seatGroup.add(deleteButton);
+          }
+
           seatGroup.on('click tap', () => selectSeat(seat.id));
           seatGroup.on('dragmove', () => {
             seat.x = seatGroup.x();
@@ -1144,10 +1190,7 @@
       });
       actionButtons.deleteSeat?.addEventListener('click', () => {
         if (state.locked || !isSeatSelection()) return;
-        state.layout.seats = state.layout.seats.filter((seat) => seat.id !== state.selection.id);
-        selectInstructor();
-        syncJson();
-        drawLayout();
+        deleteSeatById(state.selection.id);
       });
       actionButtons.renumberRows?.addEventListener('click', () => {
         if (state.locked) return;
