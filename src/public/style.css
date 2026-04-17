@@ -1964,24 +1964,100 @@ textarea {
   min-width: 0;
 }
 
+.layout-editor-workspace {
+  position: relative;
+  min-height: 78vh;
+}
+
+.layout-editor-canvas-shell {
+  position: relative;
+  min-height: 78vh;
+  padding: 2rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(221, 236, 218, 0.55), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(224, 205, 180, 0.28), transparent 28%),
+    linear-gradient(180deg, rgba(248, 244, 237, 0.96), rgba(235, 228, 217, 0.9));
+}
+
+.layout-editor-floating {
+  position: absolute;
+  z-index: 2;
+  border-radius: 28px;
+  backdrop-filter: blur(18px);
+  background: rgba(255, 252, 247, 0.78);
+  border: 1px solid rgba(95, 69, 46, 0.12);
+  box-shadow: 0 22px 40px rgba(53, 41, 28, 0.12);
+}
+
+.layout-editor-floating--meta {
+  top: 1.4rem;
+  left: 1.4rem;
+  width: min(28rem, calc(100% - 3rem));
+  padding: 1.1rem 1.2rem;
+}
+
+.layout-editor-floating--toolbar {
+  left: 1.4rem;
+  right: 26rem;
+  bottom: 1.4rem;
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.9rem 1rem;
+}
+
+.layout-editor-floating--note {
+  left: 1.4rem;
+  bottom: 9.6rem;
+  max-width: 24rem;
+  padding: 0.85rem 1rem;
+}
+
 .layout-editor-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
-  margin-bottom: 1rem;
+  margin: 0;
+}
+
+.layout-editor-viewport-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.layout-editor-viewport-scale {
+  min-width: 4.5rem;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(58, 49, 38, 0.72);
 }
 
 .layout-editor-canvas-wrap {
   overflow: auto;
+  height: 100%;
+  min-height: 72vh;
+  padding: 7.8rem 25rem 8.4rem 2rem;
   border-radius: 28px;
-  background: rgba(255, 250, 245, 0.62);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)),
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.85), rgba(244, 237, 227, 0.58));
   border: 1px solid rgba(95, 69, 46, 0.12);
+}
+
+.layout-editor-stage-viewport {
+  width: max-content;
+  min-width: 100%;
+  min-height: 100%;
 }
 
 .layout-editor-stage {
   width: max-content;
-  min-width: 100%;
   padding: 1rem;
+  transition: transform 120ms ease;
 }
 
 .layout-editor-stage canvas {
@@ -1990,19 +2066,47 @@ textarea {
   box-shadow: 0 18px 40px rgba(46, 29, 26, 0.12);
 }
 
+.layout-inspector-panel--floating {
+  position: absolute;
+  top: 1.4rem;
+  right: 1.4rem;
+  z-index: 3;
+  width: min(23rem, calc(100% - 3rem));
+  max-height: calc(100% - 2.8rem);
+  overflow: auto;
+}
+
 .layout-inspector-fields {
   display: grid;
   gap: 0.75rem;
   margin-top: 1rem;
 }
 
-.layout-background-tools {
+.layout-inspector-section {
   display: grid;
-  gap: 0.7rem;
+  gap: 0.75rem;
   padding: 0.95rem;
   border-radius: 22px;
   background: rgba(255, 250, 245, 0.08);
   border: 1px solid rgba(255, 237, 217, 0.08);
+}
+
+.layout-inspector-section__title {
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.layout-inspector-inline-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.layout-background-tools {
+  display: grid;
+  gap: 0.7rem;
 }
 
 .layout-background-tools__header {
@@ -2052,6 +2156,33 @@ textarea {
 
 .system-panel-light .system-inline-note {
   color: rgba(66, 50, 37, 0.72);
+}
+
+@media (max-width: 1180px) {
+  .layout-editor-canvas-shell {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .layout-editor-floating,
+  .layout-inspector-panel--floating {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    max-height: none;
+  }
+
+  .layout-editor-canvas-wrap {
+    min-height: 40rem;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .layout-inspector-inline-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .booking-modal {
@@ -6452,6 +6583,16 @@ body.classes-editorial-page {
   position: relative;
 }
 
+.theme-tisa .layout-editor-canvas-shell {
+  border-radius: 34px;
+}
+
+.theme-tisa .layout-editor-floating {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(95, 102, 86, 0.12);
+  box-shadow: 0 18px 36px rgba(77, 70, 54, 0.1);
+}
+
 .theme-tisa .layout-editor-panel__head,
 .theme-tisa .seat-selection-context__header {
   display: grid;
@@ -6487,6 +6628,7 @@ body.classes-editorial-page {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
+.theme-tisa .layout-inspector-section,
 .theme-tisa .layout-inspector-fields {
   padding: 0.9rem;
   border-radius: 24px;

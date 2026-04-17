@@ -445,10 +445,17 @@
         uploadBackground: document.querySelector('[data-layout-action="upload-background"]'),
         replaceBackground: document.querySelector('[data-layout-action="replace-background"]'),
         clearBackground: document.querySelector('[data-layout-action="clear-background"]'),
+        zoomIn: document.querySelector('[data-layout-action="zoom-in"]'),
+        zoomOut: document.querySelector('[data-layout-action="zoom-out"]'),
+        zoomReset: document.querySelector('[data-layout-action="zoom-reset"]'),
       };
       const inspectorFields = {
+        viewportScale: document.querySelector('[data-layout-output="viewport-scale"]'),
         selection: document.querySelector('[data-layout-output="selection"]'),
         backgroundStatus: document.querySelector('[data-layout-output="background-status"]'),
+        canvasWidth: document.querySelector('[data-layout-input="canvas-width"]'),
+        canvasHeight: document.querySelector('[data-layout-input="canvas-height"]'),
+        canvasGrid: document.querySelector('[data-layout-input="canvas-grid"]'),
         label: document.querySelector('[data-layout-input="label"]'),
         row: document.querySelector('[data-layout-input="row"]'),
         order: document.querySelector('[data-layout-input="order"]'),
@@ -466,9 +473,9 @@
       const seatHeight = 58;
       const seatHalfWidth = seatWidth / 2;
       const seatHalfHeight = seatHeight / 2;
-      const grid = Number(state.layout.canvas?.grid || 24);
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-      const snap = (value) => Math.round(value / grid) * grid;
+      const gridSize = () => Number(state.layout.canvas?.grid || 24);
+      const snap = (value) => Math.round(value / gridSize()) * gridSize();
       const clone = (value) => JSON.parse(JSON.stringify(value));
       const isSeatSelection = () => state.selection.type === 'seat';
       const isBackgroundSelection = () => state.selection.type === 'background' && Boolean(state.layout.background);
@@ -476,6 +483,8 @@
       const selectedBackground = () => state.layout.background || null;
       const nextSeatId = () => `seat-${Math.random().toString(36).slice(2, 10)}`;
       const imageCache = new Map();
+      const viewport = { scale: 1 };
+      const stageViewport = stageContainer.parentElement;
 
       const stage = new window.Konva.Stage({
         container: stageContainer,
@@ -499,6 +508,29 @@
         return image;
       };
 
+      const syncViewport = () => {
+        if (!stageViewport) return;
+        stageContainer.style.transform = `scale(${viewport.scale})`;
+        stageContainer.style.transformOrigin = 'top left';
+        stageViewport.style.width = `${Math.round(stage.width() * viewport.scale)}px`;
+        stageViewport.style.height = `${Math.round(stage.height() * viewport.scale)}px`;
+        if (inspectorFields.viewportScale) {
+          inspectorFields.viewportScale.value = `${Math.round(viewport.scale * 100)}%`;
+          inspectorFields.viewportScale.textContent = `${Math.round(viewport.scale * 100)}%`;
+        }
+      };
+
+      const setViewportScale = (nextScale) => {
+        viewport.scale = clamp(Number(nextScale) || 1, 0.5, 2.5);
+        syncViewport();
+      };
+
+      const syncCanvasFields = () => {
+        if (inspectorFields.canvasWidth) inspectorFields.canvasWidth.value = String(stage.width());
+        if (inspectorFields.canvasHeight) inspectorFields.canvasHeight.value = String(stage.height());
+        if (inspectorFields.canvasGrid) inspectorFields.canvasGrid.value = String(gridSize());
+      };
+
       const syncJson = () => {
         jsonField.value = JSON.stringify(state.layout);
       };
@@ -517,6 +549,7 @@
         if (field) field.disabled = disabled;
       };
       const fitBackgroundToStage = (background) => {
+        const grid = gridSize();
         const widthLimit = Math.max(stage.width() - grid * 4, grid * 8);
         const heightLimit = Math.max(stage.height() - grid * 4, grid * 8);
         const fittedScale = Math.min(widthLimit / background.assetWidth, heightLimit / background.assetHeight, 1);
@@ -575,6 +608,7 @@
         gridLayer.destroyChildren();
         const width = stage.width();
         const height = stage.height();
+        const grid = gridSize();
         for (let x = 0; x <= width; x += grid) {
           gridLayer.add(new window.Konva.Line({
             points: [x, 0, x, height],
@@ -602,12 +636,51 @@
       });
       const clampBackgroundPosition = (position, background = selectedBackground()) => {
         if (!background) return { x: snap(position.x), y: snap(position.y) };
+        const grid = gridSize();
         const width = background.assetWidth * background.scale;
         const height = background.assetHeight * background.scale;
         return {
           x: clamp(snap(position.x), -width + grid * 2, stage.width() - grid * 2),
           y: clamp(snap(position.y), -height + grid * 2, stage.height() - grid * 2),
         };
+      };
+
+      const clampLayoutIntoCanvas = () => {
+        state.layout.instructor = {
+          ...state.layout.instructor,
+          ...clampInstructorPosition(state.layout.instructor),
+        };
+        state.layout.seats = state.layout.seats.map((seat) => ({
+          ...seat,
+          ...clampSeatPosition(seat),
+        }));
+        if (state.layout.background) {
+          state.layout.background = {
+            ...state.layout.background,
+            ...clampBackgroundPosition(state.layout.background, state.layout.background),
+          };
+        }
+      };
+
+      const updateCanvasFromInspector = () => {
+        if (state.locked) return;
+        const nextWidth = clamp(Number.parseInt(inspectorFields.canvasWidth?.value || stage.width(), 10) || stage.width(), 640, 2400);
+        const nextHeight = clamp(Number.parseInt(inspectorFields.canvasHeight?.value || stage.height(), 10) || stage.height(), 480, 1800);
+        const nextGrid = clamp(Number.parseInt(inspectorFields.canvasGrid?.value || gridSize(), 10) || gridSize(), 12, 64);
+        state.layout.canvas = {
+          width: nextWidth,
+          height: nextHeight,
+          grid: nextGrid,
+        };
+        stage.width(nextWidth);
+        stage.height(nextHeight);
+        clampLayoutIntoCanvas();
+        syncCanvasFields();
+        syncJson();
+        syncViewport();
+        drawGrid();
+        drawLayout();
+        syncInspector();
       };
 
       const syncInspector = () => {
@@ -633,6 +706,9 @@
         setFieldDisabled(inspectorFields.backgroundY, !backgroundEditable);
         setFieldDisabled(inspectorFields.backgroundScale, !backgroundEditable);
         setFieldDisabled(inspectorFields.backgroundOpacity, !backgroundEditable);
+        setFieldDisabled(inspectorFields.canvasWidth, state.locked);
+        setFieldDisabled(inspectorFields.canvasHeight, state.locked);
+        setFieldDisabled(inspectorFields.canvasGrid, state.locked);
 
         if (inspectorFields.backgroundStatus) {
           inspectorFields.backgroundStatus.textContent = background
@@ -673,6 +749,8 @@
           if (inspectorFields.backgroundScale) inspectorFields.backgroundScale.value = '';
           if (inspectorFields.backgroundOpacity) inspectorFields.backgroundOpacity.value = '';
         }
+
+        syncCanvasFields();
       };
 
       const selectInstructor = () => {
@@ -716,6 +794,7 @@
         background.y = Number.parseInt(inspectorFields.backgroundY?.value || background.y, 10) || 0;
         background.scale = clamp(Number.parseFloat(inspectorFields.backgroundScale?.value || background.scale) || background.scale || 1, 0.1, 4);
         background.opacity = clamp(Number.parseFloat(inspectorFields.backgroundOpacity?.value || background.opacity) || background.opacity || 1, 0.1, 1);
+        Object.assign(background, clampBackgroundPosition(background, background));
         syncJson();
         drawLayout();
         syncInspector();
@@ -892,8 +971,12 @@
 
       actionButtons.selectInstructor?.addEventListener('click', () => selectInstructor());
       actionButtons.selectBackground?.addEventListener('click', () => selectBackground());
+      actionButtons.zoomIn?.addEventListener('click', () => setViewportScale(viewport.scale + 0.1));
+      actionButtons.zoomOut?.addEventListener('click', () => setViewportScale(viewport.scale - 0.1));
+      actionButtons.zoomReset?.addEventListener('click', () => setViewportScale(1));
       actionButtons.addSeat?.addEventListener('click', () => {
         if (state.locked) return;
+        const grid = gridSize();
         const seat = selectedSeat();
         const row = seat?.row || 'A';
         const nextOrder = state.layout.seats.filter((item) => item.row === row).length + 1;
@@ -938,9 +1021,14 @@
         if (state.locked || !baseLayout) return;
         state.layout = clone(baseLayout);
         state.layout.background = state.layout.background || null;
+        stage.width(Number(state.layout.canvas?.width || 1200));
+        stage.height(Number(state.layout.canvas?.height || 800));
         selectInstructor();
         syncJson();
+        syncViewport();
+        drawGrid();
         drawLayout();
+        syncInspector();
       });
       actionButtons.uploadBackground?.addEventListener('click', openBackgroundPicker);
       actionButtons.replaceBackground?.addEventListener('click', openBackgroundPicker);
@@ -988,7 +1076,12 @@
       });
 
       Object.entries(inspectorFields).forEach(([key, element]) => {
-        if (!element || ['selection', 'backgroundStatus', 'backgroundFile'].includes(key)) return;
+        if (!element || ['viewportScale', 'selection', 'backgroundStatus', 'backgroundFile'].includes(key)) return;
+        if (['canvasWidth', 'canvasHeight', 'canvasGrid'].includes(key)) {
+          element.addEventListener('input', updateCanvasFromInspector);
+          element.addEventListener('change', updateCanvasFromInspector);
+          return;
+        }
         if (key.startsWith('background')) {
           element.addEventListener('input', updateBackgroundFromInspector);
           element.addEventListener('change', updateBackgroundFromInspector);
@@ -999,6 +1092,8 @@
       });
 
       syncJson();
+      syncViewport();
+      syncCanvasFields();
       drawGrid();
       drawLayout();
       syncInspector();
