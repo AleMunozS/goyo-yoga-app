@@ -8,7 +8,7 @@ import { z } from 'zod';
 import formidable from 'formidable';
 import { imageSize } from 'image-size';
 import { randomUUID } from 'crypto';
-import { mkdir, readFile, rename, unlink } from 'fs/promises';
+import { copyFile, mkdir, readFile, rename, unlink } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { brand, getCheckoutStateCopy } from './brand.js';
@@ -117,7 +117,14 @@ async function parseBackgroundUpload(req, uploadDir) {
   await mkdir(uploadDir, { recursive: true });
   const { filename } = getLayoutBackgroundDestination(file.mimetype, file.originalFilename);
   const destination = path.join(uploadDir, filename);
-  await rename(file.filepath, destination);
+  try {
+    await rename(file.filepath, destination);
+  } catch (error) {
+    // Docker uploads may land on /tmp while the target is a bind mount on another device.
+    if (error?.code !== 'EXDEV') throw error;
+    await copyFile(file.filepath, destination);
+    await unlink(file.filepath).catch(() => {});
+  }
 
   return {
     assetUrl: `/static/uploads/layouts/${filename}`,
