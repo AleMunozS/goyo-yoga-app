@@ -1817,6 +1817,11 @@ textarea {
   transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 }
 
+.seat-map .seat-node {
+  position: absolute;
+  width: max-content;
+}
+
 .seat-mat:not(.seat-node):hover {
   transform: translateY(-1px);
 }
