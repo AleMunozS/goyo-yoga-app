@@ -7624,7 +7624,7 @@ body.classes-editorial-page {
 }
 
 .studio-workspace-section.section {
-  max-width: 1540px;
+  max-width: 1600px;
 }
 
 .studio-workspace {
@@ -7635,12 +7635,12 @@ body.classes-editorial-page {
 }
 
 .studio-workspace--layout-editor {
-  grid-template-columns: 224px minmax(0, 1fr);
-  gap: 0.65rem;
+  grid-template-columns: 204px minmax(0, 1fr);
+  gap: 0.45rem;
 }
 
 .studio-workspace--layout-editor .studio-workspace__sidebar {
-  padding: 0.82rem;
+  padding: 0.78rem;
 }
 
 .studio-workspace--layout-editor .studio-workspace__nav a {
@@ -7650,18 +7650,26 @@ body.classes-editorial-page {
 
 .studio-workspace--layout-editor .layout-editor-canvas-shell {
   min-height: 72vh;
-  padding: 0.9rem;
+  padding: 0.8rem;
+}
+
+.studio-workspace--layout-editor .studio-workspace__main {
+  gap: 0.8rem;
+}
+
+.studio-workspace--layout-editor .studio-workspace__header {
+  padding: 1.05rem 1.15rem;
 }
 
 .studio-workspace--layout-editor .layout-editor-shell-head,
 .studio-workspace--layout-editor .layout-editor-toolbar-row {
-  padding: 0.85rem 0.9rem;
+  padding: 0.8rem 0.85rem;
 }
 
 .studio-workspace--layout-editor .layout-editor-canvas-wrap {
   height: min(70vh, 920px);
   min-height: 66vh;
-  padding: 0.85rem;
+  padding: 0.75rem;
 }
 
 .studio-workspace--layout-editor .layout-inspector-panel--sidebar {
@@ -7713,7 +7721,7 @@ body.classes-editorial-page {
 }
 
 .studio-workspace--layout-editor .layout-editor-note {
-  padding: 0.8rem 0.9rem;
+  padding: 0.72rem 0.85rem;
 }
 
 .studio-workspace__sidebar {
