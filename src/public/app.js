@@ -645,6 +645,69 @@
         };
       };
 
+      const getLayoutBounds = () => {
+        const bounds = {
+          minX: state.layout.instructor.x - 76,
+          maxX: state.layout.instructor.x + 76,
+          minY: state.layout.instructor.y - 26,
+          maxY: state.layout.instructor.y + 26,
+        };
+
+        state.layout.seats.forEach((seat) => {
+          bounds.minX = Math.min(bounds.minX, seat.x - seatHalfWidth);
+          bounds.maxX = Math.max(bounds.maxX, seat.x + seatHalfWidth);
+          bounds.minY = Math.min(bounds.minY, seat.y - seatHalfHeight);
+          bounds.maxY = Math.max(bounds.maxY, seat.y + seatHalfHeight);
+        });
+
+        if (state.layout.background) {
+          const width = state.layout.background.assetWidth * state.layout.background.scale;
+          const height = state.layout.background.assetHeight * state.layout.background.scale;
+          bounds.minX = Math.min(bounds.minX, state.layout.background.x);
+          bounds.maxX = Math.max(bounds.maxX, state.layout.background.x + width);
+          bounds.minY = Math.min(bounds.minY, state.layout.background.y);
+          bounds.maxY = Math.max(bounds.maxY, state.layout.background.y + height);
+        }
+
+        return bounds;
+      };
+
+      const ensureCanvasFitsLayout = () => {
+        const grid = gridSize();
+        const padding = grid * 2;
+        const bounds = getLayoutBounds();
+        const shiftX = bounds.minX < padding ? snap(padding - bounds.minX) : 0;
+        const shiftY = bounds.minY < padding ? snap(padding - bounds.minY) : 0;
+
+        if (shiftX || shiftY) {
+          state.layout.instructor.x += shiftX;
+          state.layout.instructor.y += shiftY;
+          state.layout.seats = state.layout.seats.map((seat) => ({
+            ...seat,
+            x: seat.x + shiftX,
+            y: seat.y + shiftY,
+          }));
+          if (state.layout.background) {
+            state.layout.background = {
+              ...state.layout.background,
+              x: state.layout.background.x + shiftX,
+              y: state.layout.background.y + shiftY,
+            };
+          }
+        }
+
+        const nextBounds = getLayoutBounds();
+        const nextWidth = Math.max(Number(state.layout.canvas?.width || 1200), snap(nextBounds.maxX + padding));
+        const nextHeight = Math.max(Number(state.layout.canvas?.height || 800), snap(nextBounds.maxY + padding));
+        state.layout.canvas = {
+          width: nextWidth,
+          height: nextHeight,
+          grid,
+        };
+        stage.width(nextWidth);
+        stage.height(nextHeight);
+      };
+
       const clampLayoutIntoCanvas = () => {
         state.layout.instructor = {
           ...state.layout.instructor,
@@ -1021,8 +1084,7 @@
         if (state.locked || !baseLayout) return;
         state.layout = clone(baseLayout);
         state.layout.background = state.layout.background || null;
-        stage.width(Number(state.layout.canvas?.width || 1200));
-        stage.height(Number(state.layout.canvas?.height || 800));
+        ensureCanvasFitsLayout();
         selectInstructor();
         syncJson();
         syncViewport();
@@ -1091,6 +1153,7 @@
         element.addEventListener('change', updateSeatFromInspector);
       });
 
+      ensureCanvasFitsLayout();
       syncJson();
       syncViewport();
       syncCanvasFields();

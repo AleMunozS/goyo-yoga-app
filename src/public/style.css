@@ -1965,14 +1965,17 @@ textarea {
 }
 
 .layout-editor-workspace {
-  position: relative;
-  min-height: 78vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 23rem);
+  gap: 1rem;
+  align-items: start;
 }
 
 .layout-editor-canvas-shell {
   position: relative;
   min-height: 78vh;
-  padding: 2rem;
+  min-width: 0;
+  padding: 1.25rem;
   overflow: hidden;
   background:
     radial-gradient(circle at top left, rgba(221, 236, 218, 0.55), transparent 26%),
@@ -1991,25 +1994,26 @@ textarea {
 }
 
 .layout-editor-floating--meta {
-  top: 1.4rem;
-  left: 1.4rem;
-  width: min(28rem, calc(100% - 3rem));
+  top: 1.25rem;
+  left: 1.25rem;
+  width: min(28rem, calc(100% - 2.5rem));
   padding: 1.1rem 1.2rem;
 }
 
 .layout-editor-floating--toolbar {
-  left: 1.4rem;
-  right: 26rem;
-  bottom: 1.4rem;
+  left: 1.25rem;
+  right: 1.25rem;
+  bottom: 1.25rem;
   display: grid;
   gap: 0.8rem;
   padding: 0.9rem 1rem;
 }
 
 .layout-editor-floating--note {
-  left: 1.4rem;
-  bottom: 9.6rem;
-  max-width: 24rem;
+  left: auto;
+  right: 1.25rem;
+  bottom: 7.5rem;
+  max-width: 22rem;
   padding: 0.85rem 1rem;
 }
 
@@ -2040,7 +2044,7 @@ textarea {
   overflow: auto;
   height: 100%;
   min-height: 72vh;
-  padding: 7.8rem 25rem 8.4rem 2rem;
+  padding: 8rem 1rem 7.4rem;
   border-radius: 28px;
   background:
     linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)),
@@ -2049,6 +2053,9 @@ textarea {
 }
 
 .layout-editor-stage-viewport {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   width: max-content;
   min-width: 100%;
   min-height: 100%;
@@ -2067,12 +2074,11 @@ textarea {
 }
 
 .layout-inspector-panel--floating {
-  position: absolute;
-  top: 1.4rem;
-  right: 1.4rem;
+  position: sticky;
+  top: calc(var(--fixed-chrome-offset) + 18px);
   z-index: 3;
-  width: min(23rem, calc(100% - 3rem));
-  max-height: calc(100% - 2.8rem);
+  width: auto;
+  max-height: calc(100vh - var(--fixed-chrome-offset) - 36px);
   overflow: auto;
 }
 
@@ -2158,7 +2164,11 @@ textarea {
   color: rgba(66, 50, 37, 0.72);
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1080px) {
+  .layout-editor-workspace {
+    grid-template-columns: 1fr;
+  }
+
   .layout-editor-canvas-shell {
     display: grid;
     gap: 1rem;
@@ -6621,7 +6631,7 @@ body.classes-editorial-page {
 }
 
 .theme-tisa .layout-editor-canvas-wrap {
-  padding: 0.5rem;
+  padding: 8rem 1rem 7.4rem;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(237, 241, 233, 0.78));
   border: 1px solid rgba(95, 102, 86, 0.1);
