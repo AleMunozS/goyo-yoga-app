@@ -32,6 +32,7 @@ const DEFAULT_LAYOUT_BLUEPRINT = [
   { label: 'F2', row: 'F', order: 2, zone: 'back', x: 534, y: 734 },
   { label: 'F3', row: 'F', order: 3, zone: 'back', x: 654, y: 734 },
 ];
+const DEFAULT_LAYOUT_BLUEPRINT_BY_LABEL = new Map(DEFAULT_LAYOUT_BLUEPRINT.map((seat) => [seat.label, seat]));
 
 const seatSchema = z.object({
   id: z.string().min(1),
@@ -146,9 +147,41 @@ function normalizeSeat(rawSeat, index) {
   };
 }
 
+function seatPositionKey(seat) {
+  return `${roundCoord(seat.x)}:${roundCoord(seat.y)}`;
+}
+
+function shouldRepairSeatPositions(seats) {
+  if (!Array.isArray(seats) || seats.length < 6) return false;
+  const counts = new Map();
+  seats.forEach((seat) => {
+    const key = seatPositionKey(seat);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  const uniquePositions = counts.size;
+  const maxDuplicates = Math.max(...counts.values());
+  return uniquePositions <= Math.floor(seats.length * 0.75) || maxDuplicates >= 3;
+}
+
+function repairSeatPositions(seats) {
+  return seats.map((seat) => {
+    const blueprint = DEFAULT_LAYOUT_BLUEPRINT_BY_LABEL.get(seat.label);
+    if (!blueprint) return seat;
+    return {
+      ...seat,
+      x: blueprint.x,
+      y: blueprint.y,
+      zone: seat.zone || blueprint.zone,
+      row: seat.row || blueprint.row,
+      order: Number.isFinite(Number(seat.order)) ? seat.order : blueprint.order,
+    };
+  });
+}
+
 function normalizeLayout(layout) {
   const parsed = layoutSchema.parse(layout);
-  const seats = sortSeats(parsed.seats.map(normalizeSeat)).map(withSeatMeta);
+  const normalizedSeats = parsed.seats.map(normalizeSeat);
+  const seats = sortSeats(shouldRepairSeatPositions(normalizedSeats) ? repairSeatPositions(normalizedSeats) : normalizedSeats).map(withSeatMeta);
   return {
     version: DEFAULT_LAYOUT_VERSION,
     canvas: {

@@ -319,6 +319,29 @@ test('layout schema round-trips background metadata', () => {
   assert.deepEqual(parsed.background, layout.background);
 });
 
+test('layout parser repairs heavily overlapped seat coordinates using the default blueprint', () => {
+  const layout = createDefaultLayout(18);
+  layout.seats = layout.seats.map((seat, index) =>
+    index < 8
+      ? {
+          ...seat,
+          x: 120,
+          y: 456,
+        }
+      : seat,
+  );
+
+  const parsed = parseLayoutJson(JSON.stringify(layout), 18);
+  const a1 = parsed.seats.find((seat) => seat.label === 'A1');
+  const a2 = parsed.seats.find((seat) => seat.label === 'A2');
+  const b1 = parsed.seats.find((seat) => seat.label === 'B1');
+
+  assert.deepEqual(
+    [a1.x, a1.y, a2.x, a2.y, b1.x, b1.y],
+    [414, 194, 534, 194, 414, 294],
+  );
+});
+
 test('layout background upload accepts images and rejects non-images', { concurrency: false }, async () => {
   await seedBaseData();
   const sessionCookie = await loginAs('admin@test.local', 'admin1234');
