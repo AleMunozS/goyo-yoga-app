@@ -448,15 +448,15 @@ function renderLayoutEditorBody({
         <input type="hidden" name="layoutJson" id="layout-editor-json" value="${esc(serializeLayout(layout))}" />
         <div class="layout-editor-workspace">
           <article class="system-panel system-panel-light layout-editor-canvas-shell">
-            <div class="layout-editor-floating layout-editor-floating--meta">
+            <div class="layout-editor-shell-head">
               <div class="layout-editor-panel__head">
                 <p class="concept-kicker">Canvas editorial</p>
                 <h2>Lienzo del salón</h2>
-                <p>Trabaja el layout como un lienzo libre. Puedes mover tapetes, fondo y ahora también ajustar dimensiones y retícula del canvas.</p>
+                <p>Editor de escritorio para ajustar el salón con más espacio y menos paneles encima del lienzo.</p>
               </div>
               <div class="system-detail-list">${details}</div>
             </div>
-            <div class="layout-editor-floating layout-editor-floating--toolbar">
+            <div class="layout-editor-toolbar-row">
               <div class="layout-editor-toolbar">
                 <button class="btn alt" type="button" data-layout-action="select-instructor">Mover instructora</button>
                 <button class="btn alt" type="button" data-layout-action="select-background">Seleccionar fondo</button>
@@ -478,17 +478,15 @@ function renderLayoutEditorBody({
                 <div id="layout-editor-stage" class="layout-editor-stage" aria-label="Editor del layout"></div>
               </div>
             </div>
-            <div class="layout-editor-floating layout-editor-floating--note">
-              <p class="system-inline-note">
-                ${structureLocked
-                  ? 'Esta clase ya tiene reservas activas. Solo puedes mover la instructora; la estructura del salón y el fondo quedan congelados.'
-                  : 'Arrastra elementos sobre la retícula, cambia el tamaño del lienzo y usa el zoom para trabajar con mayor precisión.'}
-              </p>
-            </div>
+            <p class="system-inline-note layout-editor-note">
+              ${structureLocked
+                ? 'Esta clase ya tiene reservas activas. Solo puedes mover la instructora; la estructura del salón y el fondo quedan congelados.'
+                : 'El lienzo ocupa el área principal. Usa el inspector lateral para tamaño, retícula y ajustes del fondo.'}
+            </p>
           </article>
           <article class="system-panel system-panel-dark layout-inspector-panel layout-inspector-panel--floating">
             <p class="concept-kicker">Ajustes finos</p>
-            <h2>Inspector flotante</h2>
+            <h2>Inspector</h2>
             <div class="layout-inspector-fields">
               <div class="layout-inspector-section">
                 <span class="layout-inspector-section__title">Lienzo</span>
