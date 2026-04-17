@@ -7634,6 +7634,29 @@ body.classes-editorial-page {
   align-items: start;
 }
 
+.studio-workspace--layout-editor {
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.studio-workspace--layout-editor .studio-workspace__sidebar {
+  padding: 0.95rem;
+}
+
+.studio-workspace--layout-editor .studio-workspace__nav a {
+  padding: 0.8rem 0.9rem;
+  font-size: 0.76rem;
+}
+
+.studio-workspace--layout-editor .layout-editor-canvas-shell {
+  padding: 1rem;
+}
+
+.studio-workspace--layout-editor .layout-editor-shell-head,
+.studio-workspace--layout-editor .layout-editor-toolbar-row {
+  padding-inline: 0.9rem;
+}
+
 .studio-workspace__sidebar {
   position: sticky;
   top: calc(var(--fixed-chrome-offset) + 18px);

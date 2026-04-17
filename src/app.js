@@ -297,6 +297,7 @@ function renderStudioWorkspace({
   subtitle = '',
   content = '',
   sidebarContent = '',
+  workspaceClassName = '',
   footerActionLabel = 'Abrir agenda',
   footerActionHref = '/classes',
 }) {
@@ -317,7 +318,7 @@ function renderStudioWorkspace({
     .map((item) => `<a class="${item.key === activeKey ? 'is-active' : ''}" href="${item.href}">${item.label}</a>`)
     .join('');
 
-  return `<section class="studio-workspace">
+  return `<section class="studio-workspace${workspaceClassName ? ` ${workspaceClassName}` : ''}">
     <aside class="studio-workspace__sidebar">
       <div class="studio-workspace__brand">
         <p>${esc(eyebrow)}</p>
@@ -596,6 +597,7 @@ function renderLayoutEditorBody({
       subtitle,
       content,
       sidebarContent: inspectorMarkup,
+      workspaceClassName: 'studio-workspace--layout-editor',
       footerActionLabel: 'Volver a layouts',
       footerActionHref: backPath,
     })}
