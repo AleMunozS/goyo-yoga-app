@@ -815,6 +815,7 @@ function renderSeatSelectionBody({
   message = '',
   messageType = 'error',
 }) {
+  const intensity = getAgendaIntensityMeta(occurrence.classType.intensity);
   const layout = getSeatLayout(occurrence.layoutJson, occurrence.capacity);
   const occupiedSet = new Set((occupiedSeatCodes || []).map((value) => String(value)));
   const enabledSeats = layout.seats.filter((seat) => seat.enabled && seat.bookable);
@@ -833,7 +834,7 @@ function renderSeatSelectionBody({
     <section class="section seat-floorplan-page">
       <div class="seat-floorplan-app">
         <aside class="seat-floorplan-sidebar">
-          <article class="seat-floorplan-sidebar__card">
+          <article class="seat-floorplan-sidebar__card ${intensity.className}">
             <p class="seat-floorplan-eyebrow">Sesión elegida</p>
             <h1>${esc(occurrence.classType.name)}</h1>
             <p>Visualiza el salón, confirma disponibilidad real y reserva sin cambiar de contexto.</p>
@@ -855,7 +856,7 @@ function renderSeatSelectionBody({
         <form action="/reservations/web-checkout" method="post" id="seat-selection-form" class="seat-floorplan-form">
           <input type="hidden" name="occurrenceId" value="${occurrence.id}" />
           <input type="hidden" name="salesChannel" value="web" />
-          <section class="seat-floorplan-board">
+          <section class="seat-floorplan-board ${intensity.className}">
             <div class="seat-floorplan-board__header">
               <div>
                 <p class="seat-floorplan-eyebrow">Layout activo</p>
@@ -872,7 +873,7 @@ function renderSeatSelectionBody({
             </div>
           </section>
           <aside class="seat-floorplan-summary">
-            <article class="seat-floorplan-summary__card">
+            <article class="seat-floorplan-summary__card ${intensity.className}">
               <div class="seat-floorplan-summary__handle" aria-hidden="true"></div>
               <div class="seat-floorplan-summary__top">
                 <div>
@@ -903,15 +904,15 @@ function renderSeatSelectionBody({
               <div class="seat-floorplan-summary__fields">
                 <label class="form-row seat-floorplan-field">
                   <span>Nombre</span>
-                  <input type="text" name="customerName" value="${esc(customerName)}" placeholder="Nombre completo" required />
+                  <input type="text" name="customerName" value="${esc(customerName)}" placeholder="Nombre completo" autocomplete="name" required />
                 </label>
                 <label class="form-row seat-floorplan-field">
                   <span>Correo</span>
-                  <input type="email" name="customerEmail" value="${esc(customerEmail)}" placeholder="tu@correo.com" required />
+                  <input type="email" name="customerEmail" value="${esc(customerEmail)}" placeholder="tu@correo.com" autocomplete="email" required />
                 </label>
                 <label class="form-row seat-floorplan-field">
                   <span>Teléfono</span>
-                  <input type="tel" name="customerPhone" value="${esc(customerPhone)}" placeholder="55..." />
+                  <input type="tel" name="customerPhone" value="${esc(customerPhone)}" placeholder="55..." autocomplete="tel" />
                 </label>
               </div>
               <div class="seat-floorplan-summary__actions">
@@ -1241,7 +1242,7 @@ export function createApp({ prisma }) {
     const typeCards = practiceEntries
       .map(
         (t) => `
-      <article class="card tisa-card landing-practice-card reveal">
+      <article class="card tisa-card landing-practice-card reveal ${getAgendaIntensityMeta(t.intensity).className}">
         <div class="landing-practice-topline">
           <span class="tag">${esc(t.intensity)}</span>
           <span class="landing-practice-schedule">${esc(t.scheduleLabel)}</span>
@@ -1278,7 +1279,7 @@ export function createApp({ prisma }) {
       .sort((a, b) => a.intensityOrder - b.intensityOrder)
       .map(
         (profile) => `
-      <article class="card tisa-card landing-class-guide-card reveal">
+      <article class="card tisa-card landing-class-guide-card reveal ${getAgendaIntensityMeta(profile.intensity).className}">
         <span class="ritual-step">${esc(profile.intensity)}</span>
         <h3>${esc(profile.name)}</h3>
         <p>${esc(profile.guideText)}</p>
@@ -1401,15 +1402,15 @@ export function createApp({ prisma }) {
           </div>
           <div class="landing-panel-body landing-ops-layout">
             <div class="ops-panels">
-              <div class="ops-panel">
+              <div class="ops-panel ops-panel--admin">
                 <span>Admin</span>
                 <strong>Lectura diaria del estudio, pagos y ocupación sin ruido visual.</strong>
               </div>
-              <div class="ops-panel">
+              <div class="ops-panel ops-panel--trainer">
                 <span>Trainer</span>
                 <strong>Agenda clara para programar, revisar reservas y sostener el ritmo del día.</strong>
               </div>
-              <div class="ops-panel">
+              <div class="ops-panel ops-panel--ops">
                 <span>Check-in</span>
                 <strong>Validación rápida con respuestas legibles y consistentes con la experiencia pública.</strong>
               </div>
@@ -2667,27 +2668,33 @@ export function createApp({ prisma }) {
           <h1>${brand.staff.title}</h1>
           <p>${brand.staff.lede}</p>
         </section>
-        <div class="system-grid">
-          <article class="system-panel system-panel-light">
+        <div class="system-grid staff-login-grid">
+          <article class="system-panel system-panel-light staff-login-card">
             <h2>Acceso staff</h2>
             <form method="post" action="/staff/login" class="admin-login-mock">
-              <label class="form-row"><span>Email</span><input class="admin-input" type="email" name="email" required /></label>
-              <label class="form-row"><span>Password</span><input class="admin-input" type="password" name="password" required /></label>
+              <label class="form-row"><span>Email</span><input class="admin-input" type="email" name="email" autocomplete="username" required /></label>
+              <label class="form-row"><span>Password</span><input class="admin-input" type="password" name="password" autocomplete="current-password" required /></label>
               <button class="btn" type="submit">Entrar</button>
             </form>
           </article>
-          <article class="system-panel system-panel-dark">
+          <article class="system-panel system-panel-dark staff-surfaces-card">
             <h2>Superficies operativas</h2>
             <div class="admin-list">
-              <div class="admin-list-row"><div><strong>Admin</strong><p>Indicadores, pagos y lectura diaria del estudio.</p></div></div>
-              <div class="admin-list-row"><div><strong>Trainer</strong><p>Agenda, sesiones y control fino de cada práctica.</p></div></div>
-              <div class="admin-list-row"><div><strong>Ops</strong><p>Check-in ágil y validación QR con certeza.</p></div></div>
+              <div class="admin-list-row staff-surface-row staff-surface-row--admin"><div><strong>Admin</strong><p>Indicadores, pagos y lectura diaria del estudio.</p></div></div>
+              <div class="admin-list-row staff-surface-row staff-surface-row--trainer"><div><strong>Trainer</strong><p>Agenda, sesiones y control fino de cada práctica.</p></div></div>
+              <div class="admin-list-row staff-surface-row staff-surface-row--ops"><div><strong>Ops</strong><p>Check-in ágil y validación QR con certeza.</p></div></div>
             </div>
           </article>
         </div>
       </div>
     </section>`;
-    res.send(renderLayout({ title: 'Staff Login', body, simulationMode: config.simulationMode }));
+    res.send(renderLayout({
+      title: 'Staff Login',
+      body,
+      simulationMode: config.simulationMode,
+      bodyClass: 'staff-login-page',
+      mainClass: 'staff-login-main',
+    }));
   });
 
   app.post('/staff/login', async (req, res) => {

@@ -15,19 +15,23 @@ export function renderLayout({
 }) {
   const isConceptBoard = title.startsWith('Concept') && !staff;
   const isHome = title === 'Inicio' && !staff;
+  const isStaffLogin = title === 'Staff Login' && !staff;
   const appName = brand.name;
-  const assetVersion = '20260417-seat-content-fit';
+  const assetVersion = '20260422-premium-earth-theme';
   const canAccessAssistedSales = staffRole === 'ADMIN' || staffRole === 'OPS';
   const canAccessLayouts = staffRole === 'ADMIN' || staffRole === 'OPS';
+  const canAccessAdmin = staffRole === 'ADMIN';
+  const canAccessTrainer = staffRole === 'TRAINER';
+  const canAccessCheckin = staffRole === 'ADMIN' || staffRole === 'OPS';
   const nav = staff
     ? `
       <nav class="top-nav staff-nav">
         <div class="top-nav__cluster">
-          <a href="/admin/dashboard">Admin</a>
+          ${canAccessAdmin ? '<a href="/admin/dashboard">Admin</a>' : ''}
           ${canAccessAssistedSales ? '<a href="/admin/assisted-sales">Ventas WhatsApp</a>' : ''}
           ${canAccessLayouts ? '<a href="/admin/layouts">Layouts</a>' : ''}
-          <a href="/trainer/classes">Trainer</a>
-          <a href="/ops/checkin">Check-in</a>
+          ${canAccessTrainer ? '<a href="/trainer/classes">Trainer</a>' : ''}
+          ${canAccessCheckin ? '<a href="/ops/checkin">Check-in</a>' : ''}
         </div>
         <div class="top-nav__utility">
           <span class="top-nav__badge">Studio Staff</span>
@@ -49,10 +53,10 @@ export function renderLayout({
     `
     : `
       <nav class="top-nav public-nav">
-        <a href="/">Inicio</a>
-        <a href="/classes">Agenda</a>
+        <a class="${isHome ? 'is-active' : ''}" href="/">Inicio</a>
+        <a class="${title === 'Clases' ? 'is-active' : ''}" href="/classes">Agenda</a>
         <a class="nav-cta" href="/classes">Reservar</a>
-        <a href="/staff/login">Staff</a>
+        <a class="${isStaffLogin ? 'is-active' : ''}" href="/staff/login">Staff</a>
       </nav>
     `;
   const bodyClasses = [
@@ -90,7 +94,7 @@ export function renderLayout({
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="description" content="${esc(brand.metaDescription)}" />
-    <meta name="theme-color" content="#f4eee6" />
+    <meta name="theme-color" content="#F1EFE9" />
     <title>${esc(title)} | ${appName}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

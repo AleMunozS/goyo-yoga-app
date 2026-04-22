@@ -1,6 +1,10 @@
 (() => {
   const simBanner = document.querySelector('.sim-banner');
   const siteHeader = document.querySelector('.site-header');
+  const themeColor = (name, fallback) => {
+    const value = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
+  };
 
   const syncFixedChromeOffset = () => {
     const simBannerHeight = simBanner ? simBanner.getBoundingClientRect().height : 0;
@@ -510,6 +514,17 @@
       const payload = JSON.parse(layoutPayload.textContent || '{}');
       const baseLayout = payload.baseLayout ? JSON.parse(JSON.stringify(payload.baseLayout)) : null;
       const matMarkAsset = payload.matMarkAsset || '/static/tisa-mat-mark.svg';
+      const layoutTheme = {
+        caliza: themeColor('--caliza', '#F1EFE9'),
+        yeso: themeColor('--yeso', '#DBD6C9'),
+        arenaProfunda: themeColor('--arena-profunda', '#B3AB9B'),
+        arcilla: themeColor('--arcilla', '#94674B'),
+        tierraTostada: themeColor('--tierra-tostada', '#553E2B'),
+        pizarra: themeColor('--pizarra', '#3C3935'),
+        olivaMineral: themeColor('--oliva-mineral', '#7C7651'),
+        bosqueSeco: themeColor('--bosque-seco', '#424130'),
+        brumaAzul: themeColor('--bruma-azul', '#7C868D'),
+      };
       const state = {
         layout: JSON.parse(JSON.stringify(payload.layout || {})),
         selection: { type: 'instructor', id: null },
@@ -990,7 +1005,7 @@
               y: 0,
               width,
               height,
-              fill: 'rgba(217, 224, 210, 0.38)',
+              fill: 'rgba(219, 214, 201, 0.42)',
             }));
           }
 
@@ -1000,7 +1015,7 @@
               y: -6,
               width: width + 12,
               height: height + 12,
-              stroke: '#4f6245',
+              stroke: layoutTheme.brumaAzul,
               dash: [10, 8],
               strokeWidth: 3,
               listening: false,
@@ -1030,8 +1045,8 @@
           width: 152,
           height: 52,
           cornerRadius: 24,
-          fill: state.selection.type === 'instructor' ? '#2e1d1a' : '#f2e8dd',
-          stroke: '#7a5a45',
+          fill: state.selection.type === 'instructor' ? layoutTheme.arcilla : layoutTheme.caliza,
+          stroke: layoutTheme.tierraTostada,
           strokeWidth: 2,
         }));
         instructorGroup.add(new window.Konva.Text({
@@ -1040,7 +1055,7 @@
           width: 132,
           align: 'center',
           text: state.layout.instructor.label || 'Instructora',
-          fill: state.selection.type === 'instructor' ? '#fff8f0' : '#2e1d1a',
+          fill: state.selection.type === 'instructor' ? layoutTheme.caliza : layoutTheme.pizarra,
           fontStyle: 'bold',
           fontSize: 16,
         }));
@@ -1061,8 +1076,8 @@
             rotation: seat.rotation || 0,
           });
           const isSelected = state.selection.type === 'seat' && state.selection.id === seat.id;
-          const fill = !seat.enabled || seat.bookable === false ? '#d8d2c8' : isSelected ? '#5a6f4d' : '#f4f0e8';
-          const textFill = !seat.enabled || seat.bookable === false ? '#7b7268' : isSelected ? '#f7faf3' : '#3e4637';
+          const fill = !seat.enabled || seat.bookable === false ? layoutTheme.arenaProfunda : isSelected ? layoutTheme.arcilla : layoutTheme.caliza;
+          const textFill = !seat.enabled || seat.bookable === false ? layoutTheme.bosqueSeco : isSelected ? layoutTheme.caliza : layoutTheme.pizarra;
           const markImage = loadImage(matMarkAsset);
 
           seatGroup.add(new window.Konva.Rect({
@@ -1072,7 +1087,7 @@
             height: seatHeight,
             cornerRadius: 24,
             fill,
-            stroke: seat.zone === 'near' ? '#9d6646' : seat.zone === 'back' ? '#64724f' : '#827d5b',
+            stroke: seat.zone === 'near' ? layoutTheme.arcilla : seat.zone === 'back' ? layoutTheme.bosqueSeco : layoutTheme.olivaMineral,
             strokeWidth: isSelected ? 4 : 2,
           }));
 
@@ -1093,7 +1108,7 @@
               width: 72,
               align: 'center',
               text: 'TISA',
-              fill: isSelected ? 'rgba(247, 250, 243, 0.28)' : 'rgba(92, 101, 81, 0.42)',
+              fill: isSelected ? 'rgba(241, 239, 233, 0.32)' : 'rgba(124, 118, 81, 0.38)',
               fontStyle: 'bold',
               fontSize: 14,
               listening: false,
@@ -1119,10 +1134,10 @@
             });
             deleteButton.add(new window.Konva.Circle({
               radius: 11,
-              fill: '#f8f3ef',
-              stroke: '#9d4f3d',
+              fill: layoutTheme.caliza,
+              stroke: layoutTheme.tierraTostada,
               strokeWidth: 2,
-              shadowColor: 'rgba(46, 29, 26, 0.18)',
+              shadowColor: 'rgba(60, 57, 53, 0.18)',
               shadowBlur: 8,
               shadowOffsetY: 2,
             }));
@@ -1132,7 +1147,7 @@
               width: 10,
               align: 'center',
               text: '×',
-              fill: '#8b2f21',
+              fill: layoutTheme.tierraTostada,
               fontStyle: 'bold',
               fontSize: 14,
               listening: false,
