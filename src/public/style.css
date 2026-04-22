@@ -8976,8 +8976,25 @@ body.theme-tisa .classes-mobile-nav-arrow {
   color: var(--text-on-dark);
 }
 
+body.theme-tisa .classes-mobile-dock__meta span {
+  color: rgba(219, 214, 201, 0.74);
+}
+
+body.theme-tisa .classes-mobile-dock__meta strong {
+  color: var(--text-on-dark);
+}
+
 body.theme-tisa .classes-mobile-nav a {
-  color: rgba(241, 239, 233, 0.70);
+  background: rgba(241, 239, 233, 0.08);
+  border: 1px solid rgba(241, 239, 233, 0.10);
+  color: rgba(241, 239, 233, 0.88);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body.theme-tisa .classes-mobile-nav a:hover,
+body.theme-tisa .classes-mobile-nav a:focus-visible {
+  background: rgba(241, 239, 233, 0.14);
+  color: var(--text-on-dark);
 }
 
 body.seat-floorplan-body {
@@ -9354,7 +9371,8 @@ body.staff-login-page .staff-surface-row--ops::before {
   }
 
   body.theme-tisa .classes-mobile-nav a.is-active {
-    background: rgba(241, 239, 233, 0.12);
+    background: var(--arcilla);
+    border-color: rgba(85, 62, 43, 0.24);
     color: var(--text-on-dark);
   }
 
