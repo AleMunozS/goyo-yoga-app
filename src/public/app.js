@@ -545,6 +545,7 @@
         clearBackground: document.querySelector('[data-layout-action="clear-background"]'),
         zoomIn: document.querySelector('[data-layout-action="zoom-in"]'),
         zoomOut: document.querySelector('[data-layout-action="zoom-out"]'),
+        zoomFit: document.querySelector('[data-layout-action="zoom-fit"]'),
         zoomReset: document.querySelector('[data-layout-action="zoom-reset"]'),
       };
       const inspectorFields = {
@@ -583,6 +584,7 @@
       const imageCache = new Map();
       const viewport = { scale: 1 };
       const stageViewport = stageContainer.parentElement;
+      const canvasWrap = stageViewport?.parentElement || null;
 
       const stage = new window.Konva.Stage({
         container: stageContainer,
@@ -621,6 +623,17 @@
       const setViewportScale = (nextScale) => {
         viewport.scale = clamp(Number(nextScale) || 1, 0.5, 2.5);
         syncViewport();
+      };
+
+      const fitViewportToCanvas = () => {
+        if (!canvasWrap) {
+          setViewportScale(1);
+          return;
+        }
+        const availableWidth = Math.max(canvasWrap.clientWidth - 32, 320);
+        const availableHeight = Math.max(canvasWrap.clientHeight - 32, 260);
+        const fitScale = Math.min(1, availableWidth / stage.width(), availableHeight / stage.height());
+        setViewportScale(fitScale);
       };
 
       const syncCanvasFields = () => {
@@ -1180,6 +1193,7 @@
       actionButtons.selectBackground?.addEventListener('click', () => selectBackground());
       actionButtons.zoomIn?.addEventListener('click', () => setViewportScale(viewport.scale + 0.1));
       actionButtons.zoomOut?.addEventListener('click', () => setViewportScale(viewport.scale - 0.1));
+      actionButtons.zoomFit?.addEventListener('click', fitViewportToCanvas);
       actionButtons.zoomReset?.addEventListener('click', () => setViewportScale(1));
       actionButtons.addSeat?.addEventListener('click', () => {
         if (state.locked) return;
@@ -1296,12 +1310,15 @@
 
       ensureCanvasFitsLayout();
       syncJson();
-      syncViewport();
+      fitViewportToCanvas();
       syncCanvasFields();
       drawGrid();
       drawLayout();
       syncInspector();
-      window.addEventListener('resize', drawGrid);
+      window.addEventListener('resize', () => {
+        syncViewport();
+        drawGrid();
+      });
     }
   }
 

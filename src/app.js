@@ -571,7 +571,8 @@ function renderLayoutEditorBody({
                 <button class="btn alt" type="button" data-layout-action="zoom-out">-</button>
                 <output class="layout-editor-viewport-scale" data-layout-output="viewport-scale">100%</output>
                 <button class="btn alt" type="button" data-layout-action="zoom-in">+</button>
-                <button class="btn alt" type="button" data-layout-action="zoom-reset">Centrar</button>
+                <button class="btn alt" type="button" data-layout-action="zoom-fit">Ajustar</button>
+                <button class="btn alt" type="button" data-layout-action="zoom-reset">100%</button>
               </div>
             </div>
             <div class="layout-editor-canvas-wrap">
@@ -582,9 +583,10 @@ function renderLayoutEditorBody({
             <p class="system-inline-note layout-editor-note">
               ${structureLocked
                 ? 'Esta clase ya tiene reservas activas. Solo puedes mover la instructora; la estructura del salón y el fondo quedan congelados.'
-                : 'El lienzo ocupa el área principal. Usa el panel izquierdo para tamaño, retícula y ajustes del fondo.'}
+                : 'El lienzo ocupa el área principal. Usa el inspector lateral para tamaño, retícula y ajustes del fondo.'}
             </p>
           </article>
+          ${inspectorMarkup}
         </div>
       </form>`;
 
@@ -596,7 +598,6 @@ function renderLayoutEditorBody({
       title,
       subtitle,
       content,
-      sidebarContent: inspectorMarkup,
       workspaceClassName: 'studio-workspace--layout-editor',
       footerActionLabel: 'Volver a layouts',
       footerActionHref: backPath,
