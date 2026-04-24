@@ -2013,6 +2013,10 @@ textarea {
   gap: 0.55rem;
 }
 
+.layout-editor-save-action {
+  margin-left: auto;
+}
+
 .layout-editor-viewport-scale {
   min-width: 4.5rem;
   text-align: center;

@@ -573,6 +573,7 @@ function renderLayoutEditorBody({
                 <button class="btn alt" type="button" data-layout-action="zoom-in">+</button>
                 <button class="btn alt" type="button" data-layout-action="zoom-fit">Ajustar</button>
                 <button class="btn alt" type="button" data-layout-action="zoom-reset">100%</button>
+                <button class="btn layout-editor-save-action" type="submit">Guardar cambios</button>
               </div>
             </div>
             <div class="layout-editor-canvas-wrap">
