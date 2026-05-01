@@ -83,6 +83,7 @@ async function createClassCatalog() {
         durationMin: 55,
         intensity: 'Suave',
         colorHex: '#986d4f',
+        layoutJson: serializeLayout(createDefaultLayout(18)),
       },
     }),
     prisma.class_types.create({
@@ -93,6 +94,7 @@ async function createClassCatalog() {
         durationMin: 55,
         intensity: 'Media',
         colorHex: '#6a7346',
+        layoutJson: serializeLayout(createDefaultLayout(20)),
       },
     }),
     prisma.class_types.create({
@@ -103,6 +105,7 @@ async function createClassCatalog() {
         durationMin: 40,
         intensity: 'Baja',
         colorHex: '#828a91',
+        layoutJson: serializeLayout(createDefaultLayout(18)),
       },
     }),
   ]);

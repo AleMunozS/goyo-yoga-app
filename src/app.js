@@ -22,6 +22,7 @@ import {
   describeReservedSeats,
   formatSeatLabels,
   getLayoutCapacity,
+  getOccurrenceLayoutJson,
   getSeatLayout,
   hasStructuralSeatChanges,
   parseLayoutJson,
@@ -367,7 +368,7 @@ function renderSeatSelectionHeader() {
   `;
 }
 
-function renderLayoutsIndexBody({ locations, occurrences, staffRole = null }) {
+function renderLayoutsIndexBody({ locations, classTypes, staffRole = null }) {
   const locationRows = locations
     .map((location) => {
       const capacity = getLayoutCapacity(location.layoutJson, 18);
@@ -384,17 +385,18 @@ function renderLayoutsIndexBody({ locations, occurrences, staffRole = null }) {
     })
     .join('');
 
-  const classRows = occurrences
-    .map((occurrence) => {
-      const capacity = getLayoutCapacity(occurrence.layoutJson, occurrence.capacity);
+  const classRows = classTypes
+    .map((classType) => {
+      const fallbackCapacity = classType.classes[0]?.capacity || 18;
+      const capacity = getLayoutCapacity(classType.layoutJson, fallbackCapacity);
       return `<div class="admin-list-row layout-list-row">
         <div class="admin-list-row__meta">
-          <span class="admin-list-row__eyebrow">Override activo</span>
-          <strong>${esc(occurrence.classType.name)}</strong>
-          <p>${dayjs(occurrence.startsAt).format('DD MMM YYYY · HH:mm')} · ${esc(occurrence.location.name)} · ${capacity} lugares</p>
+          <span class="admin-list-row__eyebrow">Tipo de clase</span>
+          <strong>${esc(classType.name)}</strong>
+          <p>${esc(classType.description)} · ${capacity} lugares · ${classType.classes.length} horarios próximos</p>
         </div>
         <div class="admin-list-row__action">
-          <a class="btn alt" href="/admin/class-layouts/${occurrence.id}">Editar layout de clase</a>
+          <a class="btn alt" href="/admin/class-layouts/${classType.id}">Editar layout del tipo</a>
         </div>
       </div>`;
     })
@@ -407,9 +409,9 @@ function renderLayoutsIndexBody({ locations, occurrences, staffRole = null }) {
           <div class="admin-list">${locationRows || '<div class="admin-list-row"><div><strong>Sin sedes</strong><p>No hay sedes activas todavía.</p></div></div>'}</div>
         </article>
         <article class="system-panel system-panel-dark layout-admin-panel">
-          <p class="concept-kicker">Próximas clases</p>
-          <h2>Overrides por clase</h2>
-          <div class="admin-list">${classRows || '<div class="admin-list-row"><div><strong>Sin clases próximas</strong><p>No hay clases programadas para ajustar layout.</p></div></div>'}</div>
+          <p class="concept-kicker">Catálogo</p>
+          <h2>Layouts por tipo de clase</h2>
+          <div class="admin-list">${classRows || '<div class="admin-list-row"><div><strong>Sin tipos de clase</strong><p>Crea tipos de clase para asignarles un layout compartido.</p></div></div>'}</div>
         </article>
       </div>`;
 
@@ -419,7 +421,7 @@ function renderLayoutsIndexBody({ locations, occurrences, staffRole = null }) {
       staffRole,
       eyebrow: 'TISA / LAYOUTS',
       title: 'El salón ya no depende de un mapa fijo.',
-      subtitle: 'Admin y operación pueden mantener layouts base por sede y preparar overrides por clase antes de abrir ventas o check-in.',
+      subtitle: 'Admin y operación pueden mantener layouts base por sede y layouts compartidos por tipo de clase.',
       content,
       footerActionLabel: 'Ventas asistidas',
       footerActionHref: '/admin/assisted-sales',
@@ -818,13 +820,14 @@ function renderSeatSelectionBody({
   messageType = 'error',
 }) {
   const intensity = getAgendaIntensityMeta(occurrence.classType.intensity);
-  const layout = getSeatLayout(occurrence.layoutJson, occurrence.capacity);
+  const occurrenceLayoutJson = getOccurrenceLayoutJson(occurrence);
+  const layout = getSeatLayout(occurrenceLayoutJson, occurrence.capacity);
   const occupiedSet = new Set((occupiedSeatCodes || []).map((value) => String(value)));
   const enabledSeats = layout.seats.filter((seat) => seat.enabled && seat.bookable);
   const availableCount = enabledSeats.filter((seat) => !occupiedSet.has(seat.id)).length;
-  const selectedSummary = formatSeatLabels(selectedSeatCodes, occurrence.layoutJson, occurrence.capacity);
+  const selectedSummary = formatSeatLabels(selectedSeatCodes, occurrenceLayoutJson, occurrence.capacity);
   const seatMapHtml = renderSeatMapMarkup({
-    layoutJson: occurrence.layoutJson,
+    layoutJson: occurrenceLayoutJson,
     fallbackCapacity: occurrence.capacity,
     occupiedSeatIds: occupiedSeatCodes,
     selectedSeatCodes,
@@ -944,7 +947,7 @@ function renderAssistedSalesBody({
   const selectedOccurrence = occurrences.find((occurrence) => occurrence.id === form.occurrenceId) || occurrences[0] || null;
   const selectedSeatCodes = parseSeatCodesInput(form.seatCodesText || '');
   const selectedSeatLabels = selectedOccurrence
-    ? formatSeatLabels(selectedSeatCodes, selectedOccurrence.layoutJson, selectedOccurrence.capacity)
+    ? formatSeatLabels(selectedSeatCodes, getOccurrenceLayoutJson(selectedOccurrence), selectedOccurrence.capacity)
     : '';
 
   return `<section class="section">
@@ -2625,7 +2628,7 @@ export function createApp({ prisma }) {
     const qrDataUrl = booking.qrPayload && booking.qrSignature
       ? await QRCode.toDataURL(JSON.stringify({ ...parseJson(booking.qrPayload, {}), signature: booking.qrSignature }))
       : null;
-    const seatSummary = describeReservedSeats(booking.reservedSeats, booking.classOccurrence.layoutJson, booking.classOccurrence.capacity);
+    const seatSummary = describeReservedSeats(booking.reservedSeats, getOccurrenceLayoutJson(booking.classOccurrence), booking.classOccurrence.capacity);
     const seatLabels = seatSummary.map((seat) => seat.label).join(', ');
 
     const body = `<section class="section">
@@ -2851,28 +2854,29 @@ export function createApp({ prisma }) {
   });
 
   app.get('/admin/layouts', requireStaff, requireRole('ADMIN', 'OPS'), async (req, res) => {
-    const [locations, occurrences] = await Promise.all([
+    const [locations, classTypes] = await Promise.all([
       prisma.locations.findMany({
         where: { isActive: true },
         orderBy: { name: 'asc' },
       }),
-      prisma.class_occurrences.findMany({
-        where: {
-          status: { not: 'CANCELLED' },
-          startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) },
-        },
+      prisma.class_types.findMany({
         include: {
-          classType: true,
-          location: true,
+          classes: {
+            where: {
+              status: { not: 'CANCELLED' },
+              startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) },
+            },
+            orderBy: { startsAt: 'asc' },
+            take: 20,
+          },
         },
-        orderBy: { startsAt: 'asc' },
-        take: 24,
+        orderBy: { name: 'asc' },
       }),
     ]);
 
     const body = renderLayoutsIndexBody({
       locations,
-      occurrences,
+      classTypes,
       staffRole: req.session.staffRole,
     });
     res.send(renderLayout({
@@ -2933,41 +2937,50 @@ export function createApp({ prisma }) {
     res.redirect(`/admin/layouts/${location.id}`);
   });
 
-  app.get('/admin/class-layouts/:occurrenceId', requireStaff, requireRole('ADMIN', 'OPS'), async (req, res) => {
-    const occurrence = await prisma.class_occurrences.findUnique({
-      where: { id: req.params.occurrenceId },
+  app.get('/admin/class-layouts/:classTypeId', requireStaff, requireRole('ADMIN', 'OPS'), async (req, res) => {
+    const classType = await prisma.class_types.findUnique({
+      where: { id: req.params.classTypeId },
       include: {
-        classType: true,
-        trainer: true,
-        location: true,
-        bookings: {
-          where: {
-            OR: [
-              { status: { in: ['PAID', 'CHECKED_IN'] } },
-              { status: { in: OPEN_RESERVATION_STATUSES }, expiresAt: { gt: new Date() } },
-            ],
+        classes: {
+          where: { status: { not: 'CANCELLED' } },
+          include: {
+            location: true,
+            bookings: {
+              where: {
+                OR: [
+                  { status: { in: ['PAID', 'CHECKED_IN'] } },
+                  { status: { in: OPEN_RESERVATION_STATUSES }, expiresAt: { gt: new Date() } },
+                ],
+              },
+              select: { id: true },
+            },
           },
-          select: { id: true },
+          orderBy: { startsAt: 'asc' },
         },
       },
     });
-    if (!occurrence) return res.status(404).send(renderError('Clase no encontrada.'));
+    if (!classType) {
+      const occurrence = await prisma.class_occurrences.findUnique({ where: { id: req.params.classTypeId } });
+      if (occurrence) return res.redirect(`/admin/class-layouts/${occurrence.classTypeId}`);
+      return res.status(404).send(renderError('Tipo de clase no encontrado.'));
+    }
 
-    const baseLayout = parseLayoutJson(occurrence.location.layoutJson, occurrence.capacity);
-    const layout = parseLayoutJson(occurrence.layoutJson || baseLayout, occurrence.capacity);
-    const structureLocked = occurrence.bookings.length > 0;
+    const sampleOccurrence = classType.classes[0] || null;
+    const fallbackCapacity = sampleOccurrence?.capacity || 18;
+    const baseLayout = parseLayoutJson(sampleOccurrence?.location?.layoutJson, fallbackCapacity);
+    const layout = parseLayoutJson(classType.layoutJson || sampleOccurrence?.layoutJson || baseLayout, fallbackCapacity);
+    const structureLocked = classType.classes.some((occurrence) => occurrence.bookings.length > 0);
     const body = renderLayoutEditorBody({
-      title: `Layout de clase · ${occurrence.classType.name}`,
-      kicker: 'TISA / OVERRIDE POR CLASE',
-      subtitle: 'Este snapshot lo usan la selección pública, ventas asistidas y check-in de esta clase.',
+      title: `Layout de tipo · ${classType.name}`,
+      kicker: 'TISA / LAYOUT POR TIPO',
+      subtitle: 'Este layout lo comparten todos los horarios creados para este tipo de clase.',
       staffRole: req.session.staffRole,
       details: `
-        <div><span>Clase</span><strong>${esc(occurrence.classType.name)}</strong></div>
-        <div><span>Horario</span><strong>${dayjs(occurrence.startsAt).format('DD MMM YYYY · HH:mm')}</strong></div>
-        <div><span>Sede</span><strong>${esc(occurrence.location.name)}</strong></div>
+        <div><span>Tipo</span><strong>${esc(classType.name)}</strong></div>
+        <div><span>Horarios activos</span><strong>${classType.classes.length}</strong></div>
         <div><span>Estado</span><strong>${structureLocked ? 'Bloqueado por reservas activas' : 'Editable'}</strong></div>
       `,
-      savePath: `/admin/class-layouts/${occurrence.id}`,
+      savePath: `/admin/class-layouts/${classType.id}`,
       backPath: '/admin/layouts',
       layout,
       baseLayout,
@@ -2976,7 +2989,7 @@ export function createApp({ prisma }) {
     });
 
     res.send(renderLayout({
-      title: 'Editar Layout de Clase',
+      title: 'Editar Layout de Tipo',
       body,
       staff: req.session.staffName,
       staffRole: req.session.staffRole,
@@ -2984,50 +2997,67 @@ export function createApp({ prisma }) {
     }));
   });
 
-  app.post('/admin/class-layouts/:occurrenceId', requireStaff, requireRole('ADMIN', 'OPS'), async (req, res) => {
-    const occurrence = await prisma.class_occurrences.findUnique({
-      where: { id: req.params.occurrenceId },
+  app.post('/admin/class-layouts/:classTypeId', requireStaff, requireRole('ADMIN', 'OPS'), async (req, res) => {
+    const classType = await prisma.class_types.findUnique({
+      where: { id: req.params.classTypeId },
       include: {
-        location: true,
-        bookings: {
-          where: {
-            OR: [
-              { status: { in: ['PAID', 'CHECKED_IN'] } },
-              { status: { in: OPEN_RESERVATION_STATUSES }, expiresAt: { gt: new Date() } },
-            ],
+        classes: {
+          where: { status: { not: 'CANCELLED' } },
+          include: {
+            location: true,
+            bookings: {
+              where: {
+                OR: [
+                  { status: { in: ['PAID', 'CHECKED_IN'] } },
+                  { status: { in: OPEN_RESERVATION_STATUSES }, expiresAt: { gt: new Date() } },
+                ],
+              },
+              select: { id: true },
+            },
           },
-          select: { id: true },
+          orderBy: { startsAt: 'asc' },
         },
       },
     });
-    if (!occurrence) return res.status(404).send(renderError('Clase no encontrada.'));
+    if (!classType) return res.status(404).send(renderError('Tipo de clase no encontrado.'));
 
-    const currentLayout = parseLayoutJson(occurrence.layoutJson || occurrence.location.layoutJson, occurrence.capacity);
+    const sampleOccurrence = classType.classes[0] || null;
+    const fallbackCapacity = sampleOccurrence?.capacity || 18;
+    const currentLayout = parseLayoutJson(classType.layoutJson || sampleOccurrence?.layoutJson || sampleOccurrence?.location?.layoutJson, fallbackCapacity);
     const rawLayout = parseJson(req.body.layoutJson);
     if (!rawLayout) return res.status(400).send(renderError('El layout recibido no es JSON válido.'));
-    const nextLayout = parseLayoutJson(rawLayout, occurrence.capacity);
-    const structureLocked = occurrence.bookings.length > 0;
+    const nextLayout = parseLayoutJson(rawLayout, fallbackCapacity);
+    const structureLocked = classType.classes.some((occurrence) => occurrence.bookings.length > 0);
 
-    if (structureLocked && hasStructuralSeatChanges(currentLayout, nextLayout, occurrence.capacity)) {
-      return res.status(409).send(renderError('La clase ya tiene reservas activas. Solo puedes mover la instructora en este punto.'));
+    if (structureLocked && hasStructuralSeatChanges(currentLayout, nextLayout, fallbackCapacity)) {
+      return res.status(409).send(renderError('Este tipo de clase ya tiene reservas activas. Solo puedes mover la instructora en este punto.'));
     }
 
-    const occupiedSeatIds = await getActiveSeatCodes(prisma, occurrence.id);
-    const nextCapacity = structureLocked ? occurrence.capacity : getLayoutCapacity(nextLayout, occurrence.capacity);
-    const nextAvailableSlots = structureLocked
-      ? occurrence.availableSlots
-      : Math.max(nextCapacity - occupiedSeatIds.length, 0);
+    const serializedLayout = serializeLayout(nextLayout);
+    await prisma.$transaction(async (tx) => {
+      await tx.class_types.update({
+        where: { id: classType.id },
+        data: { layoutJson: serializedLayout },
+      });
 
-    await prisma.class_occurrences.update({
-      where: { id: occurrence.id },
-      data: {
-        layoutJson: serializeLayout(nextLayout),
-        capacity: nextCapacity,
-        availableSlots: nextAvailableSlots,
-      },
+      if (!structureLocked) {
+        const nextCapacity = getLayoutCapacity(nextLayout, fallbackCapacity);
+        await tx.class_occurrences.updateMany({
+          where: {
+            classTypeId: classType.id,
+            status: { not: 'CANCELLED' },
+            startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) },
+          },
+          data: {
+            capacity: nextCapacity,
+            availableSlots: nextCapacity,
+            layoutJson: null,
+          },
+        });
+      }
     });
 
-    res.redirect(`/admin/class-layouts/${occurrence.id}`);
+    res.redirect(`/admin/class-layouts/${classType.id}`);
   });
 
   app.get('/admin/dashboard', requireStaff, requireRole('ADMIN'), async (req, res) => {
@@ -3272,12 +3302,16 @@ export function createApp({ prisma }) {
     if (!startsAt.isValid()) return res.status(400).send(renderError('Fecha u hora inválida.'));
     if (startsAt.isBefore(dayjs().subtract(5, 'minute'))) return res.status(400).send(renderError('No se puede crear una clase en el pasado.'));
 
-    const location = await prisma.locations.findUnique({ where: { id: locationId } });
+    const [location, classType] = await Promise.all([
+      prisma.locations.findUnique({ where: { id: locationId } }),
+      prisma.class_types.findUnique({ where: { id: classTypeId } }),
+    ]);
     if (!location) return res.status(404).send(renderError('Sede no encontrada.'));
+    if (!classType) return res.status(404).send(renderError('Tipo de clase no encontrado.'));
 
     let occurrenceLayout;
     try {
-      occurrenceLayout = createOccurrenceLayoutSnapshot(location.layoutJson || createDefaultLayout(capacity), capacity);
+      occurrenceLayout = createOccurrenceLayoutSnapshot(classType.layoutJson || location.layoutJson || createDefaultLayout(capacity), capacity);
     } catch (error) {
       return res.status(400).send(renderError(error.message || 'No se pudo preparar el layout para esta clase.'));
     }
@@ -3296,7 +3330,7 @@ export function createApp({ prisma }) {
         availableSlots: derivedCapacity,
         unitPriceCents: Math.round(unitPriceMxn * 100),
         status: 'SCHEDULED',
-        layoutJson: serializeLayout(occurrenceLayout),
+        layoutJson: null,
       },
     });
 
@@ -3445,7 +3479,7 @@ export function createApp({ prisma }) {
       await tx.checkins.create({ data: { bookingId: booking.id, staffId: req.session.staffId, method: 'QR_CAMERA_OR_MANUAL' } });
     });
 
-    const seatLabels = describeReservedSeats(booking.reservedSeats, booking.classOccurrence.layoutJson, booking.classOccurrence.capacity)
+    const seatLabels = describeReservedSeats(booking.reservedSeats, getOccurrenceLayoutJson(booking.classOccurrence), booking.classOccurrence.capacity)
       .map((seat) => seat.label)
       .join(', ');
 

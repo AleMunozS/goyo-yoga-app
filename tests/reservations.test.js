@@ -99,6 +99,7 @@ async function seedBaseData() {
       durationMin: 60,
       intensity: 'Media',
       colorHex: '#7a6a54',
+      layoutJson: serializeLayout(createDefaultLayout(18)),
     },
   });
 
@@ -371,8 +372,8 @@ test('layout background upload accepts images and rejects non-images', { concurr
   assert.match(badPayload.error, /imagen|JPG|PNG|WebP/i);
 });
 
-test('admin class layout save recalculates capacity when the class has no active reservations', { concurrency: false }, async () => {
-  const { soonOccurrence } = await seedBaseData();
+test('admin class type layout save recalculates capacity for future occurrences without active reservations', { concurrency: false }, async () => {
+  const { classType, soonOccurrence } = await seedBaseData();
   const sessionCookie = await loginAs('admin@test.local', 'admin1234');
   const nextLayout = JSON.parse(serializeLayout(createDefaultLayout(18)));
   nextLayout.seats = nextLayout.seats.map((seat) => (seat.id === 'seat-e3' ? { ...seat, enabled: false } : seat));
@@ -386,7 +387,7 @@ test('admin class layout save recalculates capacity when the class has no active
     opacity: 0.58,
   };
 
-  const response = await request(`/admin/class-layouts/${soonOccurrence.id}`, {
+  const response = await request(`/admin/class-layouts/${classType.id}`, {
     method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
@@ -397,14 +398,15 @@ test('admin class layout save recalculates capacity when the class has no active
   });
 
   assert.equal(response.status, 302);
+  const updatedClassType = await prisma.class_types.findUnique({ where: { id: classType.id } });
   const updatedOccurrence = await prisma.class_occurrences.findUnique({ where: { id: soonOccurrence.id } });
   assert.equal(updatedOccurrence.capacity, 17);
   assert.equal(updatedOccurrence.availableSlots, 17);
-  assert.deepEqual(parseLayoutJson(updatedOccurrence.layoutJson, 18).background, nextLayout.background);
+  assert.deepEqual(parseLayoutJson(updatedClassType.layoutJson, 18).background, nextLayout.background);
 });
 
 test('admin class layout save blocks structural seat edits after an active reservation exists', { concurrency: false }, async () => {
-  const { soonOccurrence } = await seedBaseData();
+  const { classType, soonOccurrence } = await seedBaseData();
   await createDraftReservation(prisma, {
     occurrenceId: soonOccurrence.id,
     seatCodes: ['A1'],
@@ -417,7 +419,7 @@ test('admin class layout save blocks structural seat edits after an active reser
   const nextLayout = JSON.parse(serializeLayout(createDefaultLayout(18)));
   nextLayout.seats = nextLayout.seats.map((seat) => (seat.id === 'seat-a2' ? { ...seat, x: seat.x + 96 } : seat));
 
-  const response = await request(`/admin/class-layouts/${soonOccurrence.id}`, {
+  const response = await request(`/admin/class-layouts/${classType.id}`, {
     method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
@@ -432,7 +434,7 @@ test('admin class layout save blocks structural seat edits after an active reser
 });
 
 test('admin class layout save blocks background edits after an active reservation exists', { concurrency: false }, async () => {
-  const { soonOccurrence } = await seedBaseData();
+  const { classType, soonOccurrence } = await seedBaseData();
   await createDraftReservation(prisma, {
     occurrenceId: soonOccurrence.id,
     seatCodes: ['A1'],
@@ -453,7 +455,7 @@ test('admin class layout save blocks background edits after an active reservatio
     opacity: 0.6,
   };
 
-  const response = await request(`/admin/class-layouts/${soonOccurrence.id}`, {
+  const response = await request(`/admin/class-layouts/${classType.id}`, {
     method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
@@ -487,7 +489,7 @@ test('ops layouts workspace hides admin-only navigation links', { concurrency: f
 });
 
 test('booking and admin layout pages render mat markup and persisted background metadata', { concurrency: false }, async () => {
-  const { soonOccurrence } = await seedBaseData();
+  const { classType, soonOccurrence } = await seedBaseData();
   const layout = createDefaultLayout(18);
   layout.background = {
     assetUrl: '/static/uploads/layouts/render-room.png',
@@ -498,8 +500,8 @@ test('booking and admin layout pages render mat markup and persisted background 
     scale: 0.9,
     opacity: 0.55,
   };
-  await prisma.class_occurrences.update({
-    where: { id: soonOccurrence.id },
+  await prisma.class_types.update({
+    where: { id: classType.id },
     data: { layoutJson: serializeLayout(layout) },
   });
 
@@ -512,7 +514,7 @@ test('booking and admin layout pages render mat markup and persisted background 
   assert.match(bookingHtml, /render-room\.png/);
 
   const sessionCookie = await loginAs('admin@test.local', 'admin1234');
-  const editorResponse = await request(`/admin/class-layouts/${soonOccurrence.id}`, {
+  const editorResponse = await request(`/admin/class-layouts/${classType.id}`, {
     headers: { cookie: sessionCookie },
   });
   assert.equal(editorResponse.status, 200);

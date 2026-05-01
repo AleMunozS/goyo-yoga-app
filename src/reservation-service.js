@@ -8,6 +8,7 @@ import {
   describeReservedSeats,
   formatSeatLabels,
   getLayoutCapacity,
+  getOccurrenceLayoutJson,
   validateSeatSelection,
 } from './seats.js';
 
@@ -91,7 +92,7 @@ function aggregateByOccurrence(bookings) {
 }
 
 function parseSeatSummary(booking) {
-  return describeReservedSeats(booking.reservedSeats, booking.classOccurrence.layoutJson, booking.classOccurrence.capacity);
+  return describeReservedSeats(booking.reservedSeats, getOccurrenceLayoutJson(booking.classOccurrence), booking.classOccurrence.capacity);
 }
 
 async function getReservationOrThrow(prisma, reservationId) {
@@ -188,7 +189,7 @@ async function finalizePaidReservation(prisma, reservation, payment, baseUrl, pa
   const qrSignature = signPayload(qrPayload, QR_SECRET);
   const seatLabels = formatSeatLabels(
     reservation.reservedSeats.map((seat) => seat.seatId || seat.seatLabelSnapshot || seat.seatCode),
-    reservation.classOccurrence.layoutJson,
+    getOccurrenceLayoutJson(reservation.classOccurrence),
     reservation.classOccurrence.capacity,
   );
 
@@ -413,10 +414,11 @@ export async function createDraftReservation(prisma, input) {
       throw new ReservationError('CLASS_CANCELLED', 'La clase fue cancelada.', 409);
     }
 
+    const occurrenceLayoutJson = getOccurrenceLayoutJson(occurrence);
     const occupiedSeatCodes = await getActiveSeatCodes(tx, occurrence.id, now);
     const validation = validateSeatSelection({
       seatCodes: input.seatCodes,
-      layoutJson: occurrence.layoutJson,
+      layoutJson: occurrenceLayoutJson,
       occupiedSeatIds: occupiedSeatCodes,
       fallbackCapacity: occurrence.capacity,
     });
@@ -425,7 +427,7 @@ export async function createDraftReservation(prisma, input) {
       throw new ReservationError('INVALID_SEAT_SELECTION', validation.message, 409);
     }
 
-    const derivedCapacity = getLayoutCapacity(occurrence.layoutJson, occurrence.capacity);
+    const derivedCapacity = getLayoutCapacity(occurrenceLayoutJson, occurrence.capacity);
     if (occurrence.capacity !== derivedCapacity || occurrence.availableSlots > derivedCapacity) {
       await tx.class_occurrences.update({
         where: { id: occurrence.id },
@@ -595,7 +597,7 @@ export async function createCheckoutSessionForReservation(prisma, input) {
           unit_amount: reservation.totalCents,
           product_data: {
             name: `${reservation.classOccurrence.classType.name} · ${dayjs(reservation.classOccurrence.startsAt).format('DD MMM · HH:mm')}`,
-            description: `Lugares ${formatSeatLabels(seatCodes, reservation.classOccurrence.layoutJson, reservation.classOccurrence.capacity)}`,
+            description: `Lugares ${formatSeatLabels(seatCodes, getOccurrenceLayoutJson(reservation.classOccurrence), reservation.classOccurrence.capacity)}`,
           },
         },
       },

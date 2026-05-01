@@ -269,6 +269,10 @@ export function getSeatLayout(layoutJson, fallbackCapacity = DEFAULT_LAYOUT_BLUE
   };
 }
 
+export function getOccurrenceLayoutJson(occurrence) {
+  return occurrence?.classType?.layoutJson || occurrence?.layoutJson || occurrence?.location?.layoutJson || null;
+}
+
 export function getLayoutCapacity(layoutJson, fallbackCapacity = DEFAULT_LAYOUT_BLUEPRINT.length) {
   return getSeatLayout(layoutJson, fallbackCapacity).seats.filter((seat) => seat.bookable && seat.enabled).length;
 }
