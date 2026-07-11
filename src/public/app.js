@@ -1,6 +1,7 @@
 (() => {
   const simBanner = document.querySelector('.sim-banner');
-  const siteHeader = document.querySelector('.site-header');
+  const siteHeader = document.querySelector('.site-header, .classes-site-header, .seat-floorplan-header');
+  const classesToolbar = document.querySelector('.classes-toolbar');
   const themeColor = (name, fallback) => {
     const value = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     return value || fallback;
@@ -9,9 +10,11 @@
   const syncFixedChromeOffset = () => {
     const simBannerHeight = simBanner ? simBanner.getBoundingClientRect().height : 0;
     const siteHeaderHeight = siteHeader ? siteHeader.getBoundingClientRect().height : 0;
+    const classesToolbarHeight = classesToolbar ? classesToolbar.getBoundingClientRect().height : 0;
     const totalOffset = simBannerHeight + siteHeaderHeight;
     document.documentElement.style.setProperty('--sim-banner-height', `${simBannerHeight}px`);
     document.documentElement.style.setProperty('--site-header-height', `${siteHeaderHeight}px`);
+    document.documentElement.style.setProperty('--classes-toolbar-height', `${classesToolbarHeight}px`);
     document.documentElement.style.setProperty('--fixed-chrome-offset', `${totalOffset}px`);
   };
 
@@ -44,6 +47,169 @@
     }
 
     el.addEventListener('click', () => scrollToTarget(target));
+  });
+
+  const setupResponsiveMenu = (toggle, menu, selectors) => {
+    if (!toggle || !menu) return;
+    const setOpen = (open) => {
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.classList.toggle('is-open', open);
+      menu.classList.toggle('is-open', open);
+    };
+
+    toggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    menu.addEventListener('click', (event) => {
+      if (event.target.closest('a, button')) setOpen(false);
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!menu.classList.contains('is-open')) return;
+      if (event.target.closest(selectors)) return;
+      setOpen(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    });
+  };
+
+  setupResponsiveMenu(
+    document.querySelector('[data-classes-menu-toggle]'),
+    document.querySelector('[data-classes-menu]'),
+    '[data-classes-menu], [data-classes-menu-toggle]',
+  );
+  setupResponsiveMenu(
+    document.querySelector('[data-nav-menu-toggle]'),
+    document.querySelector('[data-nav-menu]'),
+    '[data-nav-menu], [data-nav-menu-toggle]',
+  );
+
+  const mobileDaySticky = document.querySelector('[data-classes-day-sticky]');
+  if (mobileDaySticky) {
+    const titleTarget = mobileDaySticky.querySelector('[data-classes-day-sticky-title]');
+    const metaTarget = mobileDaySticky.querySelector('[data-classes-day-sticky-meta]');
+    const markers = Array.from(document.querySelectorAll('[data-classes-day-marker]'));
+    const mobileQuery = window.matchMedia('(max-width: 760px)');
+
+    const setActiveMarker = (marker) => {
+      if (!marker || !titleTarget || !metaTarget) return;
+      titleTarget.textContent = marker.dataset.dayTitle || titleTarget.textContent;
+      metaTarget.textContent = marker.dataset.dayMeta || metaTarget.textContent;
+      markers.forEach((item) => item.classList.toggle('is-current-mobile-day', item === marker));
+    };
+
+    const getProbeY = () => {
+      const styles = window.getComputedStyle(document.documentElement);
+      const chrome = parseFloat(styles.getPropertyValue('--fixed-chrome-offset')) || 0;
+      return chrome + mobileDaySticky.getBoundingClientRect().height + 18;
+    };
+
+    const syncMobileDaySticky = () => {
+      if (!mobileQuery.matches || markers.length === 0) {
+        mobileDaySticky.classList.remove('is-visible');
+        return;
+      }
+
+      const probeY = getProbeY();
+      let active = markers.find((marker) => {
+        const rect = marker.getBoundingClientRect();
+        return rect.top <= probeY && rect.bottom > probeY;
+      });
+
+      if (!active) {
+        active = markers
+          .map((marker) => ({ marker, distance: Math.abs(marker.getBoundingClientRect().top - probeY) }))
+          .sort((a, b) => a.distance - b.distance)[0]?.marker;
+      }
+
+      setActiveMarker(active);
+      const board = document.getElementById('classes-editorial-grid');
+      const boardRect = board?.getBoundingClientRect();
+      mobileDaySticky.classList.toggle('is-visible', Boolean(boardRect && boardRect.top < window.innerHeight && boardRect.bottom > probeY));
+    };
+
+    let stickyFrame = 0;
+    const scheduleStickySync = () => {
+      if (stickyFrame) return;
+      stickyFrame = window.requestAnimationFrame(() => {
+        stickyFrame = 0;
+        syncMobileDaySticky();
+      });
+    };
+
+    if ('IntersectionObserver' in window) {
+      const markerObserver = new IntersectionObserver(scheduleStickySync, {
+        root: null,
+        rootMargin: '-18% 0px -58% 0px',
+        threshold: [0, 0.1, 0.35, 0.7, 1],
+      });
+      markers.forEach((marker) => markerObserver.observe(marker));
+    }
+
+    window.addEventListener('scroll', scheduleStickySync, { passive: true });
+    window.addEventListener('resize', scheduleStickySync);
+    mobileQuery.addEventListener?.('change', scheduleStickySync);
+    syncMobileDaySticky();
+  }
+
+  if (window.location.hash === '#classes-editorial-grid') {
+    requestAnimationFrame(() => {
+      scrollToTarget('classes-editorial-grid');
+    });
+    window.setTimeout(() => {
+      scrollToTarget('classes-editorial-grid');
+    }, 350);
+  }
+
+  const classesScrollKey = 'tisa:classes-scroll';
+  const classesPath = `${window.location.pathname}${window.location.search}`;
+  const isClassesPage = document.body.classList.contains('classes-editorial-page');
+  const saveClassesScroll = () => {
+    if (!isClassesPage) return;
+    try {
+      window.sessionStorage.setItem(
+        classesScrollKey,
+        JSON.stringify({ path: classesPath, y: Math.max(0, Math.round(window.scrollY)), savedAt: Date.now() }),
+      );
+    } catch {
+      // Browsers can block storage in strict privacy modes.
+    }
+  };
+
+  if (isClassesPage) {
+    try {
+      const saved = JSON.parse(window.sessionStorage.getItem(classesScrollKey) || 'null');
+      const canRestore = saved
+        && saved.path === classesPath
+        && Number.isFinite(saved.y)
+        && Date.now() - Number(saved.savedAt || 0) < 30 * 60 * 1000;
+      if (canRestore) {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: Math.max(0, saved.y), behavior: 'auto' });
+        });
+      }
+    } catch {
+      // Ignore malformed storage and keep native browser behavior.
+    }
+  }
+
+  document.querySelectorAll('a[data-preserve-classes-scroll]').forEach((link) => {
+    link.addEventListener('click', () => {
+      saveClassesScroll();
+      try {
+        const url = new URL(link.href, window.location.origin);
+        if (url.origin === window.location.origin && url.pathname === '/booking/seats') {
+          url.searchParams.set('returnTo', `${classesPath}#classes-editorial-grid`);
+          link.href = url.toString();
+        }
+      } catch {
+        // Keep the original href if URL parsing fails.
+      }
+    });
   });
 
   const intro = document.getElementById('landing-intro');
@@ -255,8 +421,15 @@
     const seatInputs = Array.from(seatForm.querySelectorAll('input[name="seatCodes"]'));
     const countLabel = document.getElementById('seat-selection-count');
     const summaryLabel = document.getElementById('seat-selection-summary');
+    const totalLabel = document.getElementById('seat-selection-total');
+    const submitButton = document.getElementById('seat-selection-submit');
+    const chipsList = document.getElementById('seat-selection-chips');
+    const clearButton = document.getElementById('seat-selection-clear');
     const seatViewport = seatForm.querySelector('[data-seat-viewport]');
     const seatCanvas = seatForm.querySelector('[data-seat-canvas]');
+    const maxSeats = Number.parseInt(seatForm.dataset.maxSeats || '2', 10) || 2;
+    const unitPriceCents = Number.parseInt(seatForm.dataset.unitPriceCents || '0', 10) || 0;
+    const formatMoney = (cents) => `MXN ${(cents / 100).toLocaleString('es-MX')}`;
 
     const updateSeatSummary = () => {
       const selected = seatInputs.filter((input) => input.checked);
@@ -268,22 +441,67 @@
         option.classList.toggle('is-available', !input.checked);
       });
       if (countLabel) {
-        countLabel.textContent = `${selected.length} de 2 lugares elegidos`;
+        countLabel.textContent = selected.length
+          ? `${selected.length} de ${maxSeats} lugares elegidos`
+          : 'Elige tu lugar';
       }
       if (summaryLabel) {
-        summaryLabel.textContent = labels.length ? `Lugares elegidos: ${labels.join(', ')}` : 'Elige uno o dos lugares para continuar con calma.';
+        summaryLabel.textContent = labels.length
+          ? `Lugares elegidos: ${labels.join(', ')}. Revisa tus datos y continúa al pago.`
+          : `Primero toca los tapetes disponibles en el mapa. Puedes elegir hasta ${maxSeats} lugares.`;
+      }
+      if (chipsList) {
+        chipsList.replaceChildren();
+        if (!labels.length) {
+          const empty = document.createElement('span');
+          empty.className = 'is-empty';
+          empty.textContent = 'Sin lugares seleccionados';
+          chipsList.appendChild(empty);
+        } else {
+          labels.forEach((label) => {
+            const chip = document.createElement('span');
+            chip.textContent = label;
+            chipsList.appendChild(chip);
+          });
+        }
+      }
+      if (totalLabel) {
+        totalLabel.textContent = selected.length ? formatMoney(unitPriceCents * selected.length) : formatMoney(0);
+      }
+      if (submitButton) {
+        submitButton.disabled = selected.length === 0;
+        submitButton.textContent = selected.length === 0
+          ? 'Elige un lugar para continuar'
+          : selected.length === 1
+          ? 'Continuar al pago'
+          : `Continuar con ${selected.length} lugares`;
+      }
+      if (clearButton) {
+        clearButton.disabled = selected.length === 0;
       }
     };
 
     seatInputs.forEach((input) => {
       input.addEventListener('change', () => {
         const selected = seatInputs.filter((item) => item.checked);
-        if (selected.length > 2) {
+        if (selected.length > maxSeats) {
           input.checked = false;
+          if (summaryLabel) {
+            summaryLabel.textContent = `Puedes elegir máximo ${maxSeats} lugares por reservación.`;
+          }
         }
         updateSeatSummary();
       });
     });
+
+    if (clearButton) {
+      clearButton.addEventListener('click', () => {
+        seatInputs.forEach((input) => {
+          input.checked = false;
+        });
+        updateSeatSummary();
+      });
+    }
 
     if (seatViewport && seatCanvas) {
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -505,6 +723,86 @@
 
     updateSeatSummary();
   }
+
+  const previewModal = document.getElementById('class-preview-modal');
+  if (previewModal) {
+    const frame = previewModal.querySelector('[data-class-preview-frame]');
+    const openPreview = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (frame && !frame.getAttribute('src')) frame.setAttribute('src', frame.dataset.src || '');
+      if (typeof previewModal.showModal === 'function') previewModal.showModal();
+      else previewModal.setAttribute('open', '');
+    };
+    const closePreview = () => {
+      if (typeof previewModal.close === 'function') previewModal.close();
+      else previewModal.removeAttribute('open');
+      if (frame) frame.setAttribute('src', '');
+    };
+
+    document.querySelectorAll('[data-class-preview-video]').forEach((trigger) => {
+      trigger.addEventListener('click', openPreview);
+      trigger.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') openPreview(event);
+      });
+    });
+
+    previewModal.querySelectorAll('[data-class-preview-close]').forEach((button) => {
+      button.addEventListener('click', closePreview);
+    });
+    previewModal.addEventListener('click', (event) => {
+      if (event.target === previewModal) closePreview();
+    });
+    previewModal.addEventListener('cancel', () => {
+      if (frame) frame.setAttribute('src', '');
+    });
+  }
+
+  document.querySelectorAll('[data-support-chat-form]').forEach((form) => {
+    const log = form.querySelector('[data-support-chat-log]');
+    const textarea = form.querySelector('textarea[name="message"]');
+    const button = form.querySelector('button[type="submit"]');
+    const appendMessage = (who, text) => {
+      if (!log) return;
+      const item = document.createElement('p');
+      const strong = document.createElement('strong');
+      const span = document.createElement('span');
+      strong.textContent = who;
+      span.textContent = text;
+      item.append(strong, span);
+      log.appendChild(item);
+      log.scrollTop = log.scrollHeight;
+    };
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const message = textarea?.value.trim();
+      if (!message) return;
+      appendMessage('Tú', message);
+      if (textarea) textarea.value = '';
+      if (button) {
+        button.disabled = true;
+        button.textContent = 'Respondiendo...';
+      }
+
+      try {
+        const response = await fetch('/api/support/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message }),
+        });
+        const data = await response.json();
+        appendMessage('Asistente TISA', data.reply || data.error || 'No pude responder en este momento.');
+      } catch {
+        appendMessage('Asistente TISA', 'No pude conectar con el asistente. Revisa tu referencia y contacta al equipo de TISA.');
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = 'Preguntar';
+        }
+      }
+    });
+  });
 
   const layoutPayload = document.getElementById('layout-editor-payload');
   if (layoutPayload && window.Konva) {

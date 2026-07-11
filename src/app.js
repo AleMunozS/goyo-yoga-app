@@ -167,6 +167,13 @@ function buildSeatSelectionUrl(occurrenceId, params = {}) {
   return `/booking/seats?${search.toString()}`;
 }
 
+function normalizeReturnTo(value, fallback = '/classes#classes-editorial-grid') {
+  const rawValue = String(value || '').trim();
+  if (!rawValue || rawValue.startsWith('//') || /^[a-z][a-z0-9+.-]*:/i.test(rawValue)) return fallback;
+  if (!rawValue.startsWith('/')) return fallback;
+  return rawValue.slice(0, 360);
+}
+
 function formatCurrency(cents, currency = 'MXN') {
   return `${String(currency || 'MXN').toUpperCase()} ${(Number(cents || 0) / 100).toLocaleString('es-MX')}`;
 }
@@ -184,6 +191,183 @@ function parseSeatCodesInput(value) {
 
 function safeJsonForHtml(value) {
   return JSON.stringify(value).replace(/</g, '\\u003c');
+}
+
+const CLASS_PREVIEW_VIDEO = {
+  title: 'Muestra de práctica TISA',
+  source: 'YouTube',
+  embedUrl: 'https://www.youtube-nocookie.com/embed/S6PQeVpmSfY?rel=0&modestbranding=1',
+  watchUrl: 'https://www.youtube.com/watch?v=S6PQeVpmSfY',
+};
+
+const SUPPORT_FAQS = [
+  {
+    question: '¿Qué hago si no encuentro mi boleto?',
+    answer: 'Revisa el correo usado al pagar y busca la referencia de TISA. Si no aparece, escribe tu correo y nombre en el chat de ayuda para ubicar tu reserva.',
+  },
+  {
+    question: '¿Puedo cambiar mi lugar?',
+    answer: 'Antes de pagar puedes volver al mapa y elegir otro tapete. Después del pago, el equipo debe revisar disponibilidad para evitar dobles reservas.',
+  },
+  {
+    question: '¿Cuánto dura el apartado?',
+    answer: 'Tu lugar se sostiene durante 10 minutos mientras completas el pago. Si el tiempo vence, el tapete vuelve a estar disponible.',
+  },
+  {
+    question: '¿Qué pasa si el pago no se confirma?',
+    answer: 'La página de checkout te indicará si puedes reintentar. Si tu banco muestra un cargo pero TISA no confirmó el QR, contacta al equipo con tu referencia.',
+  },
+];
+
+function renderIconInfo(label = 'Ver muestra') {
+  return `
+    <button class="classes-event-video" type="button" aria-label="${esc(label)}" data-class-preview-video data-tooltip="${esc(label)}">
+      <span aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M9 7.8v8.4L16.2 12 9 7.8Z"></path>
+        </svg>
+      </span>
+    </button>
+  `;
+}
+
+function renderClassPreviewModal() {
+  return `
+    <dialog class="class-preview-modal" id="class-preview-modal" aria-labelledby="class-preview-title">
+      <div class="class-preview-modal__card">
+        <button class="class-preview-modal__close" type="button" data-class-preview-close aria-label="Cerrar muestra">Cerrar</button>
+        <div class="class-preview-modal__copy">
+          <p class="classes-kicker">Muestra de actividad</p>
+          <h2 id="class-preview-title">${esc(CLASS_PREVIEW_VIDEO.title)}</h2>
+          <p>Video de referencia para que puedas ver el ritmo, movimiento y ambiente general antes de reservar.</p>
+          <a class="class-preview-modal__link" href="${esc(CLASS_PREVIEW_VIDEO.watchUrl)}" target="_blank" rel="noopener noreferrer">Abrir video en ${esc(CLASS_PREVIEW_VIDEO.source)}</a>
+        </div>
+        <div class="class-preview-modal__video">
+          <iframe
+            title="${esc(CLASS_PREVIEW_VIDEO.title)}"
+            data-class-preview-frame
+            src=""
+            data-src="${esc(CLASS_PREVIEW_VIDEO.embedUrl)}"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </div>
+    </dialog>
+  `;
+}
+
+function renderCustomerHelpSection({ compact = false } = {}) {
+  const faqMarkup = SUPPORT_FAQS.map(
+    (item) => `
+      <details class="support-faq-item">
+        <summary>${esc(item.question)}</summary>
+        <p>${esc(item.answer)}</p>
+      </details>
+    `,
+  ).join('');
+
+  return `
+    <section class="support-section ${compact ? 'is-compact' : ''}" id="ayuda">
+      <div class="support-section__intro">
+        <p class="classes-kicker">Ayuda y boletos</p>
+        <h2>¿Problemas con tus boletos o dudas antes de reservar?</h2>
+        <p>Revisa respuestas rápidas o escribe una pregunta. Si hay llave de OpenAI en el servidor, responde el asistente; si no, te guía con información local de TISA.</p>
+      </div>
+      <div class="support-section__grid">
+        <div class="support-faq-list">
+          ${faqMarkup}
+        </div>
+        <form class="support-chat" data-support-chat-form>
+          <div class="support-chat__log" data-support-chat-log aria-live="polite">
+            <p><strong>Asistente TISA</strong><span>Hola. Puedo ayudarte con agenda, lugares, pagos, QR y problemas con boletos.</span></p>
+          </div>
+          <label class="support-chat__field">
+            <span>Tu pregunta</span>
+            <textarea name="message" rows="3" maxlength="420" placeholder="Ej. pagué pero no veo mi QR..." required></textarea>
+          </label>
+          <button class="btn" type="submit">Preguntar</button>
+          <p class="support-chat__note">Para casos de cobro bancario, conserva tu referencia y correo de pago.</p>
+        </form>
+      </div>
+    </section>
+  `;
+}
+
+function getLocalSupportAnswer(message) {
+  const normalized = String(message || '').toLowerCase();
+  const matches = SUPPORT_FAQS.filter((item) => {
+    const haystack = `${item.question} ${item.answer}`.toLowerCase();
+    return normalized.split(/\s+/).filter((word) => word.length > 3).some((word) => haystack.includes(word));
+  });
+  const selected = matches[0] || SUPPORT_FAQS[0];
+  return `${selected.answer} Si necesitas que el equipo lo revise, comparte tu nombre, correo de pago y referencia de reserva.`;
+}
+
+function extractOpenAIText(responseJson) {
+  if (typeof responseJson?.output_text === 'string' && responseJson.output_text.trim()) return responseJson.output_text.trim();
+  const chunks = [];
+  for (const item of responseJson?.output || []) {
+    for (const content of item.content || []) {
+      if (content.type === 'output_text' && content.text) chunks.push(content.text);
+      if (content.type === 'text' && content.text) chunks.push(content.text);
+    }
+  }
+  return chunks.join('\n').trim();
+}
+
+async function createSupportAssistantReply(message) {
+  const cleanMessage = String(message || '').trim().slice(0, 420);
+  if (!cleanMessage) return { reply: 'Escribe tu duda para poder orientarte.', poweredBy: 'local' };
+
+  const codexSupportUrl = String(process.env.CODEX_SUPPORT_URL || '').trim();
+  if (codexSupportUrl) {
+    try {
+      const response = await fetch(codexSupportUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: cleanMessage }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.reply) return { reply: String(data.reply), poweredBy: 'codex' };
+      }
+    } catch (error) {
+      console.error('[support] codex assistant failed', error);
+    }
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY || '';
+  if (!apiKey) return { reply: getLocalSupportAnswer(cleanMessage), poweredBy: 'local' };
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL || 'gpt-5-mini',
+        instructions:
+          'Eres el asistente de TISA, un estudio de regulación corporal. Responde en español mexicano, breve, cálido y útil. Ayuda solo con agenda, clases, lugares, pagos, QR, boletos y dudas del estudio. No inventes políticas; si requiere revisión humana, pide nombre, correo de pago y referencia. No des consejo médico.',
+        input: cleanMessage,
+        reasoning: { effort: 'low' },
+        text: { verbosity: 'low' },
+        store: false,
+      }),
+    });
+
+    if (!response.ok) return { reply: getLocalSupportAnswer(cleanMessage), poweredBy: 'local' };
+    const data = await response.json();
+    const openAiReply = extractOpenAIText(data);
+    return openAiReply
+      ? { reply: openAiReply, poweredBy: 'openai' }
+      : { reply: getLocalSupportAnswer(cleanMessage), poweredBy: 'local' };
+  } catch (error) {
+    console.error('[support] assistant failed', error);
+    return { reply: getLocalSupportAnswer(cleanMessage), poweredBy: 'local' };
+  }
 }
 
 function createOccurrenceLayoutSnapshot(layoutJson, requestedCapacity) {
@@ -615,6 +799,15 @@ const SPANISH_DAY_NAMES_SHORT = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sá
 const SPANISH_MONTH_NAMES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const SPANISH_MONTH_NAMES_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const AGENDA_INTENSITY_ORDER = ['Suave', 'Baja', 'Media/Alta'];
+const AGENDA_SERVICE_ORDER = [
+  'Yoga Inmersivo',
+  'Yoga Clasico Rooftop',
+  'Meditación',
+  'Meditación Rooftop',
+  'Head Spa',
+  'Yoga Facial',
+  'Noche Tisa',
+];
 
 function capitalizeLabel(value) {
   if (!value) return '';
@@ -648,6 +841,162 @@ function getAgendaIntensityMeta(value) {
     },
   };
   return tones[label] || tones.Suave;
+}
+
+function sortAgendaServices(a, b) {
+  const aIndex = AGENDA_SERVICE_ORDER.indexOf(a.name);
+  const bIndex = AGENDA_SERVICE_ORDER.indexOf(b.name);
+  if (aIndex !== -1 || bIndex !== -1) {
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
+  }
+  return a.name.localeCompare(b.name, 'es-MX');
+}
+
+function getClassTypePriceCents(classType, occurrences = []) {
+  const firstOccurrencePrice = occurrences.find((occurrence) => occurrence.classTypeId === classType.id)?.unitPriceCents;
+  if (Number.isFinite(firstOccurrencePrice)) return firstOccurrencePrice;
+  const productPrice = classType.ticketProducts?.find((product) => product.active !== false)?.priceCents;
+  return Number.isFinite(productPrice) ? productPrice : 0;
+}
+
+function getClassTypeCapacity(classType, occurrences = []) {
+  const firstOccurrenceCapacity = occurrences.find((occurrence) => occurrence.classTypeId === classType.id)?.capacity;
+  if (Number.isFinite(firstOccurrenceCapacity)) return firstOccurrenceCapacity;
+  return getLayoutCapacity(classType.layoutJson, 0);
+}
+
+function formatAgendaSlotLabel(start, end) {
+  return `${dayjs(start).format('HH:mm')}-${dayjs(end).format('HH:mm')}`;
+}
+
+function getAgendaServiceClass(classType) {
+  const slug = String(classType?.slug || classType?.name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  return slug ? `is-service-${slug}` : '';
+}
+
+function renderAgendaServiceIcon(className = '') {
+  if (className.includes('rooftop')) {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v2.4M12 17.6V20M4 12h2.4M17.6 12H20M6.35 6.35l1.7 1.7M15.95 15.95l1.7 1.7M17.65 6.35l-1.7 1.7M8.05 15.95l-1.7 1.7"/><path d="M8 13.2a4.2 4.2 0 1 1 8 0"/><path d="M5.5 15.5c2.2-1.2 4.3-1.2 6.5 0s4.3 1.2 6.5 0"/></svg>`;
+  }
+  if (className.includes('meditacion')) {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6c-2.3 2.1-3.1 4.7-2.4 7.6 1.6-.5 2.7-1.5 3.4-3 .7 1.5 1.8 2.5 3.4 3 .7-2.9-.1-5.5-2.4-7.6"/><path d="M7.5 14.2c-2.1.6-3.5 1.8-4.1 3.7 2.8.5 5-.1 6.7-1.7M16.5 16.2c1.7 1.6 3.9 2.2 6.7 1.7-.6-1.9-2-3.1-4.1-3.7"/><path d="M6 20h12"/></svg>`;
+  }
+  if (className.includes('head-spa')) {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4c-3.2 4.2-4.8 7.2-4.8 9.2a4.8 4.8 0 0 0 9.6 0C16.8 11.2 15.2 8.2 12 4Z"/><path d="M8.4 14.6c2 1.4 4.1 1.4 6.3 0"/></svg>`;
+  }
+  if (className.includes('facial')) {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8c0-2.2 1.8-4 4-4s4 1.8 4 4v2.4c0 3.3-1.7 5.8-4 7.6-2.3-1.8-4-4.3-4-7.6V8Z"/><path d="M9.5 9.5h.01M14.5 9.5h.01M10 13.7c1.3.8 2.7.8 4 0"/></svg>`;
+  }
+  if (className.includes('noche')) {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.8 15.8A7 7 0 0 1 8.2 6.2 7.5 7.5 0 1 0 17.8 15.8Z"/></svg>`;
+  }
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-2.4 2.2-3.4 4.9-3 8 2-.5 3.4-1.7 4.2-3.6.8 1.9 2.2 3.1 4.2 3.6.4-3.1-.6-5.8-3-8"/><path d="M12 4v16M5 15c2.5 2.8 4.8 4.2 7 4.2s4.5-1.4 7-4.2"/></svg>`;
+}
+
+function buildReferenceAgendaSlots(day) {
+  return Array.from({ length: 15 }, (_, index) => {
+    const start = dayjs(day).hour(6).minute(30).second(0).millisecond(0).add(index, 'hour');
+    const end = index === 14 ? start.add(30, 'minute') : start.add(1, 'hour');
+    const key = formatAgendaSlotLabel(start, end);
+    return {
+      key,
+      startsAt: start.toDate(),
+      endsAt: end.toDate(),
+      isBreak: key === '13:30-14:30',
+    };
+  });
+}
+
+function renderClassesTimetable({ days, classesByDay, classTypes, classes }) {
+  const serviceRows = [...classTypes].sort(sortAgendaServices);
+  if (serviceRows.length === 0) return '';
+
+  const activeDays = days.filter((day) => (classesByDay.get(day.format('YYYY-MM-DD')) || []).length > 0);
+  const renderedDays = activeDays.length ? activeDays : days;
+
+  const daySections = renderedDays
+    .map((day) => {
+      const dayKey = day.format('YYYY-MM-DD');
+      const dayClasses = classesByDay.get(dayKey) || [];
+      const experienceCards = serviceRows
+        .map((classType) => {
+          const occurrencesForType = dayClasses
+            .filter((occurrence) => occurrence.classTypeId === classType.id)
+            .sort((a, b) => dayjs(a.startsAt).valueOf() - dayjs(b.startsAt).valueOf());
+          const priceCents = getClassTypePriceCents(classType, classes);
+          const capacity = getClassTypeCapacity(classType, classes);
+          const intensity = getAgendaIntensityMeta(classType.intensity);
+          const serviceClass = getAgendaServiceClass(classType);
+          const chips = occurrencesForType.length
+            ? occurrencesForType
+                .map((occurrence) => {
+                  const disabled = occurrence.status === 'CANCELLED' || occurrence.availableSlots <= 0;
+                  return `<a
+                    class="classes-experience-slot ${intensity.className} ${serviceClass} ${disabled ? 'is-disabled' : ''}"
+                    href="${disabled ? '#' : buildSeatSelectionUrl(occurrence.id)}"
+                    ${disabled ? '' : 'data-preserve-classes-scroll="true"'}
+                    ${disabled ? 'aria-disabled="true"' : ''}
+                  >
+                    <strong>${dayjs(occurrence.startsAt).format('HH:mm')}</strong>
+                    <span>${occurrence.availableSlots}/${occurrence.capacity} cupos</span>
+                    <small>${disabled ? 'No disponible' : 'Reservar'}</small>
+                  </a>`;
+                })
+                .join('')
+            : '<span class="classes-experience-slot is-empty"><strong>Próximamente</strong><span>Sin horario abierto</span></span>';
+          return `<article class="classes-experience-card ${intensity.className} ${serviceClass}">
+            <header class="classes-experience-card__header">
+              <div>
+                <p>${esc(intensity.description)}</p>
+                <h3>${esc(classType.name)}</h3>
+              </div>
+              <div class="classes-experience-card__meta">
+                <span>${formatCurrency(priceCents)}</span>
+                <span>Cupo ${capacity || '—'}</span>
+              </div>
+            </header>
+            ${renderIconInfo('Ver video de muestra')}
+            <p class="classes-experience-card__description">${esc(classType.description)}</p>
+            <div class="classes-experience-card__slots">${chips}</div>
+          </article>`;
+        })
+        .join('');
+
+      const dayTitle = `${formatAgendaDayName(day)} ${formatAgendaDateLabel(day)}`;
+      const dayMeta = dayClasses.length ? `${dayClasses.length} horarios para reservar` : 'Sin clases programadas';
+      return `<section
+        class="classes-timetable-day ${dayClasses.length ? '' : 'is-empty'}"
+        data-classes-day-marker
+        data-day-title="${esc(dayTitle)}"
+        data-day-meta="${esc(dayMeta)}"
+      >
+        <header class="classes-timetable-day__header">
+          <div>
+            <span>${formatAgendaDayName(day)}</span>
+            <strong>${formatAgendaDateLabel(day)}</strong>
+          </div>
+          <p>${dayMeta}</p>
+        </header>
+        ${
+          dayClasses.length
+            ? `<div class="classes-commercial-schedule" aria-label="Agenda por experiencia para ${formatAgendaDayName(day)}">${experienceCards}</div>`
+            : `<article class="classes-empty-card">
+                <span>Sin clases</span>
+                <p>Este día queda libre para una pausa más amplia o una próxima actualización de agenda.</p>
+              </article>`
+        }
+      </section>`;
+    })
+    .join('');
+
+  return `<div class="classes-timetable-stack">${daySections}</div>`;
 }
 
 function formatAgendaDayName(value) {
@@ -695,7 +1044,27 @@ function renderClassesCustomHeader() {
             <strong>Reserva clase y lugar desde una sola lectura visual.</strong>
           </div>
         </div>
-        <nav class="classes-site-nav" aria-label="Agenda TISA">
+        <button
+          class="classes-menu-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="classes-site-nav"
+          data-classes-menu-toggle
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <div class="classes-site-actions" aria-label="Accesos rápidos">
+          <a href="/staff/login" aria-label="Staff">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4.5 20c.8-4.2 3.3-6.3 7.5-6.3s6.7 2.1 7.5 6.3"/></svg>
+          </a>
+          <a href="#classes-editorial-grid" aria-label="Agenda">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>
+          </a>
+        </div>
+        <nav class="classes-site-nav" id="classes-site-nav" aria-label="Agenda TISA" data-classes-menu>
           <a href="/">Inicio</a>
           <a class="is-active" href="/classes">Agenda</a>
           <button type="button" data-scroll-target="classes-editorial-grid">Reservar</button>
@@ -707,36 +1076,34 @@ function renderClassesCustomHeader() {
 }
 
 function renderClassesCustomFooter({ view, periodStart }) {
-  const weekHref = `/classes?view=week&start=${startOfWeekMonday(periodStart).format('YYYY-MM-DD')}`;
-  const prevHref = `/classes?view=${view}&start=${(view === 'month' ? dayjs(periodStart).subtract(1, 'month') : dayjs(periodStart).subtract(7, 'day')).format('YYYY-MM-DD')}`;
-  const nextHref = `/classes?view=${view}&start=${(view === 'month' ? dayjs(periodStart).add(1, 'month') : dayjs(periodStart).add(7, 'day')).format('YYYY-MM-DD')}`;
+  const agendaHash = '#classes-editorial-grid';
+  const weekHref = `/classes?view=week&start=${startOfWeekMonday(periodStart).format('YYYY-MM-DD')}${agendaHash}`;
+  const prevHref = `/classes?view=${view}&start=${(view === 'month' ? dayjs(periodStart).subtract(1, 'month') : dayjs(periodStart).subtract(7, 'day')).format('YYYY-MM-DD')}${agendaHash}`;
+  const nextHref = `/classes?view=${view}&start=${(view === 'month' ? dayjs(periodStart).add(1, 'month') : dayjs(periodStart).add(7, 'day')).format('YYYY-MM-DD')}${agendaHash}`;
   const prevLabel = view === 'month' ? 'Mes anterior' : 'Semana anterior';
   const nextLabel = view === 'month' ? 'Mes siguiente' : 'Semana siguiente';
   return `
-    <div class="classes-mobile-dock" aria-label="Controles móviles de agenda">
-      <a class="classes-mobile-nav-arrow" href="${prevHref}" aria-label="${prevLabel}">
-        <span aria-hidden="true">&larr;</span>
-      </a>
+    <div class="classes-mobile-dock" aria-label="Navegación flotante de agenda">
       <div class="classes-mobile-dock__sheet">
         <div class="classes-mobile-dock__meta">
-          <span>${view === 'month' ? 'Vista mes' : 'Vista semana'}</span>
+          <span>${view === 'month' ? 'Estás viendo el mes' : 'Estás viendo la semana'}</span>
           <strong>${formatAgendaRangeLabel(periodStart, view)}</strong>
         </div>
         <nav class="classes-mobile-nav" aria-label="Agenda móvil">
-          <a href="/">
-            <span>Inicio</span>
+          <button type="button" data-scroll-target="classes-editorial-grid">
+            <span>Agenda</span>
+          </button>
+          <a href="${prevHref}" aria-label="${prevLabel}">
+            <span>Ant.</span>
           </a>
           <a class="${view === 'week' ? 'is-active' : ''}" href="${weekHref}">
             <span>Semana</span>
           </a>
-          <a href="/staff/login">
-            <span>Staff</span>
+          <a href="${nextHref}" aria-label="${nextLabel}">
+            <span>Sig.</span>
           </a>
         </nav>
       </div>
-      <a class="classes-mobile-nav-arrow" href="${nextHref}" aria-label="${nextLabel}">
-        <span aria-hidden="true">&rarr;</span>
-      </a>
     </div>
     <footer class="classes-site-footer">
       <div class="classes-site-footer__brand">
@@ -767,6 +1134,7 @@ function renderClassesEditorialEventCard(occurrence, { compact = false } = {}) {
       <a
         class="classes-mini-event ${intensity.className} ${isCancelled ? 'is-cancelled' : ''} ${isFull ? 'is-full' : ''}"
         href="${disabled ? '#' : buildSeatSelectionUrl(occurrence.id)}"
+        ${disabled ? '' : 'data-preserve-classes-scroll="true"'}
         ${disabled ? 'aria-disabled="true"' : ''}
       >
         <div class="classes-mini-event__topline">
@@ -783,12 +1151,14 @@ function renderClassesEditorialEventCard(occurrence, { compact = false } = {}) {
     <a
       class="classes-event-card ${intensity.className} ${isCancelled ? 'is-cancelled' : ''} ${isFull ? 'is-full' : ''}"
       href="${disabled ? '#' : buildSeatSelectionUrl(occurrence.id)}"
+      ${disabled ? '' : 'data-preserve-classes-scroll="true"'}
       ${disabled ? 'aria-disabled="true"' : ''}
     >
       <div class="classes-event-card__topline">
         <span class="classes-event-pill">${esc(intensity.label)}</span>
         <span class="classes-event-time">${startsAt.format('HH:mm')}</span>
       </div>
+      ${renderIconInfo('Ver video de muestra')}
       <h3>${esc(occurrence.classType.name)}</h3>
       <p class="classes-event-card__summary">${esc(occurrence.classType.description)}</p>
       <div class="classes-event-card__meta">
@@ -818,6 +1188,7 @@ function renderSeatSelectionBody({
   customerPhone = '',
   message = '',
   messageType = 'error',
+  returnTo = '/classes#classes-editorial-grid',
 }) {
   const intensity = getAgendaIntensityMeta(occurrence.classType.intensity);
   const occurrenceLayoutJson = getOccurrenceLayoutJson(occurrence);
@@ -825,7 +1196,11 @@ function renderSeatSelectionBody({
   const occupiedSet = new Set((occupiedSeatCodes || []).map((value) => String(value)));
   const enabledSeats = layout.seats.filter((seat) => seat.enabled && seat.bookable);
   const availableCount = enabledSeats.filter((seat) => !occupiedSet.has(seat.id)).length;
+  const unavailableCount = layout.seats.filter((seat) => !seat.enabled || !seat.bookable).length;
   const selectedSummary = formatSeatLabels(selectedSeatCodes, occurrenceLayoutJson, occurrence.capacity);
+  const selectedInitialCount = selectedSeatCodes.length;
+  const initialTotalCents = selectedInitialCount * occurrence.unitPriceCents;
+  const safeReturnTo = normalizeReturnTo(returnTo);
   const seatMapHtml = renderSeatMapMarkup({
     layoutJson: occurrenceLayoutJson,
     fallbackCapacity: occurrence.capacity,
@@ -858,20 +1233,44 @@ function renderSeatSelectionBody({
             </figure>
           </article>
         </aside>
-        <form action="/reservations/web-checkout" method="post" id="seat-selection-form" class="seat-floorplan-form">
+        <form
+          action="/reservations/web-checkout"
+          method="post"
+          id="seat-selection-form"
+          class="seat-floorplan-form"
+          data-unit-price-cents="${occurrence.unitPriceCents}"
+          data-max-seats="${MAX_SEATS_PER_BOOKING}"
+        >
           <input type="hidden" name="occurrenceId" value="${occurrence.id}" />
           <input type="hidden" name="salesChannel" value="web" />
+          <input type="hidden" name="returnTo" value="${esc(safeReturnTo)}" />
+          <article class="seat-floorplan-mobile-context ${intensity.className}">
+            <p class="seat-floorplan-eyebrow">Clase seleccionada</p>
+            <h2>${esc(occurrence.classType.name)}</h2>
+            <div class="seat-floorplan-mobile-context__meta">
+              <span>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')}</span>
+              <span>${esc(occurrence.trainer.displayName)}</span>
+              <span>${availableCount} lugares disponibles</span>
+            </div>
+          </article>
           <section class="seat-floorplan-board ${intensity.className}">
             <div class="seat-floorplan-board__header">
               <div>
-                <p class="seat-floorplan-eyebrow">Layout activo</p>
+                <p class="seat-floorplan-eyebrow">Paso 1 de 2</p>
                 <h2>Selecciona tu lugar</h2>
+                <p class="seat-floorplan-board__hint">Toca los tapetes disponibles para tu grupo. Puedes elegir varios lugares, mover el mapa con el dedo y hacer zoom si lo necesitas.</p>
               </div>
               <div class="seat-legend">
                 <span class="legend seat-available">Disponible</span>
                 <span class="legend seat-selected">Seleccionado</span>
                 <span class="legend seat-occupied">Ocupado</span>
+                ${unavailableCount ? '<span class="legend seat-disabled">No disponible</span>' : ''}
               </div>
+            </div>
+            <div class="seat-floorplan-board__status" aria-label="Disponibilidad del mapa">
+              <span><strong>${availableCount}</strong> disponibles</span>
+              <span><strong>${occupiedSet.size}</strong> ocupados</span>
+              ${unavailableCount ? `<span><strong>${unavailableCount}</strong> fuera de venta</span>` : ''}
             </div>
             <div class="seat-floorplan-board__stage">
               ${seatMapHtml}
@@ -888,6 +1287,15 @@ function renderSeatSelectionBody({
                   ${message ? `<p class="seat-inline-message">${esc(message)}</p>` : ''}
                 </div>
               </div>
+              <div class="seat-floorplan-group-helper">
+                <div>
+                  <span>Agregar varios</span>
+                  <strong>Selecciona hasta ${MAX_SEATS_PER_BOOKING} lugares por reservación.</strong>
+                  <p>El total se recalcula automáticamente conforme marcas tapetes disponibles.</p>
+                </div>
+                <div id="seat-selection-chips" class="seat-floorplan-selected-chips" aria-live="polite"></div>
+                <button type="button" id="seat-selection-clear" class="seat-floorplan-clear">Limpiar lugares</button>
+              </div>
               <div class="seat-floorplan-summary__session">
                 <div>
                   <span>Clase</span>
@@ -903,8 +1311,12 @@ function renderSeatSelectionBody({
                 </div>
                 <div>
                   <span>Total</span>
-                  <strong>MXN ${(occurrence.unitPriceCents / 100).toLocaleString('es-MX')}</strong>
+                  <strong id="seat-selection-total">MXN ${(initialTotalCents / 100).toLocaleString('es-MX')}</strong>
                 </div>
+              </div>
+              <div class="seat-floorplan-summary__next-step">
+                <span>Paso 2 de 2</span>
+                <strong>Escribe tus datos y continúa al pago seguro.</strong>
               </div>
               <div class="seat-floorplan-summary__fields">
                 <label class="form-row seat-floorplan-field">
@@ -921,13 +1333,14 @@ function renderSeatSelectionBody({
                 </label>
               </div>
               <div class="seat-floorplan-summary__actions">
-                <button class="btn" type="submit">${brand.seatSelection.cta}</button>
-                <a class="btn alt" href="/classes">Volver a la agenda</a>
+                <button class="btn" type="submit" id="seat-selection-submit">${brand.seatSelection.cta}</button>
+                <a class="btn alt" href="${esc(safeReturnTo)}">Volver a la agenda</a>
               </div>
             </article>
           </aside>
         </form>
       </div>
+      ${renderCustomerHelpSection({ compact: true })}
     </section>
   `;
 }
@@ -1112,6 +1525,16 @@ export function createApp({ prisma }) {
   app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
 
+  app.post('/api/support/chat', async (req, res) => {
+    const message = String(req.body?.message || '').trim();
+    if (!message) return res.status(400).json({ error: 'Escribe una pregunta para el asistente.' });
+    const result = await createSupportAssistantReply(message);
+    res.json({
+      reply: result.reply,
+      poweredBy: result.poweredBy,
+    });
+  });
+
   if (process.env.NODE_ENV !== 'test') {
     const expiryTimer = setInterval(() => {
       expireStaleReservations(prisma).catch((error) => {
@@ -1123,11 +1546,11 @@ export function createApp({ prisma }) {
 
   app.get('/', async (req, res) => {
     const [types, upcoming] = await Promise.all([
-      prisma.class_types.findMany({ orderBy: { name: 'asc' }, take: 4 }),
+      prisma.class_types.findMany({ orderBy: { name: 'asc' }, take: 7 }),
       prisma.class_occurrences.findMany({
         include: { classType: true, trainer: true },
         orderBy: { startsAt: 'asc' },
-        take: 4,
+        take: 7,
         where: { startsAt: { gte: new Date(dayjs().startOf('day').toISOString()) } },
       }),
     ]);
@@ -1197,8 +1620,8 @@ export function createApp({ prisma }) {
         const profile = getClassProfile(occurrence.classType.intensity);
         return {
           intensity: profile.intensity,
-          name: profile.name,
-          description: profile.description,
+          name: occurrence.classType.name,
+          description: occurrence.classType.description || profile.description,
           durationMin: occurrence.classType.durationMin || profile.durationMin,
           trainerName: occurrence.trainer.displayName,
           scheduleLabel: dayjs(occurrence.startsAt).format('DD MMM · HH:mm'),
@@ -1217,8 +1640,8 @@ export function createApp({ prisma }) {
           const profile = getClassProfile(type.intensity);
           return {
             intensity: profile.intensity,
-            name: profile.name,
-            description: profile.description,
+            name: type.name,
+            description: type.description || profile.description,
             durationMin: type.durationMin || profile.durationMin,
             trainerName: 'Equipo TISA',
             scheduleLabel: 'Agenda en actualización',
@@ -1401,23 +1824,23 @@ export function createApp({ prisma }) {
 
         <section class="landing-panel reveal landing-ops-panel">
           <div class="landing-panel-head">
-            <p class="eyebrow">OPERACIÓN COMPARTIDA</p>
-            <h2>La parte interna también responde al mismo sistema.</h2>
-            <p>Staff, trainers y operación reciben una limpieza visual inmediata para que el producto público y la operación hablen el mismo idioma.</p>
+            <p class="eyebrow">RESERVA EN TRES PASOS</p>
+            <h2>Elige tu práctica, tu lugar y confirma sin perder claridad.</h2>
+            <p>La experiencia guía a cada persona desde la agenda hasta el acceso, con información simple antes de pagar.</p>
           </div>
           <div class="landing-panel-body landing-ops-layout">
             <div class="ops-panels">
               <div class="ops-panel ops-panel--admin">
-                <span>Admin</span>
-                <strong>Lectura diaria del estudio, pagos y ocupación sin ruido visual.</strong>
+                <span>1. Práctica</span>
+                <strong>Compara intensidad, duración y disponibilidad antes de decidir.</strong>
               </div>
               <div class="ops-panel ops-panel--trainer">
-                <span>Trainer</span>
-                <strong>Agenda clara para programar, revisar reservas y sostener el ritmo del día.</strong>
+                <span>2. Lugar</span>
+                <strong>Selecciona tu tapete disponible en el mapa de la sala.</strong>
               </div>
               <div class="ops-panel ops-panel--ops">
-                <span>Check-in</span>
-                <strong>Validación rápida con respuestas legibles y consistentes con la experiencia pública.</strong>
+                <span>3. Acceso</span>
+                <strong>Confirma el pago y recibe tu acceso para llegar sin fricción.</strong>
               </div>
             </div>
           </div>
@@ -2111,20 +2534,46 @@ export function createApp({ prisma }) {
   app.get('/classes', async (req, res) => {
     const view = String(req.query.view || 'week') === 'month' ? 'month' : 'week';
     const requestedStart = req.query.start ? dayjs(String(req.query.start)) : dayjs();
-    const periodStart = view === 'month' ? dayjs(requestedStart).startOf('month') : startOfWeekMonday(requestedStart);
+    let periodStart = view === 'month' ? dayjs(requestedStart).startOf('month') : startOfWeekMonday(requestedStart);
+
+    if (!req.query.start) {
+      const nextBookableClass = await prisma.class_occurrences.findFirst({
+        where: {
+          startsAt: { gte: new Date() },
+          status: { not: 'CANCELLED' },
+          availableSlots: { gt: 0 },
+        },
+        orderBy: { startsAt: 'asc' },
+        select: { startsAt: true },
+      });
+
+      if (nextBookableClass) {
+        const nextPeriodStart = view === 'month'
+          ? dayjs(nextBookableClass.startsAt).startOf('month')
+          : startOfWeekMonday(dayjs(nextBookableClass.startsAt));
+        if (nextPeriodStart.isAfter(periodStart)) periodStart = nextPeriodStart;
+      }
+    }
+
     const periodEnd = view === 'month' ? dayjs(periodStart).endOf('month').add(7, 'day') : dayjs(periodStart).add(7, 'day');
 
-    const classes = await prisma.class_occurrences.findMany({
-      include: { classType: true, trainer: true, location: true },
-      orderBy: { startsAt: 'asc' },
-      take: 500,
-      where: {
-        startsAt: {
-          gte: new Date(periodStart.startOf('day').toISOString()),
-          lt: new Date(periodEnd.endOf('day').toISOString()),
+    const [classes, classTypes] = await Promise.all([
+      prisma.class_occurrences.findMany({
+        include: { classType: true, trainer: true, location: true },
+        orderBy: { startsAt: 'asc' },
+        take: 500,
+        where: {
+          startsAt: {
+            gte: new Date(periodStart.startOf('day').toISOString()),
+            lt: new Date(periodEnd.endOf('day').toISOString()),
+          },
         },
-      },
-    });
+      }),
+      prisma.class_types.findMany({
+        include: { ticketProducts: { where: { active: true }, orderBy: { createdAt: 'asc' } } },
+        orderBy: { name: 'asc' },
+      }),
+    ]);
     const days =
       view === 'month'
         ? Array.from({ length: 42 }, (_, i) => startOfWeekMonday(periodStart).add(i, 'day'))
@@ -2145,19 +2594,25 @@ export function createApp({ prisma }) {
       classesByDay.get(key).push(item);
     });
 
-    const typeLabels = Array.from(new Set(classes.map((item) => item.classType.name))).sort((a, b) => a.localeCompare(b, 'es-MX'));
-    const intensityLabels = Array.from(new Set(classes.map((item) => normalizeAgendaIntensity(item.classType.intensity)))).sort(
+    const orderedClassTypes = [...classTypes].sort(sortAgendaServices);
+    const typeLabels = orderedClassTypes.map((item) => item.name);
+    const intensityLabels = Array.from(new Set(classTypes.map((item) => normalizeAgendaIntensity(item.intensity)))).sort(
       (a, b) => AGENDA_INTENSITY_ORDER.indexOf(a) - AGENDA_INTENSITY_ORDER.indexOf(b),
     );
 
-    const typeChips = typeLabels.length
-      ? typeLabels.map((label) => `<span class="classes-filter-chip">${esc(label)}</span>`).join('')
+    const typeChips = orderedClassTypes.length
+      ? orderedClassTypes
+          .map((item) => {
+            const serviceClass = getAgendaServiceClass(item);
+            return `<span class="classes-filter-chip ${serviceClass}">${renderAgendaServiceIcon(serviceClass)}<span>${esc(item.name)}</span></span>`;
+          })
+          .join('')
       : '<span class="classes-filter-chip is-muted">Agenda en actualización</span>';
     const intensityChips = intensityLabels.length
       ? intensityLabels
           .map((label) => {
             const meta = getAgendaIntensityMeta(label);
-            return `<span class="classes-filter-chip ${meta.className}">${esc(meta.label)}</span>`;
+            return `<span class="classes-filter-chip ${meta.className}"><span>${esc(meta.label)}</span></span>`;
           })
           .join('')
       : '<span class="classes-filter-chip is-muted">Sin intensidades en este rango</span>';
@@ -2166,8 +2621,15 @@ export function createApp({ prisma }) {
       .map((d) => {
         const dayKey = d.format('YYYY-MM-DD');
         const dayClasses = classesByDay.get(dayKey) || [];
+        const dayTitle = `${formatAgendaDayName(d)} ${formatAgendaDateLabel(d)}`;
+        const dayMeta = dayClasses.length ? `${dayClasses.length} horarios para reservar` : 'Sin clases programadas';
         return `
-          <section class="classes-day-column ${dayjs().isSame(d, 'day') ? 'is-today' : ''}">
+          <section
+            class="classes-day-column ${dayjs().isSame(d, 'day') ? 'is-today' : ''}"
+            data-classes-day-marker
+            data-day-title="${esc(dayTitle)}"
+            data-day-meta="${esc(dayMeta)}"
+          >
             <header class="classes-day-column__header">
               <span>${formatAgendaDayName(d)}</span>
               <strong>${formatAgendaDateLabel(d)}</strong>
@@ -2187,12 +2649,21 @@ export function createApp({ prisma }) {
       })
       .join('');
 
+    const weekTimetable = renderClassesTimetable({ days, classesByDay, classTypes: orderedClassTypes, classes });
+
     const monthGrid = days
       .map((d) => {
         const dayKey = d.format('YYYY-MM-DD');
         const dayClasses = classesByDay.get(dayKey) || [];
+        const dayTitle = `${formatAgendaDayName(d)} ${formatAgendaDateLabel(d)}`;
+        const dayMeta = dayClasses.length ? `${dayClasses.length} horarios para reservar` : 'Sin clases programadas';
         return `
-          <section class="classes-month-day ${!d.isSame(periodStart, 'month') ? 'is-out-of-range' : ''} ${dayjs().isSame(d, 'day') ? 'is-today' : ''}">
+          <section
+            class="classes-month-day ${!d.isSame(periodStart, 'month') ? 'is-out-of-range' : ''} ${dayjs().isSame(d, 'day') ? 'is-today' : ''}"
+            data-classes-day-marker
+            data-day-title="${esc(dayTitle)}"
+            data-day-meta="${esc(dayMeta)}"
+          >
             <header class="classes-month-day__header">
               <span>${formatAgendaDayNameShort(d)}</span>
               <strong>${String(d.date()).padStart(2, '0')}</strong>
@@ -2236,21 +2707,30 @@ export function createApp({ prisma }) {
         </div>
         <aside class="classes-hero__aside">
           <article class="classes-spotlight-card">
-            <span>${brand.agenda.howItWorksTitle}</span>
+            <span>${firstBookableClass ? 'Próxima clase disponible' : 'Agenda en actualización'}</span>
             <strong>${firstBookableClass ? esc(firstBookableClass.classType.name) : 'Agenda en actualización'}</strong>
             <p>${
               firstBookableClass
                 ? `${formatAgendaDayName(firstBookableClass.startsAt)} ${formatAgendaDateLabel(firstBookableClass.startsAt)} · ${dayjs(firstBookableClass.startsAt).format('HH:mm')} · ${esc(firstBookableClass.trainer.displayName)}`
-                : esc(brand.agenda.howItWorksText)
+                : 'Estamos preparando nuevos horarios. Cuando haya clases activas, aquí aparecerá la primera opción para reservar.'
             }</p>
           </article>
-          <div class="classes-hero-media">
-            <figure class="classes-hero-media__portrait">
-              <img src="${brand.assets.editorialGrid}" alt="Textura editorial TISA" />
-            </figure>
-            <figure class="classes-hero-media__landscape">
-              <img src="${brand.assets.mineralSurface}" alt="Superficie mineral TISA" />
-            </figure>
+          <div class="classes-reserve-guide" aria-label="Cómo reservar">
+            <article>
+              <span>1</span>
+              <strong>Elige una fecha</strong>
+              <p>Usa semana o mes para encontrar una clase disponible.</p>
+            </article>
+            <article>
+              <span>2</span>
+              <strong>Revisa cupos</strong>
+              <p>Abre la clase y confirma intensidad, guía y precio.</p>
+            </article>
+            <article>
+              <span>3</span>
+              <strong>Reserva tu lugar</strong>
+              <p>Selecciona tapete, paga y recibe tu confirmación.</p>
+            </article>
           </div>
         </aside>
       </section>
@@ -2274,7 +2754,10 @@ export function createApp({ prisma }) {
         </div>
         <div class="classes-toolbar__actions">
           <a class="classes-toolbar-link" href="/classes?view=${view}&start=${prevStart.format('YYYY-MM-DD')}">Anterior</a>
-          <span class="classes-toolbar-range">${titleRange}</span>
+          <span class="classes-toolbar-range">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>
+            ${titleRange}
+          </span>
           <a class="classes-toolbar-link" href="/classes?view=${view}&start=${nextStart.format('YYYY-MM-DD')}">Siguiente</a>
           <a class="classes-toolbar-link ${view === 'week' ? 'is-active' : ''}" href="/classes?view=week&start=${startOfWeekMonday(periodStart).format('YYYY-MM-DD')}">Semana</a>
           <a class="classes-toolbar-link ${view === 'month' ? 'is-active' : ''}" href="/classes?view=month&start=${dayjs(periodStart).startOf('month').format('YYYY-MM-DD')}">Mes</a>
@@ -2294,12 +2777,19 @@ export function createApp({ prisma }) {
       }
 
       <section class="classes-board" id="classes-editorial-grid">
+        <div class="classes-mobile-day-sticky" data-classes-day-sticky aria-live="polite">
+          <span>Estás viendo</span>
+          <strong data-classes-day-sticky-title>${esc(firstClass ? `${formatAgendaDayName(firstClass.startsAt)} ${formatAgendaDateLabel(firstClass.startsAt)}` : titleRange)}</strong>
+          <small data-classes-day-sticky-meta>${classCount ? `${classCount} horarios en este rango` : 'Sin clases programadas'}</small>
+        </div>
         ${
           view === 'month'
             ? `<div class="classes-month-grid">${monthGrid}</div>`
-            : `<div class="classes-week-grid">${weekColumns}</div>`
+            : weekTimetable || `<div class="classes-week-grid">${weekColumns}</div>`
         }
       </section>
+      ${renderCustomerHelpSection()}
+      ${renderClassPreviewModal()}
     </section>`;
     res.send(
       renderLayout({
@@ -2308,8 +2798,6 @@ export function createApp({ prisma }) {
         simulationMode: config.simulationMode,
         bodyClass: 'classes-editorial-page',
         mainClass: 'classes-editorial-main',
-        hideDefaultHeader: true,
-        customHeaderHtml: renderClassesCustomHeader(),
         customFooterHtml: renderClassesCustomFooter({ view, periodStart }),
       }),
     );
@@ -2337,6 +2825,7 @@ export function createApp({ prisma }) {
       customerPhone: String(req.query.customerPhone || ''),
       message: req.query.error ? String(req.query.error) : '',
       messageType: 'error',
+      returnTo: normalizeReturnTo(req.query.returnTo),
     });
 
     res.send(renderLayout({
@@ -2345,8 +2834,6 @@ export function createApp({ prisma }) {
       simulationMode: config.simulationMode,
       bodyClass: 'seat-floorplan-body',
       mainClass: 'seat-floorplan-main',
-      hideDefaultHeader: true,
-      customHeaderHtml: renderSeatSelectionHeader(),
     }));
   });
 
@@ -2456,6 +2943,7 @@ export function createApp({ prisma }) {
         customerName: String(req.body.customerName || ''),
         customerEmail: String(req.body.customerEmail || ''),
         customerPhone: String(req.body.customerPhone || ''),
+        returnTo: normalizeReturnTo(req.body.returnTo),
       }));
     }
 
@@ -2482,6 +2970,7 @@ export function createApp({ prisma }) {
         customerEmail: parsed.data.customerEmail,
         customerPhone: parsed.data.customerPhone || '',
         message: error instanceof ReservationError ? error.message : 'No se pudo iniciar la reservación.',
+        returnTo: normalizeReturnTo(req.body.returnTo),
       });
       return res.status(error instanceof ReservationError ? error.status : 500).send(
         renderLayout({
@@ -2490,8 +2979,6 @@ export function createApp({ prisma }) {
           simulationMode: config.simulationMode,
           bodyClass: 'seat-floorplan-body',
           mainClass: 'seat-floorplan-main',
-          hideDefaultHeader: true,
-          customHeaderHtml: renderSeatSelectionHeader(),
         }),
       );
     }
@@ -2562,6 +3049,7 @@ export function createApp({ prisma }) {
             <div class="system-action-stack">${actionMarkup}</div>
           </article>
         </div>
+        ${renderCustomerHelpSection({ compact: true })}
       </div></section>`;
       res.send(renderLayout({ title: 'Checkout', body, simulationMode: config.simulationMode }));
     } catch (error) {
@@ -2602,6 +3090,7 @@ export function createApp({ prisma }) {
             </div>
           </article>
         </div>
+        ${renderCustomerHelpSection({ compact: true })}
       </div></section>`;
       res.send(renderLayout({ title: 'Pago cancelado', body, simulationMode: config.simulationMode }));
     } catch (error) {

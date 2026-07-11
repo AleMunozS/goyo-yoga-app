@@ -17,7 +17,7 @@ export function renderLayout({
   const isHome = title === 'Inicio' && !staff;
   const isStaffLogin = title === 'Staff Login' && !staff;
   const appName = brand.name;
-  const assetVersion = '20260422-premium-earth-theme';
+  const assetVersion = '20260619-compact-floating-nav-v7';
   const canAccessAssistedSales = staffRole === 'ADMIN' || staffRole === 'OPS';
   const canAccessLayouts = staffRole === 'ADMIN' || staffRole === 'OPS';
   const canAccessAdmin = staffRole === 'ADMIN';
@@ -25,7 +25,7 @@ export function renderLayout({
   const canAccessCheckin = staffRole === 'ADMIN' || staffRole === 'OPS';
   const nav = staff
     ? `
-      <nav class="top-nav staff-nav">
+      <nav class="top-nav staff-nav" id="site-top-nav" data-nav-menu>
         <div class="top-nav__cluster">
           ${canAccessAdmin ? '<a href="/admin/dashboard">Admin</a>' : ''}
           ${canAccessAssistedSales ? '<a href="/admin/assisted-sales">Ventas WhatsApp</a>' : ''}
@@ -41,7 +41,7 @@ export function renderLayout({
     `
     : isConceptBoard
     ? `
-      <nav class="top-nav concept-nav">
+      <nav class="top-nav concept-nav" id="site-top-nav" data-nav-menu>
         <a href="/concept-tisa-01">01</a>
         <a href="/concept-tisa-02">02</a>
         <a href="/concept-tisa-mobile">Móvil</a>
@@ -52,7 +52,7 @@ export function renderLayout({
       </nav>
     `
     : `
-      <nav class="top-nav public-nav">
+      <nav class="top-nav public-nav" id="site-top-nav" data-nav-menu>
         <a class="${isHome ? 'is-active' : ''}" href="/">Inicio</a>
         <a class="${title === 'Clases' ? 'is-active' : ''}" href="/classes">Agenda</a>
         <a class="nav-cta" href="/classes">Reservar</a>
@@ -82,6 +82,18 @@ export function renderLayout({
             height="384"
           />
         </a>
+        <button
+          class="site-menu-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="site-top-nav"
+          data-nav-menu-toggle
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
         ${nav}
       </div>
     </header>
