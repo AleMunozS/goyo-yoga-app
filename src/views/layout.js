@@ -17,7 +17,7 @@ export function renderLayout({
   const isHome = title === 'Inicio' && !staff;
   const isStaffLogin = title === 'Staff Login' && !staff;
   const appName = brand.name;
-  const assetVersion = '20260422-premium-earth-theme';
+  const assetVersion = '20260713-go-live-v1';
   const canAccessAssistedSales = staffRole === 'ADMIN' || staffRole === 'OPS';
   const canAccessLayouts = staffRole === 'ADMIN' || staffRole === 'OPS';
   const canAccessAdmin = staffRole === 'ADMIN';
@@ -25,7 +25,7 @@ export function renderLayout({
   const canAccessCheckin = staffRole === 'ADMIN' || staffRole === 'OPS';
   const nav = staff
     ? `
-      <nav class="top-nav staff-nav">
+      <nav class="top-nav staff-nav" id="site-top-nav" data-nav-menu>
         <div class="top-nav__cluster">
           ${canAccessAdmin ? '<a href="/admin/dashboard">Admin</a>' : ''}
           ${canAccessAssistedSales ? '<a href="/admin/assisted-sales">Ventas WhatsApp</a>' : ''}
@@ -41,7 +41,7 @@ export function renderLayout({
     `
     : isConceptBoard
     ? `
-      <nav class="top-nav concept-nav">
+      <nav class="top-nav concept-nav" id="site-top-nav" data-nav-menu>
         <a href="/concept-tisa-01">01</a>
         <a href="/concept-tisa-02">02</a>
         <a href="/concept-tisa-mobile">Móvil</a>
@@ -52,7 +52,7 @@ export function renderLayout({
       </nav>
     `
     : `
-      <nav class="top-nav public-nav">
+      <nav class="top-nav public-nav" id="site-top-nav" data-nav-menu>
         <a class="${isHome ? 'is-active' : ''}" href="/">Inicio</a>
         <a class="${title === 'Clases' ? 'is-active' : ''}" href="/classes">Agenda</a>
         <a class="nav-cta" href="/classes">Reservar</a>
@@ -82,6 +82,18 @@ export function renderLayout({
             height="384"
           />
         </a>
+        <button
+          class="site-menu-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="site-top-nav"
+          data-nav-menu-toggle
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
         ${nav}
       </div>
     </header>
@@ -96,6 +108,8 @@ export function renderLayout({
     <meta name="description" content="${esc(brand.metaDescription)}" />
     <meta name="theme-color" content="#F1EFE9" />
     <title>${esc(title)} | ${appName}</title>
+    <link rel="icon" href="${brand.assets.matMark}" type="image/svg+xml" />
+    <script>document.documentElement.classList.add('js');</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">

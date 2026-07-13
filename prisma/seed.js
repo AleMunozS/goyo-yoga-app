@@ -154,6 +154,10 @@ async function createUpcomingOccurrences({ location, classTypes, trainer1, train
 }
 
 async function main() {
+  if (process.env.SIMULATION_MODE === 'false') {
+    throw new Error('El seed demo es destructivo y está bloqueado cuando SIMULATION_MODE=false.');
+  }
+
   await resetDatabase();
 
   const { admin, trainer1, trainer2, ops } = await createStaffUsers();

@@ -16,6 +16,700 @@
   --fixed-chrome-offset: 0px;
 }
 
+/* /classes reference polish: filter-first schedule surface with visual service cards. */
+body.theme-tisa.classes-editorial-page {
+  background:
+    radial-gradient(circle at 6% 0%, rgba(152, 109, 79, 0.10), transparent 32%),
+    radial-gradient(circle at 92% 8%, rgba(106, 115, 70, 0.10), transparent 30%),
+    linear-gradient(180deg, #fbfaf6 0%, #f4f1e9 42%, #ece7dc 100%);
+}
+
+body.theme-tisa.classes-editorial-page .classes-editorial-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: min(100vw - 10px, 1440px);
+  padding-top: 0.55rem;
+}
+
+body.theme-tisa.classes-editorial-page .classes-hero {
+  display: none !important;
+}
+
+@media (min-width: 761px) {
+  body.theme-tisa.classes-editorial-page .classes-site-header {
+    display: none;
+  }
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-panel {
+  order: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.05rem 1.2rem;
+  border-radius: 0 0 20px 20px;
+  background: rgba(255, 252, 247, 0.82);
+  border: 1px solid rgba(85, 62, 43, 0.10);
+  box-shadow: none;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group {
+  min-width: 0;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group:first-child .classes-filter-group__label {
+  display: none;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  margin: 0 0 0.54rem;
+  color: var(--olivo-mineral);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group:last-child .classes-filter-group__label::before {
+  content: '';
+  width: 1.25rem;
+  height: 0.72rem;
+  border-top: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: skewX(-18deg);
+  opacity: 0.58;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group__chips {
+  flex-wrap: nowrap;
+  gap: 0.7rem;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.85rem;
+  padding: 0.65rem 1.05rem;
+  border-radius: 999px;
+  background: rgba(255, 252, 247, 0.9);
+  border: 1px solid rgba(85, 62, 43, 0.12);
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
+  white-space: nowrap;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-chip svg {
+  width: 1.24rem;
+  height: 1.24rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--olivo-mineral);
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-chip.is-service-yoga-inmersivo,
+body.theme-tisa.classes-editorial-page .classes-filter-chip.is-suave {
+  border-color: rgba(106, 115, 70, 0.34);
+  color: var(--bosque-seco);
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-chip.is-suave {
+  background: linear-gradient(135deg, #79845e, #63704e);
+  color: var(--text-on-dark);
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-chip.is-suave svg {
+  color: inherit;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-chip.is-media-alta {
+  color: #a15f41;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar {
+  order: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  min-height: 9rem;
+  padding: 1.35rem 1.55rem;
+  border-radius: 20px;
+  background: rgba(255, 252, 247, 0.86);
+  border: 1px solid rgba(85, 62, 43, 0.12);
+  box-shadow: 0 18px 42px rgba(60, 57, 53, 0.06);
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar__copy {
+  position: relative;
+  display: grid;
+  gap: 0.18rem;
+  padding-left: 4.7rem;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar__copy::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, rgba(219, 214, 201, 0.78), rgba(241, 239, 233, 0.78)),
+    url('/static/pexels-spa-detail.jpg');
+  background-size: cover;
+  opacity: 0.7;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar__eyebrow {
+  color: var(--olivo-mineral);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(2.65rem, 4.8vw, 4.2rem);
+  line-height: 0.9;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar__copy p:last-child {
+  margin: 0.4rem 0 0;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar__actions {
+  display: grid;
+  grid-template-columns: auto auto auto auto auto;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar-link,
+body.theme-tisa.classes-editorial-page .classes-toolbar-range {
+  min-height: 2.9rem;
+  padding: 0.72rem 1.05rem;
+  border-radius: 999px;
+  background: rgba(255, 252, 247, 0.9);
+  border-color: rgba(85, 62, 43, 0.14);
+  box-shadow: none;
+  color: var(--text-primary);
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar-range {
+  gap: 0.5rem;
+  font-weight: 900;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar-range svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar-link.is-active {
+  background: linear-gradient(135deg, #79845e, #63704e);
+  color: var(--text-on-dark);
+}
+
+body.theme-tisa.classes-editorial-page .classes-board {
+  order: 3;
+  padding: 1.35rem 1.35rem 1.8rem;
+  overflow: visible;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.72), transparent 42%),
+    rgba(241, 239, 233, 0.78);
+  border: 1px solid rgba(85, 62, 43, 0.10);
+  box-shadow: none;
+}
+
+body.theme-tisa.classes-editorial-page .classes-timetable-stack {
+  gap: 1.2rem;
+}
+
+body.theme-tisa.classes-editorial-page .classes-timetable-day {
+  padding: 0.1rem 0 0;
+}
+
+body.theme-tisa.classes-editorial-page .classes-timetable-day__header {
+  align-items: end;
+  padding: 0.2rem 0.1rem 1rem;
+}
+
+body.theme-tisa.classes-editorial-page .classes-timetable-day__header span {
+  font-size: clamp(3.2rem, 5.2vw, 4.8rem);
+}
+
+body.theme-tisa.classes-editorial-page .classes-timetable-day__header strong::before {
+  content: '';
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-right: 0.45rem;
+  border: 1.6px solid currentColor;
+  border-radius: 3px;
+  vertical-align: -0.08rem;
+  opacity: 0.72;
+}
+
+body.theme-tisa.classes-editorial-page .classes-timetable-day__header p::before {
+  content: '';
+  display: inline-block;
+  width: 0.92rem;
+  height: 0.92rem;
+  margin-right: 0.45rem;
+  border: 1.7px solid currentColor;
+  border-radius: 999px;
+  vertical-align: -0.12rem;
+  opacity: 0.72;
+}
+
+body.theme-tisa.classes-editorial-page .classes-commercial-schedule {
+  gap: 0.9rem 1rem;
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card {
+  --visual-width: clamp(4.7rem, 7vw, 6.35rem);
+  min-height: 14.1rem;
+  padding: 1.35rem 1.25rem 1.25rem calc(var(--visual-width) + 1.35rem);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 72% 20%, rgba(255, 255, 255, 0.84), transparent 36%),
+    linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(248, 246, 240, 0.97));
+  box-shadow: 0 12px 34px rgba(60, 57, 53, 0.08);
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card::before {
+  width: var(--visual-width);
+  border-radius: 18px 0 0 18px;
+  background:
+    linear-gradient(180deg, rgba(58, 63, 42, 0.08), rgba(58, 63, 42, 0.24)),
+    var(--experience-visual, url('/static/pexels-yoga-plants.jpg'));
+  background-size: cover;
+  background-position: center;
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card::after {
+  left: 1.55rem;
+  right: auto;
+  top: 1.35rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 0;
+  background: none;
+  border: 1.6px solid rgba(255, 252, 247, 0.86);
+  opacity: 0.72;
+  transform: rotate(45deg);
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-yoga-inmersivo {
+  --experience-accent: #6b7750;
+  --experience-visual: url('/static/pexels-yoga-plants.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-yoga-clasico-rooftop {
+  --experience-accent: #b96e4d;
+  --experience-visual: url('/static/pexels-rooftop-yoga.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-meditacion {
+  --experience-accent: #9f9886;
+  --experience-visual: url('/static/pexels-yoga-plants.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-meditacion-rooftop {
+  --experience-accent: #64727a;
+  --experience-visual: url('/static/pexels-rooftop-yoga.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-head-spa {
+  --experience-accent: #8e9899;
+  --experience-visual: url('/static/pexels-spa-detail.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-yoga-facial {
+  --experience-accent: #9b674a;
+  --experience-visual: url('/static/pexels-facial-spa.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-noche-tisa {
+  --experience-accent: #514a36;
+  --experience-visual: url('/static/pexels-spa-detail.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card__header {
+  padding-right: 3rem;
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card__header h3 {
+  font-size: clamp(2.15rem, 3.4vw, 3.35rem);
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card__description {
+  max-width: 52ch;
+  border-bottom: 1px solid rgba(85, 62, 43, 0.08);
+  padding-bottom: 1rem;
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card__meta span {
+  min-height: 2rem;
+  padding: 0.38rem 0.72rem;
+  color: color-mix(in srgb, var(--experience-accent, var(--arcilla)) 80%, var(--text-primary));
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-slot {
+  min-height: 3.05rem;
+  padding: 0.55rem 0.72rem;
+  border-radius: 11px;
+  background: var(--experience-accent, var(--arcilla));
+}
+
+body.theme-tisa.classes-editorial-page .classes-event-video {
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 252, 247, 0.9);
+  border-color: rgba(85, 62, 43, 0.10);
+  box-shadow: 0 8px 22px rgba(60, 57, 53, 0.10);
+}
+
+body.theme-tisa.classes-editorial-page .classes-site-actions {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  body.theme-tisa.classes-editorial-page .classes-site-header {
+    position: sticky;
+    top: 0;
+    z-index: 55;
+    background: rgba(251, 250, 246, 0.96);
+    border-bottom: 0;
+    backdrop-filter: blur(16px);
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-header__inner {
+    display: grid;
+    grid-template-columns: 3rem 1fr auto;
+    min-height: 5.55rem;
+    padding: 0.72rem 1.1rem;
+    gap: 0.85rem;
+    align-items: center;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-menu-toggle {
+    position: relative;
+    left: auto;
+    top: auto;
+    grid-column: 1;
+    grid-row: 1;
+    display: inline-grid !important;
+    width: 2.7rem;
+    height: 2.7rem;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-menu-toggle span {
+    width: 2rem;
+    height: 2px;
+    background: var(--text-primary);
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-header__lead {
+    grid-column: 2;
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-brand {
+    width: clamp(7.2rem, 34vw, 9.6rem);
+    margin: 0;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-header__meta {
+    display: none;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-actions {
+    grid-column: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.76rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-actions a {
+    display: inline-grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-actions a + a {
+    border-left: 1px solid rgba(85, 62, 43, 0.22);
+    padding-left: 0.82rem;
+    width: 3.3rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-actions svg {
+    width: 1.9rem;
+    height: 1.9rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-nav {
+    top: calc(100% + 0.35rem);
+    left: 1rem;
+    right: auto;
+    min-width: min(82vw, 20rem);
+    transform-origin: top left;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-editorial-shell {
+    width: min(100vw - 28px, 100%);
+    gap: 0.95rem;
+    padding-top: 0.95rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar {
+    order: 1;
+    grid-template-columns: 1fr;
+    min-height: 0;
+    gap: 1.15rem;
+    padding: 1.7rem 1.45rem 1.45rem;
+    border-radius: 22px;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__copy {
+    padding-left: 0;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__copy::before {
+    display: none;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar h2 {
+    font-size: clamp(2.7rem, 12vw, 3.8rem);
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar-link,
+  body.theme-tisa.classes-editorial-page .classes-toolbar-range {
+    min-height: 3.95rem;
+    padding: 0.85rem 0.8rem;
+    font-size: 1rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar-range {
+    grid-column: span 1;
+    min-width: 0;
+    font-weight: 900;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar-range svg {
+    flex: 0 0 auto;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar-link:nth-of-type(3),
+  body.theme-tisa.classes-editorial-page .classes-toolbar-link:nth-of-type(4) {
+    grid-column: span 1;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-panel {
+    order: 2;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.95rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:first-child .classes-filter-group__chips {
+    overflow-x: auto;
+    padding: 0 0.02rem 0.15rem;
+    scrollbar-width: none;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:first-child .classes-filter-group__chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:last-child {
+    padding: 1.05rem 1.1rem;
+    border-radius: 18px;
+    background: rgba(255, 252, 247, 0.86);
+    border: 1px solid rgba(85, 62, 43, 0.10);
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:last-child .classes-filter-group__chips {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-chip {
+    min-height: 3.4rem;
+    padding: 0.78rem 1rem;
+    font-size: 0.98rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:last-child .classes-filter-chip {
+    justify-content: center;
+    min-height: 3.1rem;
+    padding-inline: 0.68rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-board {
+    order: 3;
+    padding: 1.05rem 0.92rem 1.25rem;
+    border-radius: 18px;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-timetable-day__header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.45rem;
+    align-items: end;
+    padding: 0.2rem 0.12rem 1rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-timetable-day__header div {
+    min-width: 0;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-timetable-day__header span {
+    font-size: clamp(3.25rem, 15vw, 4.7rem);
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-timetable-day__header p {
+    align-self: end;
+    white-space: nowrap;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-commercial-schedule {
+    gap: 0.9rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card {
+    --visual-width: clamp(5.05rem, 22vw, 6.8rem);
+    min-height: 0;
+    padding: 1.35rem 1rem 1.15rem calc(var(--visual-width) + 1.2rem);
+    border-radius: 17px;
+    gap: 0.85rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card::before {
+    border-radius: 17px 0 0 17px;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card::after {
+    left: 1.35rem;
+    top: 1.45rem;
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__header {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 0.68rem;
+    padding-right: 0;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__header h3 {
+    font-size: clamp(2.2rem, 11vw, 3.25rem);
+    line-height: 0.95;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__meta {
+    display: grid !important;
+    justify-items: end;
+    gap: 0.48rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__meta span {
+    min-height: 2.45rem;
+    padding-inline: 0.72rem;
+    font-size: 0.78rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__description {
+    padding-bottom: 0;
+    border-bottom: 0;
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-slot {
+    min-height: 3.22rem;
+    padding: 0.64rem 0.76rem;
+    border-radius: 12px;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-slot strong {
+    font-size: 1rem;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-event-video {
+    display: none;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-mobile-day-sticky {
+    top: calc(var(--fixed-chrome-offset, 0px) + 0.42rem);
+  }
+}
+
+@media (max-width: 430px) {
+  body.theme-tisa.classes-editorial-page .classes-toolbar__actions {
+    grid-template-columns: 1fr;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar-link,
+  body.theme-tisa.classes-editorial-page .classes-toolbar-range {
+    width: 100%;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:last-child .classes-filter-group__chips {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:last-child .classes-filter-chip {
+    font-size: 0.82rem;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -949,12 +1643,17 @@ textarea {
 }
 
 .reveal {
-  opacity: 0;
-  transform: translateY(18px);
-  transition: all 0.55s ease;
+  opacity: 1;
+  transform: none;
 }
 
-.reveal.show {
+.js .reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+.js .reveal.show {
   opacity: 1;
   transform: translateY(0);
 }
@@ -5829,7 +6528,7 @@ body.classes-editorial-page {
 
 .classes-week-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(210px, 1fr));
+  grid-template-columns: repeat(7, minmax(160px, 1fr));
   gap: 0.85rem;
   align-items: start;
 }
@@ -6156,12 +6855,80 @@ body.classes-editorial-page {
 }
 
 .classes-mobile-nav {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.classes-mobile-nav a,
+.classes-mobile-nav button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0.6rem 0.45rem;
+  border-radius: 16px;
+  border: 1px solid rgba(86, 63, 46, 0.1);
+  background: rgba(255, 255, 255, 0.64);
+  color: rgba(61, 51, 45, 0.8);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.classes-mobile-nav span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.classes-mobile-nav-arrow {
   display: none;
 }
 
-.classes-mobile-dock,
-.classes-mobile-nav-arrow {
-  display: none;
+.classes-mobile-dock {
+  position: fixed;
+  left: 50%;
+  bottom: max(0.9rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 42;
+  width: min(100vw - 28px, 620px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.classes-mobile-dock__sheet {
+  display: grid;
+  grid-template-columns: minmax(9rem, 0.82fr) minmax(0, 1.18fr);
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem;
+  border-radius: 24px;
+  background: rgba(255, 248, 240, 0.94);
+  border: 1px solid rgba(86, 63, 46, 0.1);
+  box-shadow: 0 -12px 30px rgba(48, 31, 23, 0.13);
+  backdrop-filter: blur(18px);
+}
+
+.classes-mobile-dock__meta {
+  min-width: 0;
+  display: grid;
+  gap: 0.08rem;
+  padding-left: 0.35rem;
+}
+
+.classes-mobile-dock__meta span,
+.classes-mobile-dock__meta strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (max-width: 1180px) {
@@ -7373,6 +8140,10 @@ body.classes-editorial-page {
   align-items: start;
 }
 
+.seat-floorplan-mobile-context {
+  display: none;
+}
+
 .seat-floorplan-board {
   padding: 1.25rem;
   background:
@@ -7388,10 +8159,42 @@ body.classes-editorial-page {
   margin-bottom: 1rem;
 }
 
+.seat-floorplan-board__hint {
+  max-width: 44rem;
+  margin: 0.55rem 0 0;
+  line-height: 1.55;
+  color: rgba(241, 239, 233, 0.78);
+}
+
 .seat-floorplan-board__header .seat-legend {
   margin: 0;
   justify-content: flex-end;
-  max-width: 16rem;
+  max-width: 19rem;
+}
+
+.seat-floorplan-board__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+}
+
+.seat-floorplan-board__status span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.2rem;
+  padding: 0.5rem 0.72rem;
+  border-radius: 999px;
+  background: rgba(241, 239, 233, 0.09);
+  border: 1px solid rgba(241, 239, 233, 0.12);
+  color: rgba(241, 239, 233, 0.74);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.seat-floorplan-board__status strong {
+  margin-right: 0.28rem;
+  color: var(--text-on-dark);
 }
 
 .seat-floorplan-board__stage {
@@ -7435,10 +8238,95 @@ body.classes-editorial-page {
   background: rgba(137, 145, 127, 0.28);
 }
 
+.seat-floorplan-group-helper {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.9rem;
+  border-radius: 22px;
+  background: rgba(245, 241, 233, 0.78);
+  border: 1px solid rgba(104, 112, 93, 0.12);
+}
+
+.seat-floorplan-group-helper span {
+  display: block;
+  margin-bottom: 0.22rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(98, 103, 88, 0.76);
+}
+
+.seat-floorplan-group-helper strong {
+  display: block;
+  line-height: 1.35;
+  color: #3d3a33;
+}
+
+.seat-floorplan-group-helper p {
+  margin: 0.35rem 0 0;
+  line-height: 1.45;
+  color: rgba(45, 53, 42, 0.68);
+}
+
+.seat-floorplan-selected-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  min-height: 2.2rem;
+}
+
+.seat-floorplan-selected-chips > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  min-width: 2.2rem;
+  margin: 0;
+  padding: 0.34rem 0.62rem;
+  border-radius: 999px;
+  background: #8f6548;
+  color: #f8f6f0;
+  border: 1px solid rgba(85, 62, 43, 0.14);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.seat-floorplan-selected-chips > span.is-empty {
+  width: 100%;
+  justify-content: flex-start;
+  background: rgba(255, 255, 255, 0.62);
+  color: rgba(61, 51, 45, 0.62);
+  border-color: rgba(104, 112, 93, 0.1);
+}
+
+.seat-floorplan-clear {
+  appearance: none;
+  min-height: 2.45rem;
+  padding: 0.62rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(85, 62, 43, 0.14);
+  background: rgba(255, 255, 255, 0.72);
+  color: #3d3a33;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.seat-floorplan-clear:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
 .seat-floorplan-summary__session {
-  display: none;
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.85rem 1rem;
+  margin-top: 1rem;
   padding: 1rem 1.1rem;
   border-radius: 1.25rem;
   background:
@@ -7465,6 +8353,30 @@ body.classes-editorial-page {
   margin-top: 1rem;
   display: grid;
   gap: 0.75rem;
+}
+
+.seat-floorplan-summary__next-step {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 20px;
+  background: rgba(219, 214, 201, 0.44);
+  border: 1px solid rgba(60, 57, 53, 0.10);
+}
+
+.seat-floorplan-summary__next-step span {
+  display: block;
+  margin-bottom: 0.28rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-olive);
+}
+
+.seat-floorplan-summary__next-step strong {
+  display: block;
+  line-height: 1.35;
+  color: var(--text-primary);
 }
 
 .seat-floorplan-field {
@@ -7530,7 +8442,7 @@ body.classes-editorial-page {
 }
 
 .seat-floorplan-page .seat-map-viewport {
-  height: min(64vh, 780px);
+  height: min(58vh, 700px);
   border-radius: 28px;
   border: 1px solid rgba(104, 112, 93, 0.1);
   contain: layout paint;
@@ -7644,11 +8556,24 @@ body.classes-editorial-page {
 }
 
 .seat-floorplan-page .legend {
-  padding: 0.7rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.15rem;
+  padding: 0.55rem 0.72rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.76);
   border: 1px solid rgba(104, 112, 93, 0.08);
   color: rgba(84, 92, 75, 0.82);
+}
+
+.seat-floorplan-page .legend::before {
+  content: '';
+  width: 0.58rem;
+  height: 0.58rem;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.86;
 }
 
 .seat-floorplan-page .seat-available {
@@ -7661,6 +8586,10 @@ body.classes-editorial-page {
 
 .seat-floorplan-page .seat-occupied {
   background: rgba(224, 214, 199, 0.92);
+}
+
+.seat-floorplan-page .seat-disabled {
+  background: rgba(179, 171, 155, 0.58);
 }
 
 .studio-workspace-section.section {
@@ -7983,12 +8912,17 @@ body.classes-editorial-page {
   }
 
   .seat-floorplan-page.section {
-    padding: 0.75rem;
+    width: calc(100vw - 24px);
+    padding: 0.75rem 0;
     padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+    overflow-x: hidden;
   }
 
   .seat-floorplan-app {
     gap: 0.8rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .seat-floorplan-sidebar {
@@ -7997,7 +8931,46 @@ body.classes-editorial-page {
 
   .seat-floorplan-form {
     order: 1;
-    display: block;
+    display: grid;
+    gap: 0.8rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .seat-floorplan-mobile-context {
+    display: grid;
+    gap: 0.65rem;
+    padding: 1rem;
+    border-radius: 26px;
+    background: linear-gradient(180deg, rgba(246, 243, 238, 0.98), rgba(241, 239, 233, 0.98));
+    border: 1px solid rgba(60, 57, 53, 0.10);
+    box-shadow: 0 16px 34px rgba(85, 62, 43, 0.08);
+  }
+
+  .seat-floorplan-mobile-context h2 {
+    margin: 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 9vw, 2.8rem);
+    line-height: 0.96;
+  }
+
+  .seat-floorplan-mobile-context__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .seat-floorplan-mobile-context__meta span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.42rem 0.68rem;
+    border-radius: 999px;
+    background: rgba(219, 214, 201, 0.54);
+    border: 1px solid rgba(60, 57, 53, 0.08);
+    font-size: 0.82rem;
+    font-weight: 700;
   }
 
   .seat-floorplan-sidebar__card,
@@ -8019,7 +8992,7 @@ body.classes-editorial-page {
   }
 
   .seat-floorplan-board {
-    padding: 1rem;
+    padding: 0.95rem;
   }
 
   .seat-floorplan-board__header {
@@ -8027,13 +9000,32 @@ body.classes-editorial-page {
     align-items: start;
   }
 
+  .seat-floorplan-board__hint {
+    margin-top: 0.45rem;
+    font-size: 0.94rem;
+  }
+
   .seat-floorplan-board__header .seat-legend {
     justify-content: start;
     max-width: none;
+    gap: 0.42rem;
+  }
+
+  .seat-floorplan-board__status {
+    margin-bottom: 0.75rem;
+    gap: 0.42rem;
+  }
+
+  .seat-floorplan-board__status span,
+  .seat-floorplan-page .legend {
+    min-height: 1.95rem;
+    padding: 0.42rem 0.58rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
   }
 
   .seat-floorplan-page .seat-map-viewport {
-    height: min(58dvh, 34rem);
+    height: min(50dvh, 29rem);
     touch-action: none;
   }
 
@@ -8061,9 +9053,9 @@ body.classes-editorial-page {
     z-index: 5;
     display: grid;
     gap: 0.9rem;
-    margin-top: -1.35rem;
+    margin-top: 0;
     padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
-    border-radius: 2rem 2rem 1.5rem 1.5rem;
+    border-radius: 1.65rem;
     box-shadow: 0 24px 52px rgba(111, 93, 72, 0.16);
     backdrop-filter: blur(18px);
   }
@@ -8074,7 +9066,7 @@ body.classes-editorial-page {
   }
 
   .seat-floorplan-summary__top h3 {
-    font-size: 1.45rem;
+    font-size: 1.75rem;
   }
 
   .seat-floorplan-summary__top p:last-child {
@@ -8093,7 +9085,7 @@ body.classes-editorial-page {
   }
 
   .seat-floorplan-summary__actions {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 0.6rem;
     margin-top: 0.25rem;
   }
@@ -8338,6 +9330,9 @@ body.theme-tisa .btn[aria-disabled="true"] {
   border-color: rgba(179, 171, 155, 0.4);
   color: rgba(241, 239, 233, 0.82);
   opacity: 1;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 body.theme-tisa input,
@@ -8709,13 +9704,68 @@ body.theme-tisa .landing-panel {
 
 body.theme-tisa .landing-band {
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-  gap: 1rem;
+  grid-template-columns: minmax(300px, 0.74fr) minmax(0, 1.26fr);
+  align-items: stretch;
+  gap: 0.9rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 86% 18%, rgba(148, 103, 75, 0.10), transparent 24%),
+    linear-gradient(180deg, rgba(229, 225, 214, 0.60), rgba(241, 239, 233, 0.94));
+}
+
+body.theme-tisa .landing-band-lead {
+  display: grid;
+  align-content: center;
+  gap: 0.8rem;
+  min-height: 360px;
+  padding: clamp(1.15rem, 2vw, 1.7rem);
+  background: rgba(248, 246, 240, 0.94);
+  box-shadow: none;
+}
+
+body.theme-tisa .landing-band-lead h2 {
+  max-width: 12.5ch;
+  font-size: clamp(2.45rem, 3vw, 3.55rem);
+  line-height: 0.98;
+}
+
+body.theme-tisa .landing-band-lead p:not(.eyebrow) {
+  max-width: 34rem;
+  color: var(--text-muted);
+}
+
+body.theme-tisa .landing-band-body {
+  min-width: 0;
+  align-content: stretch;
+}
+
+body.theme-tisa .landing-practice-carousel {
+  align-content: stretch;
+  gap: 0.7rem;
+}
+
+body.theme-tisa .landing-carousel-toolbar {
+  min-height: 2.8rem;
+  align-items: center;
+}
+
+body.theme-tisa .landing-carousel-controls {
+  gap: 0.5rem;
+}
+
+body.theme-tisa .landing-practice-carousel .landing-carousel-track {
+  gap: 0.85rem;
+}
+
+body.theme-tisa .landing-practice-carousel .landing-carousel-track > * {
+  flex: 0 0 clamp(500px, 44vw, 650px);
 }
 
 body.theme-tisa .landing-carousel-button {
-  border: 1px solid var(--border-default);
-  background: rgba(241, 239, 233, 0.96);
+  width: 2.72rem;
+  height: 2.72rem;
+  border: 1px solid rgba(85, 62, 43, 0.18);
+  background: rgba(248, 246, 240, 0.96);
   color: var(--accent-primary);
   box-shadow: none;
 }
@@ -8730,7 +9780,7 @@ body.theme-tisa .landing-practice-topline {
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
-  align-items: start;
+  align-items: center;
 }
 
 body.theme-tisa .tag,
@@ -8750,6 +9800,25 @@ body.theme-tisa .status-pill {
 body.theme-tisa .landing-practice-schedule,
 body.theme-tisa .experience-detail {
   color: var(--text-muted);
+}
+
+body.theme-tisa .landing-practice-card {
+  min-height: 360px;
+  padding: clamp(1.15rem, 1.7vw, 1.45rem);
+  background:
+    linear-gradient(180deg, rgba(248, 246, 240, 0.84), rgba(229, 225, 214, 0.62));
+}
+
+body.theme-tisa .landing-practice-card h3 {
+  max-width: 14ch;
+  font-size: clamp(2.15rem, 2.5vw, 2.85rem);
+  line-height: 1;
+}
+
+body.theme-tisa .landing-practice-card p {
+  max-width: 42rem;
+  font-size: 1rem;
+  line-height: 1.55;
 }
 
 body.theme-tisa .landing-practice-card.is-suave {
@@ -8790,6 +9859,7 @@ body.theme-tisa .classes-filter-chip.is-media-alta {
 
 body.theme-tisa .landing-practice-info {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.55rem;
   margin-top: 1rem;
   padding-top: 0.9rem;
@@ -8797,14 +9867,25 @@ body.theme-tisa .landing-practice-info {
 }
 
 body.theme-tisa .landing-practice-info-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.8rem;
-  align-items: baseline;
+  display: grid;
+  align-content: start;
+  gap: 0.24rem;
+  min-height: 4.25rem;
+  padding: 0.72rem 0.75rem;
+  border-radius: 16px;
+  background: rgba(241, 239, 233, 0.68);
+  border: 1px solid rgba(85, 62, 43, 0.08);
 }
 
 body.theme-tisa .landing-practice-info-row span {
+  display: block;
+  font-size: 0.82rem;
   color: var(--text-muted);
+}
+
+body.theme-tisa .landing-practice-info-row strong {
+  display: block;
+  line-height: 1.25;
 }
 
 body.theme-tisa .landing-practice-actions {
@@ -9340,6 +10421,10 @@ body.theme-tisa .seat-floorplan-page .seat-occupied {
   background: rgba(179, 171, 155, 0.72);
 }
 
+body.theme-tisa .seat-floorplan-page .seat-disabled {
+  background: rgba(179, 171, 155, 0.48);
+}
+
 body.staff-login-page {
   background:
     radial-gradient(circle at top left, rgba(124, 118, 81, 0.16), transparent 18%),
@@ -9458,6 +10543,109 @@ body.staff-login-page .staff-surface-row--ops::before {
   background: var(--arcilla);
 }
 
+body.theme-tisa .landing-ops-panel {
+  background:
+    radial-gradient(circle at 92% 12%, rgba(124, 118, 81, 0.10), transparent 22%),
+    linear-gradient(180deg, rgba(246, 243, 238, 0.98), rgba(241, 239, 233, 0.98));
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-card);
+}
+
+body.theme-tisa .landing-ops-panel h2,
+body.theme-tisa .landing-ops-panel .eyebrow,
+body.theme-tisa .landing-ops-panel strong {
+  color: var(--text-primary);
+}
+
+body.theme-tisa .landing-ops-panel p {
+  color: var(--text-muted);
+}
+
+body.theme-tisa .landing-ops-layout .ops-panels {
+  align-items: stretch;
+}
+
+body.theme-tisa .landing-ops-layout .ops-panel {
+  min-height: 160px;
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+  background: rgba(248, 246, 240, 0.86);
+  border: 1px solid rgba(85, 62, 43, 0.12);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+body.theme-tisa .landing-ops-layout .ops-panel::before {
+  opacity: 0.8;
+}
+
+body.theme-tisa .landing-ops-layout .ops-panel span {
+  color: var(--accent-primary);
+}
+
+body.theme-tisa .classes-reserve-guide {
+  display: grid;
+  gap: 0.75rem;
+}
+
+body.theme-tisa .classes-reserve-guide article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.2rem 0.8rem;
+  align-items: start;
+  padding: 0.95rem;
+  border-radius: 20px;
+  background: rgba(248, 246, 240, 0.82);
+  border: 1px solid rgba(85, 62, 43, 0.10);
+}
+
+body.theme-tisa .classes-reserve-guide article span {
+  grid-row: span 2;
+  width: 2.15rem;
+  height: 2.15rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(148, 103, 75, 0.16);
+  color: var(--accent-primary-hover);
+  font-weight: 800;
+}
+
+body.theme-tisa .classes-reserve-guide article strong {
+  color: var(--text-primary);
+}
+
+body.theme-tisa .classes-reserve-guide article p {
+  margin: 0;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+body.theme-tisa .classes-mobile-dock {
+  grid-template-columns: minmax(0, 1fr);
+  width: min(100vw - 24px, 520px);
+}
+
+body.theme-tisa .classes-mobile-dock__sheet {
+  padding: 0.6rem;
+  border-radius: 24px;
+}
+
+body.theme-tisa .classes-mobile-nav {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+body.theme-tisa .classes-mobile-nav a {
+  min-height: 2.55rem;
+  padding: 0.62rem 0.4rem;
+  border-radius: 16px;
+  font-size: 0.76rem;
+}
+
 @media (max-width: 1180px) {
   body.theme-tisa .landing-hero,
   body.theme-tisa .landing-feature,
@@ -9474,6 +10662,22 @@ body.staff-login-page .staff-surface-row--ops::before {
 
   body.theme-tisa .landing-stat-grid {
     grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  body.theme-tisa .landing-band-lead {
+    min-height: auto;
+  }
+
+  body.theme-tisa .landing-band-lead h2 {
+    max-width: 18ch;
+  }
+
+  body.theme-tisa .landing-practice-carousel .landing-carousel-track > * {
+    flex-basis: min(680px, calc(100vw - 76px));
+  }
+
+  body.theme-tisa .classes-reserve-guide {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -9517,6 +10721,71 @@ body.staff-login-page .staff-surface-row--ops::before {
     max-width: none;
   }
 
+  body.theme-tisa .landing-band {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  body.theme-tisa .landing-band-lead {
+    padding: 1rem;
+  }
+
+  body.theme-tisa .landing-band-lead h2 {
+    font-size: clamp(2.15rem, 10vw, 3rem);
+  }
+
+  body.theme-tisa .landing-carousel-toolbar {
+    min-height: 2.55rem;
+  }
+
+  body.theme-tisa .landing-carousel-button {
+    width: 2.45rem;
+    height: 2.45rem;
+  }
+
+  body.theme-tisa .landing-practice-carousel .landing-carousel-track > * {
+    flex-basis: calc(100vw - 50px);
+  }
+
+  body.theme-tisa .landing-practice-card {
+    min-height: 0;
+    padding: 1rem;
+  }
+
+  body.theme-tisa .landing-practice-topline,
+  body.theme-tisa .landing-practice-info {
+    grid-template-columns: 1fr;
+  }
+
+  body.theme-tisa .landing-practice-topline {
+    display: grid;
+    align-items: start;
+  }
+
+  body.theme-tisa .landing-ops-layout .ops-panel {
+    min-height: 0;
+  }
+
+  body.theme-tisa .classes-reserve-guide {
+    grid-template-columns: 1fr;
+  }
+
+  body.theme-tisa .classes-reserve-guide article {
+    padding: 0.85rem;
+  }
+
+  body.theme-tisa .classes-mobile-dock {
+    display: none;
+  }
+
+  body.theme-tisa .classes-editorial-main {
+    padding-bottom: 2rem;
+  }
+
+  body.theme-tisa .classes-site-footer {
+    padding-bottom: 1.2rem;
+  }
+
   body.theme-tisa .classes-mobile-nav a.is-active {
     background: rgba(148, 103, 75, 0.24);
     border-color: rgba(85, 62, 43, 0.18);
@@ -9529,5 +10798,3118 @@ body.staff-login-page .staff-surface-row--ops::before {
 
   body.theme-tisa .seat-floorplan-summary__actions .btn {
     width: 100%;
+  }
+}
+
+body.theme-tisa.seat-floorplan-body {
+  overflow-x: hidden;
+}
+
+body.theme-tisa .seat-floorplan-page.section,
+body.theme-tisa .seat-floorplan-form,
+body.theme-tisa .seat-floorplan-board,
+body.theme-tisa .seat-floorplan-summary__card,
+body.theme-tisa .seat-floorplan-mobile-context {
+  max-width: 100%;
+  min-width: 0;
+}
+
+body.theme-tisa .seat-floorplan-board__header .seat-legend,
+body.theme-tisa .seat-floorplan-board__header .legend {
+  color: var(--text-on-dark);
+}
+
+body.theme-tisa .seat-floorplan-board__header .seat-available {
+  background: rgba(248, 246, 240, 0.96);
+  border-color: rgba(248, 246, 240, 0.24);
+  color: var(--pizarra);
+}
+
+body.theme-tisa .seat-floorplan-board__header .seat-occupied {
+  background: rgba(179, 171, 155, 0.72);
+  border-color: rgba(248, 246, 240, 0.16);
+  color: var(--text-on-dark);
+}
+
+body.theme-tisa .seat-floorplan-board__header .seat-selected {
+  background: rgba(148, 103, 75, 0.72);
+  border-color: rgba(248, 246, 240, 0.16);
+  color: var(--text-on-dark);
+}
+
+body.theme-tisa .seat-floorplan-board__header .seat-disabled {
+  background: rgba(179, 171, 155, 0.48);
+  border-color: rgba(248, 246, 240, 0.12);
+  color: var(--text-on-dark);
+}
+
+body.theme-tisa .classes-mobile-nav button {
+  background: rgba(219, 214, 201, 0.60);
+  border: 1px solid rgba(60, 57, 53, 0.10);
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+body.theme-tisa .classes-mobile-nav button:hover,
+body.theme-tisa .classes-mobile-nav button:focus-visible {
+  background: rgba(219, 214, 201, 0.84);
+  color: var(--text-primary);
+}
+
+@media (max-width: 760px) {
+  body.theme-tisa .classes-site-header,
+  body.theme-tisa .seat-floorplan-header {
+    padding: 0 0.75rem;
+  }
+
+  body.theme-tisa .classes-site-header__inner,
+  body.theme-tisa .seat-floorplan-header__inner {
+    width: 100%;
+    min-height: 70px;
+    gap: 0.5rem;
+  }
+
+  body.theme-tisa .classes-site-brand,
+  body.theme-tisa .seat-floorplan-header__brand {
+    width: clamp(102px, 30vw, 132px);
+    flex: 0 0 auto;
+  }
+
+  body.theme-tisa .classes-site-nav,
+  body.theme-tisa .seat-floorplan-header__nav {
+    display: flex;
+    flex: 0 1 auto;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  body.theme-tisa .classes-site-nav a[href="/"],
+  body.theme-tisa .classes-site-nav a[href="/classes"].is-active,
+  body.theme-tisa .seat-floorplan-header__nav a[href="/classes"]:not(.is-active) {
+    display: none;
+  }
+
+  body.theme-tisa .classes-site-nav a,
+  body.theme-tisa .classes-site-nav button,
+  body.theme-tisa .seat-floorplan-header__nav a {
+    min-height: 2.45rem;
+    max-width: 7.2rem;
+    padding: 0.58rem 0.76rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  body.theme-tisa .classes-mobile-dock {
+    display: grid;
+    bottom: max(0.65rem, env(safe-area-inset-bottom));
+    width: min(100vw - 20px, 540px);
+  }
+
+  body.theme-tisa .classes-mobile-dock__sheet {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+    padding: 0.55rem;
+  }
+
+  body.theme-tisa .classes-mobile-dock__meta {
+    padding: 0 0.35rem;
+  }
+
+  body.theme-tisa .classes-mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.32rem;
+  }
+
+  body.theme-tisa .classes-mobile-nav a,
+  body.theme-tisa .classes-mobile-nav button {
+    min-height: 2.35rem;
+    padding: 0.54rem 0.24rem;
+    border-radius: 14px;
+    font-size: clamp(0.64rem, 2.9vw, 0.74rem);
+  }
+
+  body.theme-tisa .classes-editorial-main {
+    padding-bottom: calc(7.6rem + env(safe-area-inset-bottom));
+  }
+
+  body.theme-tisa .classes-site-footer {
+    padding-bottom: calc(6.8rem + env(safe-area-inset-bottom));
+  }
+
+  body.theme-tisa .seat-floorplan-page.section {
+    width: calc(100vw - 24px);
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body.theme-tisa .seat-floorplan-header__inner {
+    width: min(100vw - 20px, 100%);
+    gap: 0.45rem;
+  }
+
+  body.theme-tisa .seat-floorplan-header__brand {
+    width: clamp(86px, 24vw, 112px);
+    flex: 0 0 auto;
+  }
+
+  body.theme-tisa .seat-floorplan-header__nav {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    gap: 0.22rem;
+    min-width: 0;
+  }
+
+  body.theme-tisa .seat-floorplan-header__nav a {
+    min-height: 2.18rem;
+    padding: 0.48rem 0.5rem;
+    font-size: 0.69rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  body.theme-tisa .seat-floorplan-board,
+  body.theme-tisa .seat-floorplan-summary__card,
+  body.theme-tisa .seat-floorplan-mobile-context {
+    width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  body.theme-tisa .classes-site-nav a[href="/staff/login"],
+  body.theme-tisa .seat-floorplan-header__nav a[href="/staff/login"] {
+    display: none;
+  }
+
+  body.theme-tisa .classes-site-brand,
+  body.theme-tisa .seat-floorplan-header__brand {
+    width: clamp(96px, 34vw, 118px);
+  }
+}
+
+@media (max-width: 760px) {
+  body.theme-tisa .classes-site-nav a[href="/"],
+  body.theme-tisa .classes-site-nav a[href="/classes"],
+  body.theme-tisa .seat-floorplan-header__nav a[href="/classes"]:not(.is-active) {
+    display: none !important;
+  }
+
+  body.theme-tisa .classes-site-nav,
+  body.theme-tisa .seat-floorplan-header__nav {
+    overflow: visible !important;
+    flex-wrap: nowrap !important;
+  }
+
+  body.theme-tisa .classes-site-nav button,
+  body.theme-tisa .classes-site-nav a[href="/staff/login"],
+  body.theme-tisa .seat-floorplan-header__nav a.is-active,
+  body.theme-tisa .seat-floorplan-header__nav a[href="/staff/login"] {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Final mobile navigation override: keep this last so older responsive blocks cannot compress the header. */
+.classes-menu-toggle {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  body.theme-tisa .classes-site-header {
+    overflow: visible;
+  }
+
+  body.theme-tisa .classes-site-header__inner {
+    position: relative;
+    width: min(100vw - 24px, 100%);
+    min-height: 70px;
+    gap: 0.75rem;
+  }
+
+  body.theme-tisa .classes-site-header__lead {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  body.theme-tisa .classes-site-brand {
+    width: clamp(110px, 28vw, 150px);
+    flex: 0 0 auto;
+  }
+
+  body.theme-tisa .classes-menu-toggle {
+    appearance: none;
+    display: inline-grid;
+    place-items: center;
+    gap: 0.22rem;
+    flex: 0 0 auto;
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(85, 62, 43, 0.16);
+    background: rgba(248, 246, 240, 0.92);
+    color: var(--text-primary);
+    box-shadow: 0 10px 22px rgba(60, 57, 53, 0.08);
+    cursor: pointer;
+  }
+
+  body.theme-tisa .classes-menu-toggle span {
+    display: block;
+    width: 1.05rem;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    transition:
+      transform 160ms ease,
+      opacity 160ms ease;
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(1) {
+    transform: translateY(5px) rotate(45deg);
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(2) {
+    opacity: 0;
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(3) {
+    transform: translateY(-5px) rotate(-45deg);
+  }
+
+  body.theme-tisa .classes-site-nav {
+    position: absolute;
+    top: calc(100% + 0.55rem);
+    right: 0;
+    z-index: 60;
+    display: grid !important;
+    grid-template-columns: 1fr;
+    min-width: min(76vw, 18rem);
+    padding: 0.55rem;
+    gap: 0.35rem;
+    border-radius: 22px;
+    background: rgba(248, 246, 240, 0.98);
+    border: 1px solid rgba(85, 62, 43, 0.14);
+    box-shadow: 0 20px 42px rgba(60, 57, 53, 0.16);
+    backdrop-filter: blur(18px);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(0, -0.35rem, 0) scale(0.98);
+    transform-origin: top right;
+    transition:
+      opacity 160ms ease,
+      transform 160ms ease;
+  }
+
+  body.theme-tisa .classes-site-nav.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  body.theme-tisa .classes-site-nav a,
+  body.theme-tisa .classes-site-nav button {
+    display: flex !important;
+    width: 100%;
+    min-height: 2.9rem;
+    max-width: none;
+    justify-content: flex-start;
+    padding: 0.72rem 0.9rem;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  body.theme-tisa .classes-site-nav .is-active {
+    background: rgba(148, 103, 75, 0.18);
+    box-shadow: none;
+  }
+
+  body.theme-tisa .classes-mobile-dock {
+    left: 50%;
+    right: auto;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    width: min(calc(100vw - 36px), 540px) !important;
+    transform: translateX(-50%);
+  }
+
+  body.theme-tisa .classes-mobile-dock__sheet {
+    overflow: hidden;
+    padding: 0.52rem;
+    border-radius: 22px;
+    background: rgba(248, 246, 240, 0.96);
+    border: 1px solid rgba(85, 62, 43, 0.10);
+    box-shadow:
+      0 -12px 28px rgba(60, 57, 53, 0.10),
+      inset 0 1px 0 rgba(255, 255, 255, 0.46);
+  }
+
+  body.theme-tisa .classes-mobile-nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.32rem;
+  }
+
+  body.theme-tisa .classes-mobile-nav a,
+  body.theme-tisa .classes-mobile-nav button {
+    min-width: 0;
+    min-height: 2.32rem;
+    padding: 0.5rem 0.2rem;
+    border-radius: 14px;
+    font-size: clamp(0.62rem, 2.6vw, 0.72rem);
+    letter-spacing: 0.02em;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 380px) {
+  body.theme-tisa .classes-mobile-dock {
+    width: min(calc(100vw - 44px), 520px) !important;
+  }
+
+  body.theme-tisa .classes-mobile-nav a,
+  body.theme-tisa .classes-mobile-nav button {
+    font-size: 0.61rem;
+  }
+}
+
+@media (max-width: 900px) {
+  body.theme-tisa .classes-site-nav.is-open a[href="/"],
+  body.theme-tisa .classes-site-nav.is-open a[href="/classes"],
+  body.theme-tisa .classes-site-nav.is-open a[href="/staff/login"],
+  body.theme-tisa .classes-site-nav.is-open button {
+    display: flex !important;
+  }
+
+  body.theme-tisa .classes-menu-toggle {
+    position: relative;
+    gap: 0;
+  }
+
+  body.theme-tisa .classes-menu-toggle span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  body.theme-tisa .classes-menu-toggle span:nth-child(1) {
+    transform: translate(-50%, calc(-50% - 5px));
+  }
+
+  body.theme-tisa .classes-menu-toggle span:nth-child(3) {
+    transform: translate(-50%, calc(-50% + 5px));
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(1) {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(3) {
+    transform: translate(-50%, -50%) rotate(-45deg);
+  }
+}
+
+body.theme-tisa .classes-board {
+  scroll-margin-top: calc(var(--fixed-chrome-offset) + 1rem);
+}
+
+body.theme-tisa .classes-board {
+  scroll-margin-top: calc(var(--fixed-chrome-offset) + 1rem);
+}
+
+body.theme-tisa .classes-board {
+  scroll-margin-top: calc(var(--fixed-chrome-offset) + 1rem);
+}
+
+.classes-menu-toggle {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  body.theme-tisa .classes-site-header {
+    overflow: visible;
+  }
+
+  body.theme-tisa .classes-site-header__inner {
+    position: relative;
+    width: min(100vw - 24px, 100%);
+    min-height: 70px;
+    gap: 0.75rem;
+  }
+
+  body.theme-tisa .classes-site-header__lead {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  body.theme-tisa .classes-site-brand {
+    width: clamp(110px, 28vw, 150px);
+    flex: 0 0 auto;
+  }
+
+  body.theme-tisa .classes-menu-toggle {
+    appearance: none;
+    display: inline-grid;
+    place-items: center;
+    gap: 0.22rem;
+    flex: 0 0 auto;
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(85, 62, 43, 0.16);
+    background: rgba(248, 246, 240, 0.92);
+    color: var(--text-primary);
+    box-shadow: 0 10px 22px rgba(60, 57, 53, 0.08);
+    cursor: pointer;
+  }
+
+  body.theme-tisa .classes-menu-toggle span {
+    display: block;
+    width: 1.05rem;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    transition:
+      transform 160ms ease,
+      opacity 160ms ease;
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(1) {
+    transform: translateY(5px) rotate(45deg);
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(2) {
+    opacity: 0;
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(3) {
+    transform: translateY(-5px) rotate(-45deg);
+  }
+
+  body.theme-tisa .classes-site-nav {
+    position: absolute;
+    top: calc(100% + 0.55rem);
+    right: 0;
+    z-index: 60;
+    display: grid !important;
+    grid-template-columns: 1fr;
+    min-width: min(76vw, 18rem);
+    padding: 0.55rem;
+    gap: 0.35rem;
+    border-radius: 22px;
+    background: rgba(248, 246, 240, 0.98);
+    border: 1px solid rgba(85, 62, 43, 0.14);
+    box-shadow: 0 20px 42px rgba(60, 57, 53, 0.16);
+    backdrop-filter: blur(18px);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(0, -0.35rem, 0) scale(0.98);
+    transform-origin: top right;
+    transition:
+      opacity 160ms ease,
+      transform 160ms ease;
+  }
+
+  body.theme-tisa .classes-site-nav.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  body.theme-tisa .classes-site-nav a,
+  body.theme-tisa .classes-site-nav button {
+    display: flex !important;
+    width: 100%;
+    min-height: 2.9rem;
+    max-width: none;
+    justify-content: flex-start;
+    padding: 0.72rem 0.9rem;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  body.theme-tisa .classes-site-nav .is-active {
+    background: rgba(148, 103, 75, 0.18);
+    box-shadow: none;
+  }
+
+  body.theme-tisa .classes-mobile-dock {
+    left: 50%;
+    right: auto;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    width: min(calc(100vw - 36px), 540px) !important;
+    transform: translateX(-50%);
+  }
+
+  body.theme-tisa .classes-mobile-dock__sheet {
+    overflow: hidden;
+    padding: 0.52rem;
+    border-radius: 22px;
+    background: rgba(248, 246, 240, 0.96);
+    border: 1px solid rgba(85, 62, 43, 0.10);
+    box-shadow:
+      0 -12px 28px rgba(60, 57, 53, 0.10),
+      inset 0 1px 0 rgba(255, 255, 255, 0.46);
+  }
+
+  body.theme-tisa .classes-mobile-nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.32rem;
+  }
+
+  body.theme-tisa .classes-mobile-nav a,
+  body.theme-tisa .classes-mobile-nav button {
+    min-width: 0;
+    min-height: 2.32rem;
+    padding: 0.5rem 0.2rem;
+    border-radius: 14px;
+    font-size: clamp(0.62rem, 2.6vw, 0.72rem);
+    letter-spacing: 0.02em;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 380px) {
+  body.theme-tisa .classes-mobile-dock {
+    width: min(calc(100vw - 44px), 520px) !important;
+  }
+
+  body.theme-tisa .classes-mobile-nav a,
+  body.theme-tisa .classes-mobile-nav button {
+    font-size: 0.61rem;
+  }
+}
+
+.classes-event-video {
+  appearance: none;
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  z-index: 2;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: rgba(241, 239, 233, 0.92);
+  border: 1px solid rgba(60, 57, 53, 0.16);
+  color: var(--pizarra);
+  font-weight: 900;
+  font-family: Georgia, serif;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(60, 57, 53, 0.14);
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+body.theme-tisa .classes-event-card {
+  position: relative;
+}
+
+body.theme-tisa .classes-experience-card {
+  position: relative;
+}
+
+body.theme-tisa .classes-event-card__topline {
+  padding-right: 2.5rem;
+}
+
+body.theme-tisa .classes-experience-card__header {
+  padding-right: 2.6rem;
+}
+
+.classes-event-video svg {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+
+.classes-event-video:hover,
+.classes-event-video:focus-visible {
+  transform: translateY(-1px);
+  background: var(--caliza);
+  outline: none;
+}
+
+.classes-event-video::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.45rem);
+  min-width: 7.8rem;
+  padding: 0.45rem 0.58rem;
+  border-radius: 0.8rem;
+  background: rgba(60, 57, 53, 0.94);
+  color: var(--text-on-dark);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.classes-event-video:hover::after,
+.classes-event-video:focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.class-preview-modal {
+  width: min(860px, calc(100vw - 28px));
+  padding: 0;
+  border: 0;
+  border-radius: 28px;
+  background: transparent;
+}
+
+.class-preview-modal::backdrop {
+  background: rgba(30, 28, 25, 0.64);
+  backdrop-filter: blur(10px);
+}
+
+.class-preview-modal__card {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(248, 246, 240, 0.98), rgba(241, 239, 233, 0.98));
+  border: 1px solid rgba(241, 239, 233, 0.42);
+  box-shadow: 0 34px 90px rgba(30, 28, 25, 0.32);
+}
+
+.class-preview-modal__close {
+  justify-self: end;
+  min-height: 2.5rem;
+  padding: 0.58rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(248, 246, 240, 0.88);
+  color: var(--text-primary);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.class-preview-modal__copy {
+  padding-inline: 0.4rem;
+}
+
+.class-preview-modal__copy h2 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.25rem, 6vw, 4rem);
+  line-height: 0.95;
+  color: var(--text-primary);
+}
+
+.class-preview-modal__copy p:last-child {
+  max-width: 58ch;
+  color: var(--text-muted);
+}
+
+.class-preview-modal__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.55rem;
+  margin-top: 0.35rem;
+  padding: 0.62rem 0.92rem;
+  border-radius: 999px;
+  background: rgba(148, 103, 75, 0.14);
+  border: 1px solid rgba(148, 103, 75, 0.24);
+  color: var(--accent-primary-hover);
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.class-preview-modal__link:hover,
+.class-preview-modal__link:focus-visible {
+  background: rgba(148, 103, 75, 0.22);
+  outline: none;
+}
+
+.class-preview-modal__video {
+  overflow: hidden;
+  border-radius: 22px;
+  aspect-ratio: 16 / 9;
+  background: var(--pizarra);
+}
+
+.class-preview-modal__video iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.support-section {
+  display: grid;
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1fr);
+  gap: 1rem;
+  padding: 1.2rem;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(248, 246, 240, 0.96), rgba(241, 239, 233, 0.96));
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-soft);
+}
+
+.support-section.is-compact {
+  margin-top: 1rem;
+}
+
+.support-section__intro h2 {
+  margin: 0;
+  max-width: 11ch;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.2rem, 5vw, 4.2rem);
+  line-height: 0.95;
+  color: var(--text-primary);
+}
+
+.support-section__intro p:last-child {
+  max-width: 45ch;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.support-section__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(280px, 1.05fr);
+  gap: 1rem;
+}
+
+.support-faq-list,
+.support-chat {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.support-faq-item {
+  border-radius: 18px;
+  background: rgba(255, 252, 247, 0.72);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.support-faq-item summary {
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.support-faq-item p {
+  margin: 0;
+  padding: 0 1rem 1rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.support-chat {
+  padding: 0.9rem;
+  border-radius: 22px;
+  background: rgba(60, 57, 53, 0.96);
+  border: 1px solid rgba(241, 239, 233, 0.12);
+  color: var(--text-on-dark);
+}
+
+.support-chat__log {
+  display: grid;
+  gap: 0.65rem;
+  max-height: 15rem;
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.support-chat__log p {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0.7rem 0.75rem;
+  border-radius: 16px;
+  background: rgba(241, 239, 233, 0.08);
+  border: 1px solid rgba(241, 239, 233, 0.10);
+}
+
+.support-chat__log strong {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.support-chat__log span {
+  color: rgba(241, 239, 233, 0.82);
+  line-height: 1.5;
+}
+
+.support-chat__field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.support-chat__field span,
+.support-chat__note {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(241, 239, 233, 0.68);
+}
+
+.support-chat__field textarea {
+  width: 100%;
+  resize: vertical;
+  border-radius: 16px;
+  border: 1px solid rgba(241, 239, 233, 0.16);
+  background: rgba(241, 239, 233, 0.08);
+  color: var(--text-on-dark);
+  padding: 0.85rem;
+  font: inherit;
+}
+
+.support-chat__field textarea::placeholder {
+  color: rgba(241, 239, 233, 0.46);
+}
+
+.support-chat .btn:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
+.support-chat__note {
+  margin: 0;
+  line-height: 1.4;
+}
+
+@media (max-width: 760px) {
+  body.theme-tisa .classes-editorial-main {
+    padding-bottom: 2rem;
+  }
+
+  body.theme-tisa .classes-week-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    overflow: visible;
+  }
+
+  body.theme-tisa .classes-day-column {
+    padding: 0.78rem;
+    border-radius: 22px;
+  }
+
+  body.theme-tisa .classes-day-column__header {
+    min-height: auto;
+    padding-bottom: 0.55rem;
+  }
+
+  body.theme-tisa .classes-day-column__header span {
+    font-size: clamp(1.6rem, 8vw, 2.35rem);
+    line-height: 0.95;
+  }
+
+  body.theme-tisa .classes-day-column__events {
+    gap: 0.68rem;
+  }
+
+  body.theme-tisa .classes-event-card {
+    position: relative;
+    min-height: 0;
+    padding: 0.88rem;
+    border-radius: 18px;
+    gap: 0.62rem;
+  }
+
+  body.theme-tisa .classes-event-card h3 {
+    max-width: calc(100% - 2.4rem);
+    font-size: clamp(1.35rem, 7vw, 2.1rem);
+    line-height: 0.98;
+    overflow-wrap: anywhere;
+  }
+
+  body.theme-tisa .classes-event-card__summary {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 0;
+    line-height: 1.38;
+  }
+
+  body.theme-tisa .classes-event-card__meta,
+  body.theme-tisa .classes-event-card__footer {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .classes-event-video {
+    top: 0.76rem;
+    right: 0.76rem;
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+
+  .classes-event-video::after {
+    display: none;
+  }
+
+  .class-preview-modal {
+    width: calc(100vw - 20px);
+  }
+
+  .class-preview-modal__card {
+    padding: 0.75rem;
+    border-radius: 22px;
+  }
+
+  .class-preview-modal__copy h2 {
+    font-size: clamp(2rem, 10vw, 3rem);
+  }
+
+  .support-section,
+  .support-section__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .support-section {
+    padding: 0.95rem;
+    border-radius: 22px;
+  }
+
+  .support-section__intro h2 {
+    max-width: none;
+    font-size: clamp(2rem, 10vw, 3.1rem);
+  }
+
+  .support-chat {
+    padding: 0.78rem;
+  }
+}
+
+body.theme-tisa .classes-timetable-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+body.theme-tisa .classes-timetable-day {
+  display: grid;
+  gap: 0.78rem;
+  min-width: 0;
+}
+
+body.theme-tisa .classes-timetable-day__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+  padding: 0.25rem 0.15rem 0.2rem;
+}
+
+body.theme-tisa .classes-timetable-day__header div {
+  display: grid;
+  gap: 0.16rem;
+}
+
+body.theme-tisa .classes-timetable-day__header span {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.15rem, 4.4vw, 4rem);
+  line-height: 0.94;
+  color: var(--text-primary);
+}
+
+body.theme-tisa .classes-timetable-day__header strong,
+body.theme-tisa .classes-timetable-day__header p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+body.theme-tisa .classes-timetable-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  border-radius: 22px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(248, 246, 240, 0.94);
+  box-shadow: var(--shadow-soft);
+}
+
+body.theme-tisa .classes-timetable {
+  width: 100%;
+  min-width: 1200px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  color: var(--text-primary);
+}
+
+body.theme-tisa .classes-timetable th,
+body.theme-tisa .classes-timetable td {
+  height: 3.05rem;
+  padding: 0.38rem;
+  border-right: 1px solid rgba(60, 57, 53, 0.14);
+  border-bottom: 1px solid rgba(60, 57, 53, 0.12);
+  vertical-align: middle;
+}
+
+body.theme-tisa .classes-timetable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(241, 239, 233, 0.98);
+  color: var(--text-primary);
+  font-size: 0.58rem;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+}
+
+body.theme-tisa .classes-timetable thead th:nth-child(1),
+body.theme-tisa .classes-timetable tbody td:nth-child(1) {
+  width: 5.2rem;
+}
+
+body.theme-tisa .classes-timetable thead th:nth-child(2),
+body.theme-tisa .classes-timetable tbody th.classes-timetable__service {
+  width: 12.4rem;
+}
+
+body.theme-tisa .classes-timetable thead th:nth-child(3),
+body.theme-tisa .classes-timetable tbody td:nth-child(3) {
+  width: 4.7rem;
+}
+
+body.theme-tisa .classes-timetable__price,
+body.theme-tisa .classes-timetable__capacity {
+  text-align: center;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+body.theme-tisa .classes-timetable__service {
+  text-align: left;
+  background: rgba(241, 239, 233, 0.74);
+}
+
+body.theme-tisa .classes-timetable__service strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.15;
+}
+
+body.theme-tisa .classes-timetable__service span {
+  display: block;
+  margin-top: 0.18rem;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  line-height: 1.22;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+body.theme-tisa .classes-timetable__slot {
+  width: 3.7rem;
+}
+
+body.theme-tisa .classes-timetable-block {
+  display: grid;
+  place-items: center;
+  gap: 0.08rem;
+  width: 100%;
+  min-height: 2.15rem;
+  padding: 0.32rem 0.22rem;
+  border-radius: 8px;
+  text-decoration: none;
+  text-align: center;
+  color: var(--text-on-dark);
+  background: var(--arcilla);
+  border: 1px solid rgba(60, 57, 53, 0.16);
+}
+
+body.theme-tisa .classes-timetable-block span {
+  max-width: 100%;
+  color: inherit;
+  font-size: 0.58rem;
+  line-height: 1.05;
+  opacity: 0.88;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.theme-tisa .classes-timetable-block strong {
+  color: inherit;
+  font-size: 0.74rem;
+  line-height: 1;
+}
+
+body.theme-tisa .classes-timetable-block.is-media-alta {
+  background: #6a7346;
+}
+
+body.theme-tisa .classes-timetable-block.is-baja {
+  background: #b3ab9b;
+  color: #3f3f3b;
+}
+
+body.theme-tisa .classes-timetable-block.is-suave {
+  background: #d8d2c6;
+  color: #3f3f3b;
+}
+
+body.theme-tisa .classes-timetable-block.is-service-yoga-inmersivo,
+body.theme-tisa .classes-mobile-slot.is-service-yoga-inmersivo {
+  background: #6a7346;
+  color: #f7f4ec;
+}
+
+body.theme-tisa .classes-timetable-block.is-service-yoga-clasico-rooftop,
+body.theme-tisa .classes-mobile-slot.is-service-yoga-clasico-rooftop {
+  background: #74704f;
+  color: #f7f4ec;
+}
+
+body.theme-tisa .classes-timetable-block.is-service-meditacion,
+body.theme-tisa .classes-mobile-slot.is-service-meditacion {
+  background: #b3ab9b;
+  color: #3f3f3b;
+}
+
+body.theme-tisa .classes-timetable-block.is-service-meditacion-rooftop,
+body.theme-tisa .classes-mobile-slot.is-service-meditacion-rooftop {
+  background: #64727a;
+  color: #f7f4ec;
+}
+
+body.theme-tisa .classes-timetable-block.is-service-head-spa,
+body.theme-tisa .classes-mobile-slot.is-service-head-spa {
+  background: #d8d2c6;
+  color: #3f3f3b;
+}
+
+body.theme-tisa .classes-timetable-block.is-service-yoga-facial,
+body.theme-tisa .classes-mobile-slot.is-service-yoga-facial {
+  background: #8f6548;
+  color: #f7f4ec;
+}
+
+body.theme-tisa .classes-timetable__break {
+  color: rgba(60, 57, 53, 0.72);
+  background: rgba(241, 239, 233, 0.78);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+}
+
+body.theme-tisa .classes-timetable__empty {
+  background: rgba(255, 252, 247, 0.34);
+}
+
+body.theme-tisa .classes-mobile-service-list {
+  display: none;
+}
+
+body.theme-tisa .classes-commercial-schedule {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+body.theme-tisa .classes-experience-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+  min-height: 17rem;
+  padding: clamp(1rem, 2vw, 1.45rem);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(255, 252, 247, 0.78), transparent 32%),
+    linear-gradient(180deg, rgba(248, 246, 240, 0.98), rgba(241, 239, 233, 0.96));
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 18px 38px rgba(60, 57, 53, 0.10);
+}
+
+body.theme-tisa .classes-experience-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.42rem;
+  background: var(--experience-accent, var(--arcilla));
+}
+
+body.theme-tisa .classes-experience-card::after {
+  content: '';
+  position: absolute;
+  right: -4rem;
+  top: -4.6rem;
+  width: 10rem;
+  height: 10rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--experience-accent, var(--arcilla)) 18%, transparent);
+  pointer-events: none;
+}
+
+body.theme-tisa .classes-experience-card.is-service-yoga-inmersivo {
+  --experience-accent: #6a7346;
+}
+
+body.theme-tisa .classes-experience-card.is-service-yoga-clasico-rooftop {
+  --experience-accent: #74704f;
+}
+
+body.theme-tisa .classes-experience-card.is-service-meditacion {
+  --experience-accent: #b3ab9b;
+}
+
+body.theme-tisa .classes-experience-card.is-service-meditacion-rooftop {
+  --experience-accent: #64727a;
+}
+
+body.theme-tisa .classes-experience-card.is-service-head-spa {
+  --experience-accent: #d8d2c6;
+}
+
+body.theme-tisa .classes-experience-card.is-service-yoga-facial {
+  --experience-accent: #8f6548;
+}
+
+body.theme-tisa .classes-experience-card.is-service-noche-tisa {
+  --experience-accent: var(--tierra-tostada);
+}
+
+body.theme-tisa .classes-experience-card__header {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  align-items: start;
+}
+
+body.theme-tisa .classes-experience-card__header p {
+  margin: 0 0 0.32rem;
+  color: color-mix(in srgb, var(--experience-accent, var(--arcilla)) 70%, var(--text-primary));
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+body.theme-tisa .classes-experience-card__header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  line-height: 0.92;
+  overflow-wrap: anywhere;
+}
+
+body.theme-tisa .classes-experience-card__meta {
+  display: grid;
+  gap: 0.42rem;
+  justify-items: end;
+}
+
+body.theme-tisa .classes-experience-card__meta span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.05rem;
+  padding: 0.42rem 0.68rem;
+  border-radius: 999px;
+  color: var(--text-primary);
+  background: rgba(255, 252, 247, 0.78);
+  border: 1px solid rgba(60, 57, 53, 0.10);
+  font-size: 0.76rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+body.theme-tisa .classes-experience-card__description {
+  position: relative;
+  z-index: 1;
+  max-width: 46ch;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+body.theme-tisa .classes-experience-card__slots {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-content: end;
+  margin-top: auto;
+}
+
+body.theme-tisa .classes-experience-slot {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  gap: 0.08rem 0.5rem;
+  align-items: center;
+  min-height: 3.25rem;
+  padding: 0.56rem 0.72rem;
+  border-radius: 15px;
+  text-decoration: none;
+  background: var(--experience-accent, var(--arcilla));
+  color: var(--text-on-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+body.theme-tisa .classes-experience-slot:hover,
+body.theme-tisa .classes-experience-slot:focus-visible {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+body.theme-tisa .classes-experience-slot strong,
+body.theme-tisa .classes-experience-slot span,
+body.theme-tisa .classes-experience-slot small {
+  color: inherit;
+}
+
+body.theme-tisa .classes-experience-slot strong {
+  font-size: 0.98rem;
+  line-height: 1;
+}
+
+body.theme-tisa .classes-experience-slot span {
+  font-size: 0.72rem;
+  font-weight: 900;
+  opacity: 0.9;
+}
+
+body.theme-tisa .classes-experience-slot small {
+  grid-column: 1 / -1;
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.76;
+}
+
+body.theme-tisa .classes-experience-slot.is-service-meditacion,
+body.theme-tisa .classes-experience-slot.is-service-head-spa {
+  color: #3f3f3b;
+}
+
+body.theme-tisa .classes-experience-slot.is-service-yoga-inmersivo,
+body.theme-tisa .classes-experience-slot.is-service-yoga-clasico-rooftop,
+body.theme-tisa .classes-experience-slot.is-service-meditacion-rooftop,
+body.theme-tisa .classes-experience-slot.is-service-yoga-facial {
+  color: #f7f4ec;
+}
+
+body.theme-tisa .classes-experience-slot.is-empty {
+  color: var(--text-muted);
+  background: rgba(219, 214, 201, 0.62);
+  box-shadow: none;
+}
+
+@media (max-width: 760px) {
+  body.theme-tisa .classes-board {
+    padding: 0.72rem;
+  }
+
+  body.theme-tisa .classes-timetable-day {
+    gap: 0.68rem;
+  }
+
+  body.theme-tisa .classes-timetable-day__header {
+    align-items: start;
+    display: grid;
+    gap: 0.25rem;
+    padding-inline: 0.1rem;
+  }
+
+  body.theme-tisa .classes-timetable-day__header span {
+    font-size: clamp(2rem, 10vw, 3.2rem);
+  }
+
+  body.theme-tisa .classes-timetable-scroll {
+    display: none;
+  }
+
+  body.theme-tisa .classes-commercial-schedule {
+    grid-template-columns: 1fr;
+    gap: 0.72rem;
+  }
+
+  body.theme-tisa .classes-experience-card {
+    min-height: 0;
+    padding: 0.92rem;
+    border-radius: 20px;
+    gap: 0.7rem;
+  }
+
+  body.theme-tisa .classes-experience-card__header {
+    grid-template-columns: 1fr;
+    gap: 0.62rem;
+  }
+
+  body.theme-tisa .classes-experience-card__header h3 {
+    font-size: clamp(1.9rem, 9.2vw, 2.7rem);
+  }
+
+  body.theme-tisa .classes-experience-card__meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-items: start;
+    gap: 0.4rem;
+  }
+
+  body.theme-tisa .classes-experience-card__description {
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+
+  body.theme-tisa .classes-experience-card__slots {
+    gap: 0.42rem;
+  }
+
+  body.theme-tisa .classes-experience-slot {
+    min-height: 2.72rem;
+    padding: 0.5rem 0.58rem;
+    border-radius: 13px;
+  }
+
+  body.theme-tisa .classes-mobile-service-list {
+    display: grid;
+    gap: 0.62rem;
+  }
+
+  body.theme-tisa .classes-mobile-service-card {
+    display: grid;
+    gap: 0.62rem;
+    min-width: 0;
+    padding: 0.82rem;
+    border-radius: 18px;
+    background: rgba(248, 246, 240, 0.94);
+    border: 1px solid var(--border-subtle);
+    box-shadow: none;
+  }
+
+  body.theme-tisa .classes-mobile-service-card header {
+    display: grid;
+    min-width: 0;
+  }
+
+  body.theme-tisa .classes-mobile-service-card header strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: clamp(1rem, 5.2vw, 1.35rem);
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+  }
+
+  body.theme-tisa .classes-mobile-service-card header span {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  body.theme-tisa .classes-mobile-service-card__slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.38rem;
+  }
+
+  body.theme-tisa .classes-mobile-slot {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.36rem;
+    min-height: 2.35rem;
+    padding: 0.48rem 0.58rem;
+    border-radius: 12px;
+    text-decoration: none;
+    background: #176b2c;
+    color: var(--text-on-dark);
+    border: 1px solid rgba(60, 57, 53, 0.14);
+    font-weight: 900;
+  }
+
+  body.theme-tisa .classes-mobile-slot strong,
+  body.theme-tisa .classes-mobile-slot span {
+    color: inherit;
+    font-size: 0.82rem;
+    line-height: 1;
+  }
+
+  body.theme-tisa .classes-mobile-slot.is-baja {
+    background: #a9a9a9;
+    color: #242522;
+  }
+
+  body.theme-tisa .classes-mobile-slot.is-suave {
+    background: #11aee4;
+    color: #15303a;
+  }
+
+  body.theme-tisa .classes-mobile-slot.is-empty {
+    background: rgba(219, 214, 201, 0.58);
+    color: var(--text-muted);
+  }
+}
+
+@media (max-width: 760px) {
+  body.theme-tisa .classes-site-nav a[href="/"],
+  body.theme-tisa .classes-site-nav a[href="/classes"],
+  body.theme-tisa .seat-floorplan-header__nav a[href="/classes"]:not(.is-active) {
+    display: none !important;
+  }
+
+  body.theme-tisa .classes-site-nav,
+  body.theme-tisa .seat-floorplan-header__nav {
+    overflow: visible !important;
+    flex-wrap: nowrap !important;
+  }
+
+  body.theme-tisa .classes-site-nav button,
+  body.theme-tisa .classes-site-nav a[href="/staff/login"],
+  body.theme-tisa .seat-floorplan-header__nav a.is-active,
+  body.theme-tisa .seat-floorplan-header__nav a[href="/staff/login"] {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Final mobile navigation override: keep this after the compact class agenda rules. */
+.classes-menu-toggle {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  body.theme-tisa .classes-site-header {
+    overflow: visible;
+  }
+
+  body.theme-tisa .classes-site-header__inner {
+    position: relative;
+    width: min(100vw - 24px, 100%);
+    min-height: 70px;
+    gap: 0.75rem;
+  }
+
+  body.theme-tisa .classes-site-header__lead {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  body.theme-tisa .classes-site-brand {
+    width: clamp(110px, 28vw, 150px);
+    flex: 0 0 auto;
+  }
+
+  body.theme-tisa .classes-menu-toggle {
+    appearance: none;
+    display: inline-grid;
+    place-items: center;
+    gap: 0.22rem;
+    flex: 0 0 auto;
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(85, 62, 43, 0.16);
+    background: rgba(248, 246, 240, 0.92);
+    color: var(--text-primary);
+    box-shadow: 0 10px 22px rgba(60, 57, 53, 0.08);
+    cursor: pointer;
+  }
+
+  body.theme-tisa .classes-menu-toggle span {
+    display: block;
+    width: 1.05rem;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    transition:
+      transform 160ms ease,
+      opacity 160ms ease;
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(1) {
+    transform: translateY(5px) rotate(45deg);
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(2) {
+    opacity: 0;
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(3) {
+    transform: translateY(-5px) rotate(-45deg);
+  }
+
+  body.theme-tisa .classes-site-nav {
+    position: absolute;
+    top: calc(100% + 0.55rem);
+    right: 0;
+    z-index: 60;
+    display: grid !important;
+    grid-template-columns: 1fr;
+    min-width: min(76vw, 18rem);
+    padding: 0.55rem;
+    gap: 0.35rem;
+    border-radius: 22px;
+    background: rgba(248, 246, 240, 0.98);
+    border: 1px solid rgba(85, 62, 43, 0.14);
+    box-shadow: 0 20px 42px rgba(60, 57, 53, 0.16);
+    backdrop-filter: blur(18px);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(0, -0.35rem, 0) scale(0.98);
+    transform-origin: top right;
+    transition:
+      opacity 160ms ease,
+      transform 160ms ease;
+  }
+
+  body.theme-tisa .classes-site-nav.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  body.theme-tisa .classes-site-nav a,
+  body.theme-tisa .classes-site-nav button {
+    display: flex !important;
+    width: 100%;
+    min-height: 2.9rem;
+    max-width: none;
+    justify-content: flex-start;
+    padding: 0.72rem 0.9rem;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  body.theme-tisa .classes-site-nav .is-active {
+    background: rgba(148, 103, 75, 0.18);
+    box-shadow: none;
+  }
+
+  body.theme-tisa .classes-mobile-dock {
+    left: 50%;
+    right: auto;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    width: min(calc(100vw - 36px), 540px) !important;
+    transform: translateX(-50%);
+  }
+
+  body.theme-tisa .classes-mobile-dock__sheet {
+    overflow: hidden;
+    padding: 0.52rem;
+    border-radius: 22px;
+    background: rgba(248, 246, 240, 0.96);
+    border: 1px solid rgba(85, 62, 43, 0.10);
+    box-shadow:
+      0 -12px 28px rgba(60, 57, 53, 0.10),
+      inset 0 1px 0 rgba(255, 255, 255, 0.46);
+  }
+
+  body.theme-tisa .classes-mobile-nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.32rem;
+  }
+
+  body.theme-tisa .classes-mobile-nav a,
+  body.theme-tisa .classes-mobile-nav button {
+    min-width: 0;
+    min-height: 2.32rem;
+    padding: 0.5rem 0.2rem;
+    border-radius: 14px;
+    font-size: clamp(0.62rem, 2.6vw, 0.72rem);
+    letter-spacing: 0.02em;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 380px) {
+  body.theme-tisa .classes-mobile-dock {
+    width: min(calc(100vw - 44px), 520px) !important;
+  }
+
+  body.theme-tisa .classes-mobile-nav a,
+  body.theme-tisa .classes-mobile-nav button {
+    font-size: 0.61rem;
+  }
+}
+@media (max-width: 900px) {
+  body.theme-tisa .classes-site-nav.is-open a[href="/"],
+  body.theme-tisa .classes-site-nav.is-open a[href="/classes"],
+  body.theme-tisa .classes-site-nav.is-open a[href="/staff/login"],
+  body.theme-tisa .classes-site-nav.is-open button {
+    display: flex !important;
+  }
+
+  body.theme-tisa .classes-menu-toggle {
+    position: relative;
+    gap: 0;
+  }
+
+  body.theme-tisa .classes-menu-toggle span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  body.theme-tisa .classes-menu-toggle span:nth-child(1) {
+    transform: translate(-50%, calc(-50% - 5px));
+  }
+
+  body.theme-tisa .classes-menu-toggle span:nth-child(3) {
+    transform: translate(-50%, calc(-50% + 5px));
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(1) {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  body.theme-tisa .classes-menu-toggle.is-open span:nth-child(3) {
+    transform: translate(-50%, -50%) rotate(-45deg);
+  }
+}
+@media (max-width: 900px) {
+  body.theme-tisa .classes-site-nav.is-open a,
+  body.theme-tisa .classes-site-nav.is-open button {
+    justify-content: flex-start !important;
+    text-align: left !important;
+    background: rgba(255, 255, 255, 0.42);
+    border: 1px solid rgba(85, 62, 43, 0.08);
+    box-shadow: none;
+  }
+
+  body.theme-tisa .classes-site-nav.is-open a:hover,
+  body.theme-tisa .classes-site-nav.is-open button:hover,
+  body.theme-tisa .classes-site-nav.is-open a:focus-visible,
+  body.theme-tisa .classes-site-nav.is-open button:focus-visible {
+    background: rgba(219, 214, 201, 0.58);
+    color: var(--accent-primary);
+  }
+
+  body.theme-tisa .classes-site-nav.is-open .is-active {
+    background: rgba(148, 103, 75, 0.14);
+    border-color: rgba(148, 103, 75, 0.24);
+    color: var(--accent-primary-hover);
+  }
+}
+
+.site-menu-toggle {
+  display: none;
+}
+
+.classes-mobile-day-sticky {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  body.theme-tisa .classes-board {
+    overflow: visible !important;
+  }
+
+  body.theme-tisa .classes-mobile-day-sticky {
+    position: sticky;
+    top: calc(var(--fixed-chrome-offset, 0px) + 0.58rem);
+    z-index: 38;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.12rem 0.75rem;
+    margin: 0 0 0.72rem;
+    padding: 0.66rem 0.78rem;
+    border-radius: 18px;
+    background: rgba(248, 246, 240, 0.94);
+    border: 1px solid rgba(85, 62, 43, 0.14);
+    box-shadow:
+      0 14px 32px rgba(60, 57, 53, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.46);
+    backdrop-filter: blur(16px);
+    opacity: 0;
+    transform: translate3d(0, -0.22rem, 0);
+    pointer-events: none;
+    transition:
+      opacity 160ms ease,
+      transform 160ms ease;
+  }
+
+  body.theme-tisa .classes-mobile-day-sticky.is-visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  body.theme-tisa .classes-mobile-day-sticky span {
+    grid-column: 1 / -1;
+    color: var(--text-muted);
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  body.theme-tisa .classes-mobile-day-sticky strong {
+    min-width: 0;
+    color: var(--text-primary);
+    font-size: clamp(1rem, 4.8vw, 1.24rem);
+    font-weight: 900;
+    line-height: 1.06;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  body.theme-tisa .classes-mobile-day-sticky small {
+    justify-self: end;
+    color: var(--accent-primary-hover);
+    font-size: 0.7rem;
+    font-weight: 900;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  body.theme-tisa [data-classes-day-marker].is-current-mobile-day {
+    border-color: rgba(148, 103, 75, 0.28);
+  }
+}
+
+@media (max-width: 900px) {
+  body.theme-tisa .site-header {
+    overflow: visible;
+  }
+
+  body.theme-tisa .site-header__inner {
+    position: relative;
+    width: min(100vw - 24px, 100%);
+    min-height: 70px;
+    gap: 0.75rem;
+  }
+
+  body.theme-tisa .brand {
+    width: clamp(110px, 28vw, 150px);
+    flex: 0 0 auto;
+  }
+
+  body.theme-tisa .site-menu-toggle {
+    appearance: none;
+    display: inline-grid;
+    place-items: center;
+    position: relative;
+    gap: 0;
+    flex: 0 0 auto;
+    width: 2.8rem;
+    height: 2.8rem;
+    margin-left: auto;
+    border-radius: 999px;
+    border: 1px solid rgba(85, 62, 43, 0.16);
+    background: rgba(248, 246, 240, 0.92);
+    color: var(--text-primary);
+    box-shadow: 0 10px 22px rgba(60, 57, 53, 0.08);
+    cursor: pointer;
+  }
+
+  body.theme-tisa .site-menu-toggle span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: 1.05rem;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+    transform: translate(-50%, -50%);
+    transition:
+      transform 160ms ease,
+      opacity 160ms ease;
+  }
+
+  body.theme-tisa .site-menu-toggle span:nth-child(1) {
+    transform: translate(-50%, calc(-50% - 5px));
+  }
+
+  body.theme-tisa .site-menu-toggle span:nth-child(3) {
+    transform: translate(-50%, calc(-50% + 5px));
+  }
+
+  body.theme-tisa .site-menu-toggle.is-open span:nth-child(1) {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  body.theme-tisa .site-menu-toggle.is-open span:nth-child(2) {
+    opacity: 0;
+  }
+
+  body.theme-tisa .site-menu-toggle.is-open span:nth-child(3) {
+    transform: translate(-50%, -50%) rotate(-45deg);
+  }
+
+  body.theme-tisa .top-nav {
+    position: absolute;
+    top: calc(100% + 0.55rem);
+    right: 0;
+    z-index: 60;
+    display: grid !important;
+    grid-template-columns: 1fr;
+    min-width: min(76vw, 18rem);
+    padding: 0.55rem;
+    gap: 0.35rem;
+    border-radius: 22px;
+    background: rgba(248, 246, 240, 0.98);
+    border: 1px solid rgba(85, 62, 43, 0.14);
+    box-shadow: 0 20px 42px rgba(60, 57, 53, 0.16);
+    backdrop-filter: blur(18px);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(0, -0.35rem, 0) scale(0.98);
+    transform-origin: top right;
+    transition:
+      opacity 160ms ease,
+      transform 160ms ease;
+  }
+
+  body.theme-tisa .top-nav.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  body.theme-tisa .top-nav a,
+  body.theme-tisa .top-nav button,
+  body.theme-tisa .top-nav form {
+    width: 100%;
+  }
+
+  body.theme-tisa .top-nav a,
+  body.theme-tisa .top-nav button {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-start !important;
+    min-height: 2.9rem;
+    max-width: none;
+    padding: 0.72rem 0.9rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.42);
+    border: 1px solid rgba(85, 62, 43, 0.08);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.1;
+    text-align: left !important;
+    white-space: nowrap;
+    box-shadow: none;
+  }
+
+  body.theme-tisa .top-nav .is-active,
+  body.theme-tisa .top-nav .nav-cta {
+    background: rgba(148, 103, 75, 0.14);
+    border-color: rgba(148, 103, 75, 0.24);
+    color: var(--accent-primary-hover);
+  }
+
+  body.theme-tisa .top-nav.is-open .nav-cta,
+  body.theme-tisa .top-nav.is-open .is-active {
+    color: var(--accent-primary-hover) !important;
+  }
+
+  body.theme-tisa .top-nav__cluster,
+  body.theme-tisa .top-nav__utility {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+
+  body.theme-tisa .top-nav__badge {
+    display: none;
+  }
+
+  body.theme-tisa .classes-mobile-nav {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Final /classes reference overrides. Keep this block last. */
+body.theme-tisa.classes-editorial-page {
+  background:
+    radial-gradient(circle at 6% 0%, rgba(152, 109, 79, 0.10), transparent 32%),
+    radial-gradient(circle at 92% 8%, rgba(106, 115, 70, 0.10), transparent 30%),
+    linear-gradient(180deg, #fbfaf6 0%, #f4f1e9 42%, #ece7dc 100%) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-editorial-shell {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.85rem !important;
+  width: min(100vw - 10px, 1440px) !important;
+  padding-top: 0.55rem !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-hero {
+  display: none !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-panel {
+  order: 1 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 1rem !important;
+  align-items: center !important;
+  padding: 1.05rem 1.2rem !important;
+  border-radius: 0 0 20px 20px !important;
+  background: rgba(255, 252, 247, 0.82) !important;
+  border: 1px solid rgba(85, 62, 43, 0.10) !important;
+  box-shadow: none !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group {
+  min-width: 0 !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group:first-child .classes-filter-group__label {
+  display: none !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group__label {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.42rem !important;
+  margin: 0 0 0.54rem !important;
+  color: var(--olivo-mineral) !important;
+  font-size: 0.72rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group__chips {
+  flex-wrap: nowrap !important;
+  gap: 0.7rem !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  min-height: 2.85rem !important;
+  padding: 0.65rem 1.05rem !important;
+  border-radius: 999px !important;
+  background: rgba(255, 252, 247, 0.9) !important;
+  border: 1px solid rgba(85, 62, 43, 0.12) !important;
+  color: var(--text-primary) !important;
+  white-space: nowrap !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-chip svg {
+  width: 1.24rem !important;
+  height: 1.24rem !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.65 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  color: var(--olivo-mineral) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-chip.is-service-yoga-inmersivo,
+body.theme-tisa.classes-editorial-page .classes-filter-chip.is-suave {
+  border-color: rgba(106, 115, 70, 0.34) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-chip.is-suave {
+  background: linear-gradient(135deg, #79845e, #63704e) !important;
+  color: var(--text-on-dark) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-chip.is-media-alta {
+  color: #a15f41 !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar {
+  order: 2 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 1rem !important;
+  align-items: center !important;
+  min-height: 9rem !important;
+  padding: 1.35rem 1.55rem !important;
+  border-radius: 20px !important;
+  background: rgba(255, 252, 247, 0.86) !important;
+  border: 1px solid rgba(85, 62, 43, 0.12) !important;
+  box-shadow: 0 18px 42px rgba(60, 57, 53, 0.06) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar__copy {
+  position: relative !important;
+  display: grid !important;
+  gap: 0.18rem !important;
+  padding-left: 4.7rem !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar__copy::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0.15rem !important;
+  width: 3.6rem !important;
+  height: 3.6rem !important;
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, rgba(219, 214, 201, 0.78), rgba(241, 239, 233, 0.78)), url('/static/pexels-spa-detail.jpg') !important;
+  background-size: cover !important;
+  opacity: 0.7 !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar h2 {
+  margin: 0 !important;
+  color: var(--text-primary) !important;
+  font-size: clamp(2.65rem, 4.8vw, 4.2rem) !important;
+  line-height: 0.9 !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar__actions {
+  display: grid !important;
+  grid-template-columns: auto auto auto auto auto !important;
+  gap: 0.65rem !important;
+  align-items: center !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar-link,
+body.theme-tisa.classes-editorial-page .classes-toolbar-range {
+  min-height: 2.9rem !important;
+  padding: 0.72rem 1.05rem !important;
+  border-radius: 999px !important;
+  background: rgba(255, 252, 247, 0.9) !important;
+  border-color: rgba(85, 62, 43, 0.14) !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar-range {
+  gap: 0.5rem !important;
+  font-weight: 900 !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar-range svg {
+  width: 1rem !important;
+  height: 1rem !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.7 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar-link.is-active {
+  background: linear-gradient(135deg, #79845e, #63704e) !important;
+  color: var(--text-on-dark) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-board {
+  order: 3 !important;
+  overflow: visible !important;
+  padding: 1.35rem 1.35rem 1.8rem !important;
+  border-radius: 20px !important;
+  background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.72), transparent 42%), rgba(241, 239, 233, 0.78) !important;
+  border: 1px solid rgba(85, 62, 43, 0.10) !important;
+  box-shadow: none !important;
+}
+
+body.theme-tisa.classes-editorial-page .support-section {
+  order: 4 !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-mobile-dock {
+  display: none !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-timetable-day__header {
+  align-items: end !important;
+  padding: 0.2rem 0.1rem 1rem !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-timetable-day__header span {
+  font-size: clamp(3.2rem, 5.2vw, 4.8rem) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-commercial-schedule {
+  gap: 0.9rem 1rem !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card {
+  --visual-width: clamp(4.7rem, 7vw, 6.35rem);
+  min-height: 14.1rem !important;
+  padding: 1.35rem 1.25rem 1.25rem calc(var(--visual-width) + 1.35rem) !important;
+  border-radius: 18px !important;
+  background: radial-gradient(circle at 72% 20%, rgba(255, 255, 255, 0.84), transparent 36%), linear-gradient(180deg, rgba(255, 252, 247, 0.98), rgba(248, 246, 240, 0.97)) !important;
+  box-shadow: 0 12px 34px rgba(60, 57, 53, 0.08) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card::before {
+  width: var(--visual-width) !important;
+  border-radius: 18px 0 0 18px !important;
+  background: linear-gradient(180deg, rgba(58, 63, 42, 0.08), rgba(58, 63, 42, 0.24)), var(--experience-visual, url('/static/pexels-yoga-plants.jpg')) !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card::after {
+  left: 1.55rem !important;
+  right: auto !important;
+  top: 1.35rem !important;
+  width: 2.2rem !important;
+  height: 2.2rem !important;
+  border-radius: 0 !important;
+  background: none !important;
+  border: 1.6px solid rgba(255, 252, 247, 0.86) !important;
+  opacity: 0.72 !important;
+  transform: rotate(45deg) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-yoga-inmersivo {
+  --experience-accent: #6b7750;
+  --experience-visual: url('/static/pexels-yoga-plants.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-yoga-clasico-rooftop {
+  --experience-accent: #b96e4d;
+  --experience-visual: url('/static/pexels-rooftop-yoga.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-meditacion {
+  --experience-accent: #9f9886;
+  --experience-visual: url('/static/pexels-yoga-plants.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-meditacion-rooftop {
+  --experience-accent: #64727a;
+  --experience-visual: url('/static/pexels-rooftop-yoga.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-head-spa {
+  --experience-accent: #8e9899;
+  --experience-visual: url('/static/pexels-spa-detail.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-yoga-facial {
+  --experience-accent: #9b674a;
+  --experience-visual: url('/static/pexels-facial-spa.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card.is-service-noche-tisa {
+  --experience-accent: #514a36;
+  --experience-visual: url('/static/pexels-spa-detail.jpg');
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card__header {
+  padding-right: 3rem !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card__header h3 {
+  font-size: clamp(2.15rem, 3.4vw, 3.35rem) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card__description {
+  max-width: 52ch !important;
+  padding-bottom: 1rem !important;
+  border-bottom: 1px solid rgba(85, 62, 43, 0.08) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-card__meta span {
+  color: color-mix(in srgb, var(--experience-accent, var(--arcilla)) 80%, var(--text-primary)) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-experience-slot {
+  min-height: 3.05rem !important;
+  border-radius: 11px !important;
+  background: var(--experience-accent, var(--arcilla)) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-site-actions {
+  display: none;
+}
+
+@media (min-width: 761px) {
+  body.theme-tisa.classes-editorial-page .classes-site-header {
+    display: none !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.theme-tisa.classes-editorial-page .classes-site-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 55 !important;
+    background: rgba(251, 250, 246, 0.96) !important;
+    border-bottom: 0 !important;
+    backdrop-filter: blur(16px) !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-header__inner {
+    display: grid !important;
+    grid-template-columns: 3rem 1fr auto !important;
+    min-height: 5.55rem !important;
+    padding: 0.72rem 1.1rem !important;
+    gap: 0.85rem !important;
+    align-items: center !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-menu-toggle {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    display: inline-grid !important;
+    width: 2.7rem !important;
+    height: 2.7rem !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-menu-toggle span {
+    width: 2rem !important;
+    height: 2px !important;
+    background: var(--text-primary) !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-header__lead {
+    grid-column: 2 !important;
+    display: flex !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-brand {
+    width: clamp(7.2rem, 34vw, 9.6rem) !important;
+    margin: 0 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-header__meta {
+    display: none !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-actions {
+    grid-column: 3 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.76rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-actions a {
+    display: inline-grid !important;
+    place-items: center !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    color: var(--text-primary) !important;
+    text-decoration: none !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-actions a + a {
+    border-left: 1px solid rgba(85, 62, 43, 0.22) !important;
+    padding-left: 0.82rem !important;
+    width: 3.3rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-site-actions svg {
+    width: 1.9rem !important;
+    height: 1.9rem !important;
+    fill: none !important;
+    stroke: currentColor !important;
+    stroke-width: 1.8 !important;
+    stroke-linecap: round !important;
+    stroke-linejoin: round !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-editorial-shell {
+    width: min(100vw - 28px, 100%) !important;
+    gap: 0.95rem !important;
+    padding-top: 0.95rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar {
+    order: 1 !important;
+    grid-template-columns: 1fr !important;
+    min-height: 0 !important;
+    gap: 1.15rem !important;
+    padding: 1.7rem 1.45rem 1.45rem !important;
+    border-radius: 22px !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__copy {
+    padding-left: 0 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__copy::before {
+    display: none !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar h2 {
+    font-size: clamp(2.7rem, 12vw, 3.8rem) !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.8rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar-link,
+  body.theme-tisa.classes-editorial-page .classes-toolbar-range {
+    min-height: 3.95rem !important;
+    padding: 0.85rem 0.8rem !important;
+    font-size: 1rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-panel {
+    order: 2 !important;
+    grid-template-columns: 1fr !important;
+    gap: 0.95rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:first-child .classes-filter-group__chips {
+    overflow-x: auto !important;
+    padding: 0 0.02rem 0.15rem !important;
+    scrollbar-width: none !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:first-child .classes-filter-group__chips::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:last-child {
+    padding: 1.05rem 1.1rem !important;
+    border-radius: 18px !important;
+    background: rgba(255, 252, 247, 0.86) !important;
+    border: 1px solid rgba(85, 62, 43, 0.10) !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:last-child .classes-filter-group__chips {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.7rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-chip {
+    min-height: 3.4rem !important;
+    padding: 0.78rem 1rem !important;
+    font-size: 0.98rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:last-child .classes-filter-chip {
+    justify-content: center !important;
+    min-height: 3.1rem !important;
+    padding-inline: 0.68rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-board {
+    order: 3 !important;
+    padding: 1.05rem 0.92rem 1.25rem !important;
+    border-radius: 18px !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-timetable-day__header {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    gap: 0.45rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-timetable-day__header span {
+    font-size: clamp(3.25rem, 15vw, 4.7rem) !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-timetable-day__header p {
+    align-self: end !important;
+    white-space: nowrap !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card {
+    --visual-width: clamp(5.05rem, 22vw, 6.8rem);
+    min-height: 0 !important;
+    padding: 1.35rem 1rem 1.15rem calc(var(--visual-width) + 1.2rem) !important;
+    border-radius: 17px !important;
+    gap: 0.85rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card::before {
+    border-radius: 17px 0 0 17px !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card::after {
+    left: 1.35rem !important;
+    top: 1.45rem !important;
+    width: 1.9rem !important;
+    height: 1.9rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__header {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 0.68rem !important;
+    padding-right: 0 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__header h3 {
+    font-size: clamp(2.2rem, 11vw, 3.25rem) !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__meta {
+    display: grid !important;
+    justify-items: end !important;
+    gap: 0.48rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__description {
+    padding-bottom: 0 !important;
+    border-bottom: 0 !important;
+    font-size: 1rem !important;
+    line-height: 1.45 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__slots {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+    align-items: stretch !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-slot {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 3.25rem !important;
+    padding: 0.58rem 0.66rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-slot strong {
+    font-size: clamp(0.92rem, 4.6vw, 1.05rem) !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-slot span {
+    font-size: clamp(0.62rem, 3vw, 0.72rem) !important;
+    white-space: nowrap !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-slot small {
+    font-size: 0.62rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-event-video {
+    display: none !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-mobile-day-sticky {
+    top: calc(var(--fixed-chrome-offset, 0px) + 0.42rem) !important;
+  }
+}
+
+/* Go-live agenda pagination: keep one day focused on small screens without hiding
+   content when JavaScript is unavailable. */
+.classes-mobile-day-selector {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  body.theme-tisa.classes-editorial-page .classes-mobile-day-selector {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(3.4rem, 1fr);
+    gap: 0.42rem;
+    margin: 0 0 0.8rem;
+    padding: 0.5rem;
+    overflow-x: auto;
+    border: 1px solid rgba(85, 62, 43, 0.12);
+    border-radius: 18px;
+    background: rgba(255, 252, 247, 0.9);
+    box-shadow: 0 14px 34px rgba(60, 57, 53, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.54);
+    scrollbar-width: none;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-mobile-day-selector::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-mobile-day-option {
+    display: grid;
+    place-items: center;
+    gap: 0.12rem;
+    min-height: 4rem;
+    padding: 0.42rem 0.32rem;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    cursor: pointer;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-mobile-day-option span,
+  body.theme-tisa.classes-editorial-page .classes-mobile-day-option small {
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-mobile-day-option strong {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    line-height: 1;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-mobile-day-option.is-active {
+    border-color: rgba(114, 79, 56, 0.2);
+    background: var(--terracota-suave);
+    color: var(--text-primary);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-mobile-day-option:active {
+    transform: scale(0.97);
+  }
+
+  body.theme-tisa.classes-editorial-page.has-mobile-day-paging .classes-mobile-day-sticky {
+    display: none !important;
+  }
+
+  body.theme-tisa.classes-editorial-page.has-mobile-day-paging
+    .classes-timetable-stack.is-mobile-paged
+    .classes-timetable-day:not(.is-active-mobile-day) {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  .js .reveal,
+  .js .reveal.show {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Restore classes hero and fix filter collision. Keep after reference overrides. */
+body.theme-tisa.classes-editorial-page .classes-hero {
+  order: 1 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr) !important;
+  gap: clamp(1rem, 2vw, 1.4rem) !important;
+  min-height: 0 !important;
+  padding: clamp(1.35rem, 2.4vw, 2rem) !important;
+  border-radius: 28px !important;
+  background:
+    radial-gradient(circle at 86% 8%, rgba(255, 252, 247, 0.76), transparent 34%),
+    linear-gradient(135deg, rgba(255, 252, 247, 0.92), rgba(241, 239, 233, 0.78)) !important;
+  border: 1px solid rgba(85, 62, 43, 0.11) !important;
+  box-shadow: 0 20px 48px rgba(60, 57, 53, 0.07) !important;
+  opacity: 1 !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-hero__copy,
+body.theme-tisa.classes-editorial-page .classes-hero__aside {
+  display: grid !important;
+  align-content: start !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-hero h1 {
+  max-width: 11.5ch !important;
+  margin: 0 !important;
+  font-size: clamp(3.35rem, 6.1vw, 6.6rem) !important;
+  line-height: 0.86 !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-hero .classes-lede {
+  max-width: 58ch !important;
+  margin: 0 !important;
+  color: var(--text-muted) !important;
+  font-size: clamp(1rem, 1.4vw, 1.14rem) !important;
+  line-height: 1.62 !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-hero__actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.72rem !important;
+  margin-top: 0.35rem !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-metric-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0.7rem !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-spotlight-card,
+body.theme-tisa.classes-editorial-page .classes-reserve-guide article {
+  background: rgba(255, 252, 247, 0.72) !important;
+  border: 1px solid rgba(85, 62, 43, 0.10) !important;
+  box-shadow: none !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-reserve-guide {
+  grid-template-columns: 1fr !important;
+  gap: 0.65rem !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-panel {
+  order: 2 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(17rem, auto) !important;
+  gap: 1rem 1.25rem !important;
+  align-items: start !important;
+  overflow: hidden !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group:first-child {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group:first-child .classes-filter-group__chips {
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group:last-child {
+  justify-self: end !important;
+  min-width: 17rem !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group:last-child .classes-filter-group__chips {
+  flex-wrap: nowrap !important;
+  justify-content: flex-end !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-group:last-child .classes-filter-group__label {
+  justify-content: flex-start !important;
+  white-space: nowrap !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-filter-chip {
+  max-width: 100% !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-toolbar {
+  order: 3 !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-board {
+  order: 4 !important;
+}
+
+body.theme-tisa.classes-editorial-page .support-section {
+  order: 5 !important;
+}
+
+@media (max-width: 1180px) {
+  body.theme-tisa.classes-editorial-page .classes-hero {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-panel {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:last-child {
+    justify-self: stretch !important;
+    min-width: 0 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:last-child .classes-filter-group__chips {
+    justify-content: flex-start !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.theme-tisa.classes-editorial-page .classes-hero {
+    order: 1 !important;
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    padding: 1.18rem !important;
+    border-radius: 22px !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-hero h1 {
+    max-width: 10.5ch !important;
+    font-size: clamp(3rem, 13vw, 4.2rem) !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-hero .classes-lede {
+    font-size: 1rem !important;
+    line-height: 1.55 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-metric-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-panel {
+    order: 2 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:first-child .classes-filter-group__chips {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-filter-group:last-child .classes-filter-group__chips {
+    justify-content: stretch !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar {
+    order: 3 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-board {
+    order: 4 !important;
+  }
+}
+
+/* Global navigation and compact mobile class cards. Keep last. */
+body.theme-tisa .site-header {
+  z-index: 130 !important;
+}
+
+body.theme-tisa.classes-editorial-page .site-header {
+  position: sticky !important;
+  top: 0 !important;
+  background: rgba(251, 250, 246, 0.93) !important;
+  border-bottom: 1px solid rgba(85, 62, 43, 0.10) !important;
+  backdrop-filter: blur(18px) !important;
+}
+
+body.theme-tisa.classes-editorial-page .classes-editorial-shell {
+  padding-top: clamp(0.8rem, 1.6vw, 1.15rem) !important;
+}
+
+body.has-landing-intro:not(.intro-pushing) .site-header {
+  transform: translateY(100vh) !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body.intro-pushing .site-header {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+@media (max-width: 900px) {
+  body.theme-tisa .site-header__inner {
+    grid-template-columns: auto 1fr auto !important;
+  }
+
+  body.theme-tisa .site-menu-toggle {
+    order: 1 !important;
+    margin-left: 0 !important;
+  }
+
+  body.theme-tisa .brand {
+    order: 2 !important;
+    justify-self: center !important;
+  }
+
+  body.theme-tisa .top-nav {
+    order: 3 !important;
+  }
+}
+
+@media (max-width: 760px) {
+  body.theme-tisa.classes-editorial-page .classes-commercial-schedule {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    align-content: start !important;
+    gap: 0.8rem !important;
+    padding: 8.35rem 1rem 1.05rem !important;
+    overflow: hidden !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card::before {
+    inset: 0 0 auto 0 !important;
+    width: auto !important;
+    height: 7.25rem !important;
+    border-radius: 17px 17px 0 0 !important;
+    background-position: center 42% !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card::after {
+    left: 1rem !important;
+    top: 1rem !important;
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__header {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 0.75rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__header h3 {
+    max-width: 9.8ch !important;
+    font-size: clamp(2.35rem, 10.5vw, 3.05rem) !important;
+    line-height: 0.93 !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+    hyphens: none !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__meta {
+    min-width: 5.55rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__description {
+    max-width: 100% !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-card__slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.55rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-slot {
+    grid-template-columns: 1fr !important;
+    min-height: 3.55rem !important;
+    padding: 0.58rem 0.66rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-slot strong,
+  body.theme-tisa.classes-editorial-page .classes-experience-slot span,
+  body.theme-tisa.classes-editorial-page .classes-experience-slot small {
+    min-width: 0 !important;
+    line-height: 1 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-experience-slot span {
+    white-space: nowrap !important;
+  }
+}
+
+/* Floating agenda navigation on mobile. Keep after card overrides. */
+@media (max-width: 760px) {
+  body.theme-tisa.classes-editorial-page .classes-toolbar {
+    position: sticky !important;
+    top: calc(var(--fixed-chrome-offset, 0px) + 0.62rem) !important;
+    z-index: 58 !important;
+    margin-inline: 0.12rem !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 0.62rem !important;
+    min-height: 0 !important;
+    padding: 0.78rem 0.82rem !important;
+    border-radius: 18px !important;
+    background:
+      radial-gradient(circle at 84% 12%, rgba(255, 252, 247, 0.78), transparent 36%),
+      rgba(255, 252, 247, 0.92) !important;
+    border: 1px solid rgba(85, 62, 43, 0.12) !important;
+    box-shadow:
+      0 18px 40px rgba(60, 57, 53, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.48) !important;
+    backdrop-filter: blur(18px) !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__copy {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    align-items: center !important;
+    gap: 0.36rem 0.55rem !important;
+    padding: 0 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__copy::before,
+  body.theme-tisa.classes-editorial-page .classes-toolbar h2 {
+    display: none !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__eyebrow {
+    margin: 0 !important;
+    color: var(--text-muted) !important;
+    font-size: 0.58rem !important;
+    letter-spacing: 0.14em !important;
+    line-height: 1 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__copy p:last-child {
+    margin: 0 !important;
+    justify-self: end !important;
+    color: var(--text-primary) !important;
+    font-size: 0.86rem !important;
+    font-weight: 800 !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.48rem !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar-range,
+  body.theme-tisa.classes-editorial-page .classes-toolbar__actions a:nth-of-type(4) {
+    display: none !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar-link {
+    min-height: 2.9rem !important;
+    padding: 0.72rem 0.5rem !important;
+    border-radius: 999px !important;
+    font-size: 0.9rem !important;
+    line-height: 1 !important;
+    text-align: center !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__actions a:nth-of-type(3) {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-toolbar__actions a:nth-of-type(2) {
+    grid-column: 3 !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-board {
+    scroll-margin-top: calc(var(--fixed-chrome-offset, 0px) + var(--classes-toolbar-height, 0px) + 1rem) !important;
+  }
+
+  body.theme-tisa.classes-editorial-page .classes-mobile-day-sticky {
+    top: calc(var(--fixed-chrome-offset, 0px) + var(--classes-toolbar-height, 0px) + 1.12rem) !important;
+    z-index: 54 !important;
   }
 }

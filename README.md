@@ -27,10 +27,12 @@ npm run dev
 
 Abrir: `http://localhost:3000`
 
-## Credenciales demo staff
+## Credenciales demo staff (sólo simulación local)
 - `admin@tisa.local / admin1234`
 - `sofia@tisa.local / trainer1234`
 - `ops@tisa.local / ops1234`
+
+Estas credenciales no son aptas para producción. Antes del go-live, rota todas las cuentas staff y ejecuta `npm run preflight:production`; el comando falla si detecta contraseñas demo o configuración insegura.
 
 ## Flujos de demo
 1. `GET /classes` → elegir clase y lugares.
@@ -67,3 +69,21 @@ Abrir: `http://localhost:3000`
 - Secrets esperados:
   - `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_PATH`
   - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
+
+## Preflight de producción
+
+Con `SIMULATION_MODE=false` y la configuración real cargada:
+
+```bash
+npm run preflight:production
+```
+
+El preflight comprueba, sin imprimir secretos:
+- URL HTTPS y secretos de sesión/QR no predeterminados.
+- Stripe live y webhook configurados.
+- SMTP completo para entregar confirmaciones y accesos.
+- Ausencia de contraseñas demo en todas las cuentas staff.
+
+El seed demo está bloqueado cuando `SIMULATION_MODE=false` porque reinicia la base de datos.
+
+En producción, la aplicación crea un respaldo SQLite consistente al arrancar y cada 24 horas en `./backups`, conservando 14 copias. También puede ejecutarse manualmente con `npm run backup:database`; `BACKUP_INTERVAL_HOURS`, `BACKUP_RETENTION` y `BACKUP_DIR` permiten ajustar la política.

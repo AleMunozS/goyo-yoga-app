@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const MAX_SEATS_PER_BOOKING = 2;
+export const MAX_SEATS_PER_BOOKING = 8;
 export const DEFAULT_LAYOUT_VERSION = 1;
 export const DEFAULT_CANVAS = { width: 1200, height: 800, grid: 24 };
 

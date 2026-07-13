@@ -3,10 +3,16 @@ services:
   web:
     build: .
     container_name: goyo-yoga-app
+    init: true
     ports:
       - "3100:3000"
     env_file:
       - .env
+    environment:
+      CODEX_SUPPORT_URL: http://host.docker.internal:3207/chat
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./prisma:/app/prisma
       - ./storage/layout-backgrounds:/app/src/public/uploads/layouts
+      - ./backups:/app/backups

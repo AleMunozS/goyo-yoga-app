@@ -11,7 +11,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:push": "prisma db push",
+    "backup:database": "node scripts/backup-database.js",
     "db:init": "prisma db push --force-reset --skip-generate && node prisma/seed.js",
+    "preflight:production": "node scripts/preflight-production.js",
     "seed": "node prisma/seed.js"
   },
   "keywords": [
@@ -33,14 +35,14 @@
     "formidable": "^3.5.4",
     "image-size": "^2.0.2",
     "konva": "^10.2.5",
-    "morgan": "^1.10.1",
-    "nodemailer": "^7.0.7",
+    "morgan": "^1.11.0",
+    "nodemailer": "^9.0.3",
     "qrcode": "^1.5.4",
     "stripe": "^18.5.0",
     "zod": "^4.1.11"
   },
   "devDependencies": {
     "nodemon": "^3.1.10",
-    "prisma": "^6.4.1"
+    "prisma": "^6.19.3"
   }
 }

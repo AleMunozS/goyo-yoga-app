@@ -5,3 +5,6 @@ prisma/dev.db
 npm-debug.log
 .DS_Store
 coverage
+.playwright-cli/
+backups/
+output/

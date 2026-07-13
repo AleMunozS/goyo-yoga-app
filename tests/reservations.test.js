@@ -180,15 +180,44 @@ test('classes page renders the editorial shell in week and month views with live
 
   const weekResponse = await request('/classes');
   assert.equal(weekResponse.status, 200);
+  assert.equal(weekResponse.headers.get('x-frame-options'), 'DENY');
+  assert.equal(weekResponse.headers.get('x-content-type-options'), 'nosniff');
   const weekHtml = await weekResponse.text();
-  assert.match(weekHtml, /classes-site-header/);
-  assert.match(weekHtml, /classes-week-grid/);
+  assert.match(weekHtml, /class="site-header/);
+  assert.match(weekHtml, /classes-timetable-stack/);
+  assert.match(weekHtml, /data-classes-day-selector/);
+  assert.match(weekHtml, /1 horario para reservar/);
   assert.match(weekHtml, new RegExp(`/booking/seats\\?occurrenceId=${soonOccurrence.id}`));
 
   const monthResponse = await request('/classes?view=month');
   assert.equal(monthResponse.status, 200);
   const monthHtml = await monthResponse.text();
   assert.match(monthHtml, /classes-month-grid/);
+});
+
+test('staff login uses generic errors and rate limits repeated failures', { concurrency: false }, async () => {
+  await seedBaseData();
+  const attempt = () => request('/staff/login', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'x-forwarded-for': '203.0.113.44',
+    },
+    body: formBody({ email: 'missing@tisa.local', password: 'incorrect-password' }),
+    redirect: 'manual',
+  });
+
+  for (let index = 0; index < 5; index += 1) {
+    const response = await attempt();
+    assert.equal(response.status, 401);
+    const html = await response.text();
+    assert.match(html, /Correo o contraseña incorrectos/);
+    assert.doesNotMatch(html, /Usuario no encontrado|Password incorrecto/);
+  }
+
+  const blocked = await attempt();
+  assert.equal(blocked.status, 429);
+  assert.equal(blocked.headers.get('retry-after'), '900');
 });
 
 test('reservation API creates a draft hold without QR', { concurrency: false }, async () => {
