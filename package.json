@@ -28,6 +28,7 @@
   "dependencies": {
     "@prisma/client": "^6.4.1",
     "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "ejs": "^5.0.1",

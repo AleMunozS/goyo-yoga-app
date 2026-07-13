@@ -1,5 +1,6 @@
 import { esc } from '../utils.js';
 import { brand } from '../brand.js';
+import { config } from '../config.js';
 
 export function renderLayout({
   title,
@@ -12,12 +13,18 @@ export function renderLayout({
   hideDefaultHeader = false,
   customHeaderHtml = '',
   customFooterHtml = '',
+  canonicalPath = null,
 }) {
   const isConceptBoard = title.startsWith('Concept') && !staff;
   const isHome = title === 'Inicio' && !staff;
   const isStaffLogin = title === 'Staff Login' && !staff;
   const appName = brand.name;
-  const assetVersion = '20260713-go-live-v1';
+  const assetVersion = '20260713-go-live-v2';
+  const canonicalUrl = canonicalPath
+    ? new URL(canonicalPath, `${config.appUrl.replace(/\/+$/, '')}/`).toString()
+    : null;
+  const socialImageUrl = new URL(brand.assets.editorialGrid, `${config.appUrl.replace(/\/+$/, '')}/`).toString();
+  const fullTitle = `${title} | ${appName}`;
   const canAccessAssistedSales = staffRole === 'ADMIN' || staffRole === 'OPS';
   const canAccessLayouts = staffRole === 'ADMIN' || staffRole === 'OPS';
   const canAccessAdmin = staffRole === 'ADMIN';
@@ -107,7 +114,16 @@ export function renderLayout({
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="description" content="${esc(brand.metaDescription)}" />
     <meta name="theme-color" content="#F1EFE9" />
-    <title>${esc(title)} | ${appName}</title>
+    ${canonicalUrl ? `<meta name="robots" content="index, follow" />
+    <link rel="canonical" href="${esc(canonicalUrl)}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="${esc(appName)}" />
+    <meta property="og:title" content="${esc(fullTitle)}" />
+    <meta property="og:description" content="${esc(brand.metaDescription)}" />
+    <meta property="og:url" content="${esc(canonicalUrl)}" />
+    <meta property="og:image" content="${esc(socialImageUrl)}" />
+    <meta name="twitter:card" content="summary_large_image" />` : ''}
+    <title>${esc(fullTitle)}</title>
     <link rel="icon" href="${brand.assets.matMark}" type="image/svg+xml" />
     <script>document.documentElement.classList.add('js');</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">

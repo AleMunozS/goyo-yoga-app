@@ -1,6 +1,7 @@
 import express from 'express';
 import session from 'express-session';
 import morgan from 'morgan';
+import compression from 'compression';
 import dayjs from 'dayjs';
 import bcrypt from 'bcryptjs';
 import QRCode from 'qrcode';
@@ -1468,6 +1469,7 @@ export function createApp({ prisma }) {
 
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
+  app.use(compression());
 
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -1477,12 +1479,48 @@ export function createApp({ prisma }) {
     if (!config.simulationMode) {
       res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     }
+    if (/^\/(?:admin|api|booking|checkout|health|ops|staff|trainer)(?:\/|$)/.test(req.path)) {
+      res.setHeader('X-Robots-Tag', 'noindex, noarchive');
+    }
     next();
   });
 
   app.use(morgan('dev'));
-  app.use('/static', express.static(publicDir));
-  app.use('/vendor/konva', express.static(konvaDir));
+  app.use('/static', express.static(publicDir, { maxAge: '7d' }));
+  app.use('/vendor/konva', express.static(konvaDir, { immutable: true, maxAge: '30d' }));
+
+  app.get('/favicon.ico', (req, res) => {
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.redirect(308, brand.assets.matMark);
+  });
+
+  app.get('/robots.txt', (req, res) => {
+    const baseUrl = config.appUrl.replace(/\/+$/, '');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.type('text/plain').send([
+      'User-agent: *',
+      'Allow: /',
+      'Disallow: /admin/',
+      'Disallow: /api/',
+      'Disallow: /booking/',
+      'Disallow: /checkout/',
+      'Disallow: /ops/',
+      'Disallow: /staff/',
+      'Disallow: /trainer/',
+      `Sitemap: ${baseUrl}/sitemap.xml`,
+      '',
+    ].join('\n'));
+  });
+
+  app.get('/sitemap.xml', (req, res) => {
+    const baseUrl = config.appUrl.replace(/\/+$/, '');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>${esc(`${baseUrl}/`)}</loc></url>
+  <url><loc>${esc(`${baseUrl}/classes`)}</loc></url>
+</urlset>`);
+  });
   app.use(session({
     name: 'tisa.sid',
     secret: config.sessionSecret,
@@ -1774,6 +1812,7 @@ export function createApp({ prisma }) {
 
     const body = `
       <section class="landing-intro" id="landing-intro" aria-label="Pantalla de bienvenida de TISA">
+        <h1 class="sr-only">${brand.home.title}</h1>
         <div class="intro-shell">
           <div class="intro-copy">
             <div class="intro-panel">
@@ -1892,7 +1931,7 @@ export function createApp({ prisma }) {
       </section>
     `;
 
-    res.send(renderLayout({ title: 'Inicio', body, simulationMode: config.simulationMode }));
+    res.send(renderLayout({ title: 'Inicio', body, simulationMode: config.simulationMode, canonicalPath: '/' }));
   });
 
   app.get(['/concept-tisa-01', '/concept-goyo'], async (req, res) => {
@@ -2842,6 +2881,7 @@ export function createApp({ prisma }) {
         simulationMode: config.simulationMode,
         bodyClass: 'classes-editorial-page',
         mainClass: 'classes-editorial-main',
+        canonicalPath: '/classes',
         customFooterHtml: renderClassesCustomFooter({ view, periodStart }),
       }),
     );

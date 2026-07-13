@@ -195,6 +195,47 @@ test('classes page renders the editorial shell in week and month views with live
   assert.match(monthHtml, /classes-month-grid/);
 });
 
+test('public go-live metadata, crawler endpoints, caching, and compression are configured', { concurrency: false }, async () => {
+  await seedBaseData();
+
+  const homeResponse = await request('/');
+  assert.equal(homeResponse.status, 200);
+  const homeHtml = await homeResponse.text();
+  assert.match(homeHtml, /<link rel="canonical" href="http:\/\/127\.0\.0\.1:3000\/"/);
+  assert.match(homeHtml, /<meta property="og:title" content="Inicio \| TISA"/);
+  assert.match(homeHtml, /<h1 class="sr-only">/);
+
+  const classesResponse = await request('/classes');
+  assert.equal(classesResponse.status, 200);
+  assert.match(await classesResponse.text(), /<link rel="canonical" href="http:\/\/127\.0\.0\.1:3000\/classes"/);
+
+  const robotsResponse = await request('/robots.txt');
+  assert.equal(robotsResponse.status, 200);
+  const robots = await robotsResponse.text();
+  assert.match(robots, /Disallow: \/api\//);
+  assert.match(robots, /Sitemap: http:\/\/127\.0\.0\.1:3000\/sitemap\.xml/);
+
+  const sitemapResponse = await request('/sitemap.xml');
+  assert.equal(sitemapResponse.status, 200);
+  const sitemap = await sitemapResponse.text();
+  assert.match(sitemap, /<loc>http:\/\/127\.0\.0\.1:3000\/<\/loc>/);
+  assert.match(sitemap, /<loc>http:\/\/127\.0\.0\.1:3000\/classes<\/loc>/);
+
+  const faviconResponse = await request('/favicon.ico', { redirect: 'manual' });
+  assert.equal(faviconResponse.status, 308);
+  assert.equal(faviconResponse.headers.get('location'), '/static/tisa-mat-mark.svg');
+
+  const stylesheetResponse = await request('/static/style.css', {
+    headers: { 'accept-encoding': 'gzip' },
+  });
+  assert.equal(stylesheetResponse.status, 200);
+  assert.match(stylesheetResponse.headers.get('cache-control') || '', /max-age=604800/);
+  assert.equal(stylesheetResponse.headers.get('content-encoding'), 'gzip');
+
+  const staffResponse = await request('/staff/login');
+  assert.equal(staffResponse.headers.get('x-robots-tag'), 'noindex, noarchive');
+});
+
 test('staff login uses generic errors and rate limits repeated failures', { concurrency: false }, async () => {
   await seedBaseData();
   const attempt = () => request('/staff/login', {
