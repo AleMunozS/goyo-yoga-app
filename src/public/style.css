@@ -28,7 +28,7 @@ body.theme-tisa.classes-editorial-page .classes-editorial-shell {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  width: min(100vw - 10px, 1440px);
+  width: min(calc(100% - 10px), 1440px);
   padding-top: 0.55rem;
 }
 
@@ -12855,7 +12855,7 @@ body.theme-tisa.classes-editorial-page .classes-editorial-shell {
   display: flex !important;
   flex-direction: column !important;
   gap: 0.85rem !important;
-  width: min(100vw - 10px, 1440px) !important;
+  width: min(calc(100% - 10px), 1440px) !important;
   padding-top: 0.55rem !important;
 }
 
