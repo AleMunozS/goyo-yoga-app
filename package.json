@@ -14,6 +14,7 @@
     "backup:database": "node scripts/backup-database.js",
     "db:init": "prisma db push --force-reset --skip-generate && node prisma/seed.js",
     "preflight:production": "node scripts/preflight-production.js",
+    "rotate:demo-credentials": "node scripts/rotate-demo-credentials.js",
     "seed": "node prisma/seed.js"
   },
   "keywords": [

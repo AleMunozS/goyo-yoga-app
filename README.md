@@ -84,6 +84,12 @@ El preflight comprueba, sin imprimir secretos:
 - SMTP completo para entregar confirmaciones y accesos.
 - Ausencia de contraseñas demo en todas las cuentas staff.
 
+Para rotar únicamente las cuentas que todavía usan una contraseña demo, define
+`ALLOW_STAFF_CREDENTIAL_ROTATION=true` y una ruta absoluta nueva en
+`CREDENTIAL_OUTPUT`, y ejecuta `npm run rotate:demo-credentials`. El archivo se crea
+con permisos `0600`; contiene las credenciales irrecuperables y debe custodiarse
+fuera del repositorio. El comando nunca imprime contraseñas.
+
 El seed demo está bloqueado cuando `SIMULATION_MODE=false` porque reinicia la base de datos.
 
 En producción, la aplicación crea un respaldo SQLite consistente al arrancar y cada 24 horas en `./backups`, conservando 14 copias. También puede ejecutarse manualmente con `npm run backup:database`; `BACKUP_INTERVAL_HOURS`, `BACKUP_RETENTION` y `BACKUP_DIR` permiten ajustar la política.
