@@ -186,6 +186,7 @@ test('classes page renders the editorial shell in week and month views with live
   assert.match(weekHtml, /class="site-header/);
   assert.match(weekHtml, /classes-timetable-stack/);
   assert.match(weekHtml, /data-classes-day-selector/);
+  assert.match(weekHtml, /<h2>Semana editorial<\/h2>/);
   assert.match(weekHtml, /1 horario para reservar/);
   assert.match(weekHtml, new RegExp(`/booking/seats\\?occurrenceId=${soonOccurrence.id}`));
 
@@ -582,6 +583,7 @@ test('booking and admin layout pages render mat markup and persisted background 
   assert.match(bookingHtml, /seat-mat__label/);
   assert.match(bookingHtml, /tisa-mat-mark\.svg/);
   assert.match(bookingHtml, /render-room\.png/);
+  assert.match(bookingHtml, /<h1>Flow Test<\/h1>/);
 
   const sessionCookie = await loginAs('admin@test.local', 'admin1234');
   const editorResponse = await request(`/admin/class-layouts/${classType.id}`, {

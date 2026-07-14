@@ -1270,7 +1270,7 @@ function renderSeatSelectionBody({
           <input type="hidden" name="returnTo" value="${esc(safeReturnTo)}" />
           <article class="seat-floorplan-mobile-context ${intensity.className}">
             <p class="seat-floorplan-eyebrow">Clase seleccionada</p>
-            <h2>${esc(occurrence.classType.name)}</h2>
+            <h1>${esc(occurrence.classType.name)}</h1>
             <div class="seat-floorplan-mobile-context__meta">
               <span>${dayjs(occurrence.startsAt).format('DD MMM · HH:mm')}</span>
               <span>${esc(occurrence.trainer.displayName)}</span>
