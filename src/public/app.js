@@ -1,7 +1,19 @@
 (() => {
+  const privacyNotice = document.querySelector('[data-cookie-notice]');
+  const privacyNoticeDismiss = privacyNotice?.querySelector('[data-cookie-notice-dismiss]');
+
+  privacyNoticeDismiss?.addEventListener('click', () => {
+    try {
+      window.localStorage.setItem('tisa.privacy-notice.v1', 'acknowledged');
+    } catch (error) {
+      // El cierre funciona durante esta visita aunque el almacenamiento esté bloqueado.
+    }
+    document.documentElement.classList.add('privacy-notice-seen');
+    privacyNotice.hidden = true;
+  });
+
   const simBanner = document.querySelector('.sim-banner');
   const siteHeader = document.querySelector('.site-header, .classes-site-header, .seat-floorplan-header');
-  const classesToolbar = document.querySelector('.classes-toolbar');
   const themeColor = (name, fallback) => {
     const value = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     return value || fallback;
@@ -10,6 +22,7 @@
   const syncFixedChromeOffset = () => {
     const simBannerHeight = simBanner ? simBanner.getBoundingClientRect().height : 0;
     const siteHeaderHeight = siteHeader ? siteHeader.getBoundingClientRect().height : 0;
+    const classesToolbar = document.querySelector('.classes-toolbar');
     const classesToolbarHeight = classesToolbar ? classesToolbar.getBoundingClientRect().height : 0;
     const totalOffset = simBannerHeight + siteHeaderHeight;
     document.documentElement.style.setProperty('--sim-banner-height', `${simBannerHeight}px`);
@@ -34,25 +47,40 @@
     window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   };
 
-  document.querySelectorAll('[data-scroll-target]').forEach((el) => {
+  document.addEventListener('click', (event) => {
+    const el = event.target.closest('[data-scroll-target]');
+    if (!el) return;
     const target = el.dataset.scrollTarget;
     if (!target) return;
-
-    if (el.classList.contains('scroll-hero')) {
-      el.addEventListener('click', (ev) => {
-        if (ev.target.closest('a, button, input, textarea, select')) return;
-        scrollToTarget(target);
-      });
-      return;
-    }
-
-    el.addEventListener('click', () => scrollToTarget(target));
+    if (el.classList.contains('scroll-hero') && event.target.closest('a, button, input, textarea, select')) return;
+    if (el.matches('a')) event.preventDefault();
+    scrollToTarget(target);
   });
+
+  const prefetchedPublicRoutes = new Set();
+  const prefetchPublicRoute = (link) => {
+    if (!link || link.target || link.hasAttribute('download')) return;
+    const url = new URL(link.href, window.location.origin);
+    if (url.origin !== window.location.origin || !['/', '/classes'].includes(url.pathname)) return;
+    url.hash = '';
+    const key = url.href;
+    if (key === `${window.location.origin}${window.location.pathname}${window.location.search}` || prefetchedPublicRoutes.has(key)) return;
+    prefetchedPublicRoutes.add(key);
+    const hint = document.createElement('link');
+    hint.rel = 'prefetch';
+    hint.href = key;
+    hint.as = 'document';
+    document.head.appendChild(hint);
+  };
+
+  document.addEventListener('pointerover', (event) => prefetchPublicRoute(event.target.closest('a')), { passive: true });
+  document.addEventListener('touchstart', (event) => prefetchPublicRoute(event.target.closest('a')), { passive: true });
 
   const setupResponsiveMenu = (toggle, menu, selectors) => {
     if (!toggle || !menu) return;
     const setOpen = (open) => {
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
       toggle.classList.toggle('is-open', open);
       menu.classList.toggle('is-open', open);
     };
@@ -88,14 +116,42 @@
     '[data-nav-menu], [data-nav-menu-toggle]',
   );
 
-  const mobileDaySelector = document.querySelector('[data-classes-day-selector]');
-  const mobileDayStack = document.querySelector('[data-classes-day-stack]');
-  if (mobileDaySelector && mobileDayStack) {
+  const validAgendaIntensities = ['suave', 'baja', 'media-alta'];
+  const readAgendaIntensityFilters = (url = window.location.href) => {
+    const values = new URL(url, window.location.origin).searchParams.get('intensity') || '';
+    return new Set(values.split(',').filter((value) => validAgendaIntensities.includes(value)));
+  };
+  const activeAgendaIntensityFilters = readAgendaIntensityFilters();
+
+  const syncAgendaIntensityUrl = () => {
+    if (window.location.pathname !== '/classes') return;
+    const url = new URL(window.location.href);
+    const ordered = validAgendaIntensities.filter((value) => activeAgendaIntensityFilters.has(value));
+    if (ordered.length) url.searchParams.set('intensity', ordered.join(','));
+    else url.searchParams.delete('intensity');
+    window.history.replaceState({ ...(window.history.state || {}), tisaAgenda: true }, '', url);
+  };
+
+  const setupClassesAgenda = () => {
+    const cleanups = [];
+    const mobileDaySelector = document.querySelector('[data-classes-day-selector]');
+    const mobileDayStack = document.querySelector('[data-classes-day-stack]');
+    if (mobileDaySelector && mobileDayStack) {
     const dayOptions = Array.from(mobileDaySelector.querySelectorAll('[data-classes-day-option]'));
     const dayPanels = Array.from(mobileDayStack.querySelectorAll('[data-classes-day-marker]'));
     const dayStorageKey = `tisa:classes-day:${window.location.pathname}${window.location.search}`;
 
-    const activateDay = (index, { focus = false } = {}) => {
+    const centerDayOption = (option, behavior = 'smooth') => {
+      if (!option || !window.matchMedia('(max-width: 760px)').matches) return;
+      const targetLeft = option.offsetLeft - (mobileDaySelector.clientWidth - option.offsetWidth) / 2;
+      const maxLeft = Math.max(0, mobileDaySelector.scrollWidth - mobileDaySelector.clientWidth);
+      mobileDaySelector.scrollTo({
+        left: Math.max(0, Math.min(targetLeft, maxLeft)),
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : behavior,
+      });
+    };
+
+    const activateDay = (index, { focus = false, center = true, behavior = 'smooth' } = {}) => {
       const safeIndex = Math.max(0, Math.min(index, dayPanels.length - 1));
       dayOptions.forEach((option, optionIndex) => {
         const isActive = optionIndex === safeIndex;
@@ -114,6 +170,7 @@
         // Browsers can block storage in strict privacy modes.
       }
       if (focus) dayOptions[safeIndex]?.focus({ preventScroll: true });
+      if (center) window.requestAnimationFrame(() => centerDayOption(dayOptions[safeIndex], behavior));
     };
 
     let initialDay = 0;
@@ -126,7 +183,7 @@
 
     document.body.classList.add('has-mobile-day-paging');
     mobileDayStack.classList.add('is-mobile-paged');
-    activateDay(initialDay);
+    activateDay(initialDay, { behavior: 'auto' });
 
     dayOptions.forEach((option, index) => {
       option.addEventListener('click', () => activateDay(index));
@@ -150,11 +207,12 @@
       });
     };
     mobileDayQuery.addEventListener?.('change', syncDayPanelVisibility);
+    cleanups.push(() => mobileDayQuery.removeEventListener?.('change', syncDayPanelVisibility));
     syncDayPanelVisibility();
-  }
+    }
 
-  const mobileDaySticky = document.querySelector('[data-classes-day-sticky]');
-  if (mobileDaySticky) {
+    const mobileDaySticky = document.querySelector('[data-classes-day-sticky]');
+    if (mobileDaySticky) {
     const titleTarget = mobileDaySticky.querySelector('[data-classes-day-sticky-title]');
     const metaTarget = mobileDaySticky.querySelector('[data-classes-day-sticky-meta]');
     const markers = Array.from(document.querySelectorAll('[data-classes-day-marker]'));
@@ -206,8 +264,9 @@
       });
     };
 
+    let markerObserver = null;
     if ('IntersectionObserver' in window) {
-      const markerObserver = new IntersectionObserver(scheduleStickySync, {
+      markerObserver = new IntersectionObserver(scheduleStickySync, {
         root: null,
         rootMargin: '-18% 0px -58% 0px',
         threshold: [0, 0.1, 0.35, 0.7, 1],
@@ -218,7 +277,373 @@
     window.addEventListener('scroll', scheduleStickySync, { passive: true });
     window.addEventListener('resize', scheduleStickySync);
     mobileQuery.addEventListener?.('change', scheduleStickySync);
+    cleanups.push(() => {
+      markerObserver?.disconnect();
+      window.removeEventListener('scroll', scheduleStickySync);
+      window.removeEventListener('resize', scheduleStickySync);
+      mobileQuery.removeEventListener?.('change', scheduleStickySync);
+      if (stickyFrame) window.cancelAnimationFrame(stickyFrame);
+    });
     syncMobileDaySticky();
+    }
+
+    const intensityButtons = Array.from(document.querySelectorAll('[data-agenda-intensity-filter]'));
+    const intensityCards = Array.from(document.querySelectorAll('[data-agenda-intensity-card]'));
+    const intensityStatus = document.querySelector('[data-agenda-filter-status]');
+    const intensityEmpty = document.querySelector('[data-agenda-filter-empty]');
+    const intensityClear = document.querySelector('[data-agenda-filter-clear]');
+
+    if (intensityButtons.length) {
+      const getCardCount = (card) => Number.parseInt(card.dataset.agendaOccurrenceCount || '1', 10) || 1;
+      const isCardVisibleForFilter = (card) => (
+        activeAgendaIntensityFilters.size === 0 || activeAgendaIntensityFilters.has(card.dataset.agendaIntensity)
+      );
+
+      const applyIntensityFilters = () => {
+        let visibleTotal = 0;
+        const availableCounts = new Map();
+        let availableTotal = 0;
+        intensityCards.forEach((card) => {
+          const count = getCardCount(card);
+          availableTotal += count;
+          availableCounts.set(card.dataset.agendaIntensity, (availableCounts.get(card.dataset.agendaIntensity) || 0) + count);
+        });
+        intensityCards.forEach((card) => {
+          const visible = isCardVisibleForFilter(card);
+          card.hidden = !visible;
+          card.classList.toggle('is-filtered-out', !visible);
+          if (visible) visibleTotal += getCardCount(card);
+        });
+
+        intensityButtons.forEach((button) => {
+          const value = button.dataset.agendaIntensityFilter;
+          const availableCount = value === 'all' ? availableTotal : (availableCounts.get(value) || 0);
+          const selected = value === 'all'
+            ? activeAgendaIntensityFilters.size === 0
+            : activeAgendaIntensityFilters.has(value);
+          const countTarget = button.querySelector('small');
+          if (countTarget) countTarget.textContent = String(availableCount);
+          if (value !== 'all') button.disabled = availableCount === 0;
+          button.classList.toggle('is-active', selected);
+          button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+        });
+
+        const dayContainers = Array.from(document.querySelectorAll('.classes-timetable-day, .classes-month-day, .classes-day-column'));
+        dayContainers.forEach((day) => {
+          const visibleInDay = Array.from(day.querySelectorAll('[data-agenda-intensity-card]'))
+            .filter((card) => !card.hidden)
+            .reduce((total, card) => total + getCardCount(card), 0);
+          day.classList.toggle('is-filter-empty', activeAgendaIntensityFilters.size > 0 && visibleInDay === 0);
+          day.dataset.filteredOccurrenceCount = String(visibleInDay);
+        });
+
+        const dayOptions = Array.from(document.querySelectorAll('[data-classes-day-option]'));
+        const timetableDays = Array.from(document.querySelectorAll('.classes-timetable-day'));
+        dayOptions.forEach((option, index) => {
+          const count = Number.parseInt(timetableDays[index]?.dataset.filteredOccurrenceCount || '0', 10) || 0;
+          const countTarget = option.querySelector('small');
+          if (!option.dataset.agendaBaseLabel) option.dataset.agendaBaseLabel = option.getAttribute('aria-label') || '';
+          if (countTarget) countTarget.textContent = String(count);
+          option.setAttribute(
+            'aria-label',
+            activeAgendaIntensityFilters.size > 0
+              ? `${option.dataset.agendaBaseLabel.split(',')[0]}, ${count} ${count === 1 ? 'horario visible' : 'horarios visibles'}`
+              : option.dataset.agendaBaseLabel,
+          );
+          option.classList.toggle('has-no-filter-results', activeAgendaIntensityFilters.size > 0 && count === 0);
+        });
+
+        if (activeAgendaIntensityFilters.size > 0 && dayOptions.length) {
+          const activeIndex = dayOptions.findIndex((option) => option.classList.contains('is-active'));
+          const activeCount = Number.parseInt(timetableDays[activeIndex]?.dataset.filteredOccurrenceCount || '0', 10) || 0;
+          if (activeCount === 0) {
+            const nextIndex = timetableDays.findIndex((day) => Number.parseInt(day.dataset.filteredOccurrenceCount || '0', 10) > 0);
+            if (nextIndex >= 0) dayOptions[nextIndex]?.click();
+          }
+        }
+
+        if (intensityStatus) {
+          const noun = visibleTotal === 1 ? 'horario visible' : 'horarios visibles';
+          intensityStatus.textContent = activeAgendaIntensityFilters.size
+            ? `${visibleTotal} ${noun}`
+            : `${visibleTotal} ${visibleTotal === 1 ? 'horario' : 'horarios'}`;
+        }
+        if (intensityClear) {
+          intensityClear.hidden = activeAgendaIntensityFilters.size === 0;
+          intensityClear.disabled = activeAgendaIntensityFilters.size === 0;
+        }
+        if (intensityEmpty) intensityEmpty.hidden = !(activeAgendaIntensityFilters.size > 0 && visibleTotal === 0);
+        document.querySelector('.classes-board')?.classList.toggle(
+          'has-empty-intensity-filter',
+          activeAgendaIntensityFilters.size > 0 && visibleTotal === 0,
+        );
+      };
+
+      intensityButtons.forEach((button) => {
+        const handleIntensityClick = () => {
+          const value = button.dataset.agendaIntensityFilter;
+          if (value === 'all') activeAgendaIntensityFilters.clear();
+          else if (activeAgendaIntensityFilters.has(value)) activeAgendaIntensityFilters.delete(value);
+          else activeAgendaIntensityFilters.add(value);
+          syncAgendaIntensityUrl();
+          applyIntensityFilters();
+        };
+        button.addEventListener('click', handleIntensityClick);
+        cleanups.push(() => button.removeEventListener('click', handleIntensityClick));
+      });
+
+      if (intensityClear) {
+        const handleIntensityClear = () => {
+          activeAgendaIntensityFilters.clear();
+          syncAgendaIntensityUrl();
+          applyIntensityFilters();
+        };
+        intensityClear.addEventListener('click', handleIntensityClear);
+        cleanups.push(() => intensityClear.removeEventListener('click', handleIntensityClear));
+      }
+
+      applyIntensityFilters();
+    }
+
+    syncFixedChromeOffset();
+    return () => cleanups.forEach((cleanup) => cleanup());
+  };
+
+  let cleanupClassesAgenda = setupClassesAgenda();
+
+  const classesShell = document.querySelector('.classes-editorial-shell');
+  if (classesShell) {
+    let agendaRequestController = null;
+    let agendaRequestSequence = 0;
+
+    const setAgendaLoading = (loading) => {
+      classesShell.classList.toggle('is-agenda-loading', loading);
+      const toolbar = document.querySelector('.classes-toolbar');
+      const board = document.querySelector('.classes-board');
+      toolbar?.setAttribute('aria-busy', loading ? 'true' : 'false');
+      board?.setAttribute('aria-busy', loading ? 'true' : 'false');
+    };
+
+    const showAgendaError = () => {
+      document.querySelector('.classes-agenda-client-error')?.remove();
+      const message = document.createElement('p');
+      message.className = 'classes-agenda-client-error';
+      message.setAttribute('role', 'alert');
+      message.textContent = 'No pudimos actualizar la agenda. Revisa tu conexión e inténtalo de nuevo.';
+      document.querySelector('.classes-control-deck')?.insertAdjacentElement('afterend', message);
+    };
+
+    const replaceAgendaContent = (nextDocument) => {
+      const requiredSelectors = [
+        '.classes-metric-row',
+        '.classes-spotlight-card',
+        '.classes-control-deck',
+        '.classes-board',
+      ];
+
+      requiredSelectors.forEach((selector) => {
+        const current = document.querySelector(selector);
+        const next = nextDocument.querySelector(selector);
+        if (!current || !next) throw new Error(`Falta el fragmento dinámico ${selector}`);
+        current.replaceWith(next.cloneNode(true));
+      });
+
+      const currentStatus = document.querySelector('.classes-status-banner');
+      const nextStatus = nextDocument.querySelector('.classes-status-banner');
+      currentStatus?.remove();
+      if (nextStatus) {
+        document.querySelector('.classes-board')?.insertAdjacentElement('beforebegin', nextStatus.cloneNode(true));
+      }
+
+      const currentDock = document.querySelector('.classes-mobile-dock');
+      const nextDock = nextDocument.querySelector('.classes-mobile-dock');
+      if (currentDock && nextDock) currentDock.replaceWith(nextDock.cloneNode(true));
+
+      document.title = nextDocument.title || document.title;
+      document.querySelector('.classes-board')?.classList.add('is-agenda-entering');
+      document.querySelector('.classes-control-deck')?.classList.add('is-agenda-entering');
+    };
+
+    const navigateAgenda = async (href, { historyMode = 'push', focusLabel = '' } = {}) => {
+      const targetUrl = new URL(href, window.location.origin);
+      if (targetUrl.origin !== window.location.origin || targetUrl.pathname !== '/classes') return false;
+      if (historyMode === 'none') {
+        activeAgendaIntensityFilters.clear();
+        readAgendaIntensityFilters(targetUrl).forEach((value) => activeAgendaIntensityFilters.add(value));
+      } else {
+        const orderedIntensities = validAgendaIntensities.filter((value) => activeAgendaIntensityFilters.has(value));
+        if (orderedIntensities.length) targetUrl.searchParams.set('intensity', orderedIntensities.join(','));
+        else targetUrl.searchParams.delete('intensity');
+      }
+      if (historyMode === 'push' && targetUrl.href === window.location.href) return true;
+
+      agendaRequestController?.abort();
+      agendaRequestController = new AbortController();
+      const requestSequence = ++agendaRequestSequence;
+      const scrollPosition = { x: window.scrollX, y: window.scrollY };
+      setAgendaLoading(true);
+      document.querySelector('.classes-agenda-client-error')?.remove();
+
+      try {
+        const response = await fetch(targetUrl, {
+          signal: agendaRequestController.signal,
+          headers: { 'X-Requested-With': 'TISA-Agenda' },
+        });
+        if (!response.ok) throw new Error(`Agenda HTTP ${response.status}`);
+        const nextDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+        if (requestSequence !== agendaRequestSequence) return true;
+
+        cleanupClassesAgenda();
+        if (historyMode === 'push') window.history.pushState({ tisaAgenda: true }, '', targetUrl);
+        if (historyMode === 'replace') window.history.replaceState({ tisaAgenda: true }, '', targetUrl);
+        replaceAgendaContent(nextDocument);
+        cleanupClassesAgenda = setupClassesAgenda();
+        window.scrollTo({ left: scrollPosition.x, top: scrollPosition.y, behavior: 'auto' });
+
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            document.querySelector('.classes-board')?.classList.remove('is-agenda-entering');
+            document.querySelector('.classes-control-deck')?.classList.remove('is-agenda-entering');
+          });
+        });
+
+        if (focusLabel) {
+          const nextFocus = Array.from(document.querySelectorAll('.classes-toolbar__actions a, .classes-mobile-nav a'))
+            .find((link) => (link.getAttribute('aria-label') || link.textContent.trim()) === focusLabel);
+          nextFocus?.focus({ preventScroll: true });
+        }
+        return true;
+      } catch (error) {
+        if (error.name === 'AbortError') return true;
+        showAgendaError();
+        return true;
+      } finally {
+        if (requestSequence === agendaRequestSequence) {
+          setAgendaLoading(false);
+          syncFixedChromeOffset();
+        }
+      }
+    };
+
+    window.history.replaceState({ ...(window.history.state || {}), tisaAgenda: true }, '', window.location.href);
+
+    document.addEventListener('click', (event) => {
+      const link = event.target.closest('.classes-toolbar__actions a, .classes-mobile-nav a');
+      if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const url = new URL(link.href, window.location.origin);
+      if (url.origin !== window.location.origin || url.pathname !== '/classes') return;
+      event.preventDefault();
+      const focusLabel = event.detail === 0 ? (link.getAttribute('aria-label') || link.textContent.trim()) : '';
+      navigateAgenda(url.href, { historyMode: 'push', focusLabel });
+    });
+
+    window.addEventListener('popstate', () => {
+      if (window.location.pathname === '/classes') navigateAgenda(window.location.href, { historyMode: 'none' });
+    });
+  }
+
+  const trainerAgendaToolbar = document.querySelector('[data-trainer-agenda-toolbar]');
+  const trainerWorkspace = trainerAgendaToolbar?.closest('.system-shell');
+  if (trainerAgendaToolbar && trainerWorkspace) {
+    let trainerAgendaController = null;
+    let trainerAgendaSequence = 0;
+
+    const setTrainerAgendaLoading = (loading) => {
+      trainerWorkspace.classList.toggle('is-trainer-agenda-loading', loading);
+      document.querySelector('[data-trainer-agenda-toolbar]')?.setAttribute('aria-busy', loading ? 'true' : 'false');
+      document.querySelector('[data-trainer-agenda-content]')?.setAttribute('aria-busy', loading ? 'true' : 'false');
+    };
+
+    const showTrainerAgendaError = () => {
+      document.querySelector('.trainer-agenda-client-error')?.remove();
+      const message = document.createElement('p');
+      message.className = 'trainer-agenda-client-error';
+      message.setAttribute('role', 'alert');
+      message.textContent = 'No pudimos actualizar la agenda. Conservamos la vista actual para que puedas intentarlo de nuevo.';
+      document.querySelector('[data-trainer-agenda-toolbar]')?.insertAdjacentElement('afterend', message);
+    };
+
+    const navigateTrainerAgenda = async (href, { historyMode = 'push', focusLabel = '' } = {}) => {
+      const targetUrl = new URL(href, window.location.origin);
+      if (targetUrl.origin !== window.location.origin || targetUrl.pathname !== '/trainer/classes') return false;
+      if (historyMode === 'push' && targetUrl.href === window.location.href) return true;
+
+      trainerAgendaController?.abort();
+      trainerAgendaController = new AbortController();
+      const requestSequence = ++trainerAgendaSequence;
+      const scrollPosition = { left: window.scrollX, top: window.scrollY };
+      setTrainerAgendaLoading(true);
+      document.querySelector('.trainer-agenda-client-error')?.remove();
+
+      try {
+        const response = await fetch(targetUrl, {
+          signal: trainerAgendaController.signal,
+          headers: { 'X-Requested-With': 'TISA-Trainer-Agenda' },
+        });
+        const responseUrl = new URL(response.url, window.location.origin);
+        if (responseUrl.pathname !== '/trainer/classes') {
+          window.location.assign(responseUrl.href);
+          return true;
+        }
+        if (!response.ok) throw new Error(`Trainer agenda HTTP ${response.status}`);
+
+        const nextDocument = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const nextToolbar = nextDocument.querySelector('[data-trainer-agenda-toolbar]');
+        const nextContent = nextDocument.querySelector('[data-trainer-agenda-content]');
+        if (!nextToolbar || !nextContent) throw new Error('La respuesta no contiene la agenda del trainer.');
+        if (requestSequence !== trainerAgendaSequence) return true;
+
+        if (historyMode === 'push') window.history.pushState({ tisaTrainerAgenda: true }, '', targetUrl);
+        if (historyMode === 'replace') window.history.replaceState({ tisaTrainerAgenda: true }, '', targetUrl);
+
+        document.querySelector('[data-trainer-agenda-toolbar]')?.replaceWith(nextToolbar.cloneNode(true));
+        document.querySelector('[data-trainer-agenda-content]')?.replaceWith(nextContent.cloneNode(true));
+        document.title = nextDocument.title || document.title;
+        window.scrollTo({ ...scrollPosition, behavior: 'auto' });
+
+        const insertedToolbar = document.querySelector('[data-trainer-agenda-toolbar]');
+        const insertedContent = document.querySelector('[data-trainer-agenda-content]');
+        insertedToolbar?.classList.add('is-state-entering');
+        insertedContent?.classList.add('is-state-entering');
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            insertedToolbar?.classList.remove('is-state-entering');
+            insertedContent?.classList.remove('is-state-entering');
+          });
+        });
+
+        if (focusLabel) {
+          const nextFocus = Array.from(document.querySelectorAll('.calendar-toolbar-actions a'))
+            .find((link) => (link.getAttribute('aria-label') || link.textContent.trim()) === focusLabel);
+          nextFocus?.focus({ preventScroll: true });
+        }
+        return true;
+      } catch (error) {
+        if (error.name === 'AbortError') return true;
+        showTrainerAgendaError();
+        return true;
+      } finally {
+        if (requestSequence === trainerAgendaSequence) setTrainerAgendaLoading(false);
+      }
+    };
+
+    window.history.replaceState({ ...(window.history.state || {}), tisaTrainerAgenda: true }, '', window.location.href);
+
+    document.addEventListener('click', (event) => {
+      const link = event.target.closest('.calendar-toolbar-actions a');
+      if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const url = new URL(link.href, window.location.origin);
+      if (url.pathname !== '/trainer/classes' || url.origin !== window.location.origin) return;
+      event.preventDefault();
+      const focusLabel = event.detail === 0 ? (link.getAttribute('aria-label') || link.textContent.trim()) : '';
+      navigateTrainerAgenda(url.href, { historyMode: 'push', focusLabel });
+    });
+
+    window.addEventListener('popstate', () => {
+      if (window.location.pathname === '/trainer/classes') {
+        navigateTrainerAgenda(window.location.href, { historyMode: 'none' });
+      }
+    });
   }
 
   if (window.location.hash === '#classes-editorial-grid') {
@@ -231,10 +656,10 @@
   }
 
   const classesScrollKey = 'tisa:classes-scroll';
-  const classesPath = `${window.location.pathname}${window.location.search}`;
   const isClassesPage = document.body.classList.contains('classes-editorial-page');
   const saveClassesScroll = () => {
     if (!isClassesPage) return;
+    const classesPath = `${window.location.pathname}${window.location.search}`;
     try {
       window.sessionStorage.setItem(
         classesScrollKey,
@@ -249,7 +674,7 @@
     try {
       const saved = JSON.parse(window.sessionStorage.getItem(classesScrollKey) || 'null');
       const canRestore = saved
-        && saved.path === classesPath
+        && saved.path === `${window.location.pathname}${window.location.search}`
         && Number.isFinite(saved.y)
         && Date.now() - Number(saved.savedAt || 0) < 30 * 60 * 1000;
       if (canRestore) {
@@ -262,19 +687,20 @@
     }
   }
 
-  document.querySelectorAll('a[data-preserve-classes-scroll]').forEach((link) => {
-    link.addEventListener('click', () => {
-      saveClassesScroll();
-      try {
-        const url = new URL(link.href, window.location.origin);
-        if (url.origin === window.location.origin && url.pathname === '/booking/seats') {
-          url.searchParams.set('returnTo', `${classesPath}#classes-editorial-grid`);
-          link.href = url.toString();
-        }
-      } catch {
-        // Keep the original href if URL parsing fails.
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest('a[data-preserve-classes-scroll]');
+    if (!link) return;
+    saveClassesScroll();
+    try {
+      const url = new URL(link.href, window.location.origin);
+      if (url.origin === window.location.origin && url.pathname === '/booking/seats') {
+        const classesPath = `${window.location.pathname}${window.location.search}`;
+        url.searchParams.set('returnTo', `${classesPath}#classes-editorial-grid`);
+        link.href = url.toString();
       }
-    });
+    } catch {
+      // Keep the original href if URL parsing fails.
+    }
   });
 
   const intro = document.getElementById('landing-intro');
@@ -491,6 +917,7 @@
     const countLabel = document.getElementById('seat-selection-count');
     const summaryLabel = document.getElementById('seat-selection-summary');
     const totalLabel = document.getElementById('seat-selection-total');
+    const providerTotalLabel = document.getElementById('checkout-provider-total');
     const submitButton = document.getElementById('seat-selection-submit');
     const chipsList = document.getElementById('seat-selection-chips');
     const clearButton = document.getElementById('seat-selection-clear');
@@ -536,6 +963,9 @@
       }
       if (totalLabel) {
         totalLabel.textContent = selected.length ? formatMoney(unitPriceCents * selected.length) : formatMoney(0);
+      }
+      if (providerTotalLabel) {
+        providerTotalLabel.textContent = selected.length ? formatMoney(unitPriceCents * selected.length) : formatMoney(0);
       }
       if (submitButton) {
         submitButton.disabled = selected.length === 0;
@@ -809,11 +1239,13 @@
       if (frame) frame.setAttribute('src', '');
     };
 
-    document.querySelectorAll('[data-class-preview-video]').forEach((trigger) => {
-      trigger.addEventListener('click', openPreview);
-      trigger.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') openPreview(event);
-      });
+    document.addEventListener('click', (event) => {
+      if (event.target.closest('[data-class-preview-video]')) openPreview(event);
+    });
+    document.addEventListener('keydown', (event) => {
+      if ((event.key === 'Enter' || event.key === ' ') && event.target.closest('[data-class-preview-video]')) {
+        openPreview(event);
+      }
     });
 
     previewModal.querySelectorAll('[data-class-preview-close]').forEach((button) => {
@@ -861,9 +1293,9 @@
           body: JSON.stringify({ message }),
         });
         const data = await response.json();
-        appendMessage('Asistente TISA', data.reply || data.error || 'No pude responder en este momento.');
+        appendMessage('Asistente', data.reply || data.error || 'No pude responder en este momento.');
       } catch {
-        appendMessage('Asistente TISA', 'No pude conectar con el asistente. Revisa tu referencia y contacta al equipo de TISA.');
+        appendMessage('Asistente', 'No pude conectar con el asistente. Revisa tu referencia y contacta al equipo del estudio.');
       } finally {
         if (button) {
           button.disabled = false;
@@ -880,7 +1312,7 @@
     if (stageContainer && jsonField) {
       const payload = JSON.parse(layoutPayload.textContent || '{}');
       const baseLayout = payload.baseLayout ? JSON.parse(JSON.stringify(payload.baseLayout)) : null;
-      const matMarkAsset = payload.matMarkAsset || '/static/tisa-mat-mark.svg';
+      const matMarkAsset = payload.matMarkAsset || '/static/tisa-header-lockup.png';
       const layoutTheme = {
         caliza: themeColor('--caliza', '#F1EFE9'),
         yeso: themeColor('--yeso', '#DBD6C9'),
@@ -1481,18 +1913,6 @@
               opacity: !seat.enabled || seat.bookable === false ? 0.42 : isSelected ? 0.22 : 0.38,
               listening: false,
             }));
-          } else {
-            seatGroup.add(new window.Konva.Text({
-              x: -36,
-              y: -14,
-              width: 72,
-              align: 'center',
-              text: 'TISA',
-              fill: isSelected ? 'rgba(241, 239, 233, 0.32)' : 'rgba(124, 118, 81, 0.38)',
-              fontStyle: 'bold',
-              fontSize: 14,
-              listening: false,
-            }));
           }
 
           seatGroup.add(new window.Konva.Text({
@@ -1696,20 +2116,19 @@
   const trainerCancelForm = document.getElementById('trainer-cancel-form');
   const trainerCancelBtn = document.getElementById('trainer-cancel-btn');
 
-  document.querySelectorAll('.trainer-chip').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (!trainerModal || !trainerTitle || !trainerMeta || !trainerStatus || !trainerCancelForm || !trainerCancelBtn) return;
-      const id = btn.dataset.trainerOccurrenceId || '';
-      const status = btn.dataset.trainerStatus || 'SCHEDULED';
-      const canCancel = btn.dataset.trainerCancelable === '1';
-      trainerTitle.textContent = btn.dataset.trainerClass || 'Clase';
-      trainerMeta.textContent = `${btn.dataset.trainerTime || ''} · Reservas: ${btn.dataset.trainerBookings || '0'}`;
-      trainerStatus.textContent = `Estado: ${status === 'CANCELLED' ? 'CANCELADA' : 'PROGRAMADA'}`;
-      trainerCancelForm.action = `/trainer/classes/${id}/cancel`;
-      trainerCancelBtn.disabled = !canCancel;
-      trainerCancelBtn.textContent = canCancel ? 'Cancelar clase' : 'No cancelable';
-      if (typeof trainerModal.showModal === 'function') trainerModal.showModal();
-    });
+  document.addEventListener('click', (event) => {
+    const btn = event.target.closest('.trainer-chip');
+    if (!btn || !trainerModal || !trainerTitle || !trainerMeta || !trainerStatus || !trainerCancelForm || !trainerCancelBtn) return;
+    const id = btn.dataset.trainerOccurrenceId || '';
+    const status = btn.dataset.trainerStatus || 'SCHEDULED';
+    const canCancel = btn.dataset.trainerCancelable === '1';
+    trainerTitle.textContent = btn.dataset.trainerClass || 'Clase';
+    trainerMeta.textContent = `${btn.dataset.trainerTime || ''} · Reservas: ${btn.dataset.trainerBookings || '0'}`;
+    trainerStatus.textContent = `Estado: ${status === 'CANCELLED' ? 'CANCELADA' : 'PROGRAMADA'}`;
+    trainerCancelForm.action = `/trainer/classes/${id}/cancel`;
+    trainerCancelBtn.disabled = !canCancel;
+    trainerCancelBtn.textContent = canCancel ? 'Cancelar clase' : 'No cancelable';
+    if (typeof trainerModal.showModal === 'function') trainerModal.showModal();
   });
 
   document.querySelectorAll('[data-close-trainer-modal]').forEach((btn) => {

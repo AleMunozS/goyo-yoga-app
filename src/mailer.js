@@ -8,6 +8,11 @@ import { brand } from './brand.js';
 let transportPromise;
 
 const templatesDir = fileURLToPath(new URL('./views/email', import.meta.url));
+const brandLogoAttachment = {
+  filename: 'tisa-logo.png',
+  path: fileURLToPath(new URL('./public/tisa-header-lockup.png', import.meta.url)),
+  cid: 'tisa-logo@tisa.local',
+};
 
 function getMailerSettings() {
   const configured = Boolean(config.smtpHost && config.smtpPort && config.smtpUser && config.smtpPass);
@@ -95,7 +100,8 @@ export async function sendMagicLinkEmail({ to, bookingUrl, className, classDate,
       { label: 'Lugares', value: seatLabels },
     ],
     note: 'Este enlace vence en 30 minutos. Si el tiempo se agota, solo crea una nueva selección desde la agenda.',
-    footerText: `${brand.name} · ${brand.descriptor}`,
+    brandLogoSrc: `cid:${brandLogoAttachment.cid}`,
+    footerText: brand.descriptor,
   });
   const text = [
     'Tu acceso temporal ya está listo.',
@@ -108,7 +114,7 @@ export async function sendMagicLinkEmail({ to, bookingUrl, className, classDate,
     'El enlace vence en 30 minutos.',
   ].join('\n');
 
-  return sendMail({ to, subject, html, text });
+  return sendMail({ to, subject, html, text, attachments: [brandLogoAttachment] });
 }
 
 export async function sendBookingConfirmationEmail({
@@ -146,7 +152,8 @@ export async function sendBookingConfirmationEmail({
     qrImageSrc: qrAttachment ? `cid:${qrAttachment.cid}` : null,
     qrCaption: 'Presenta este QR al llegar para validar tu entrada.',
     note: 'Si necesitas apoyo, responde a este correo y menciona tu referencia.',
-    footerText: `${brand.name} · ${brand.descriptor}`,
+    brandLogoSrc: `cid:${brandLogoAttachment.cid}`,
+    footerText: brand.descriptor,
   });
   const text = [
     'Tu reserva ya quedó confirmada.',
@@ -165,6 +172,6 @@ export async function sendBookingConfirmationEmail({
     subject,
     html,
     text,
-    attachments: qrAttachment ? [qrAttachment] : [],
+    attachments: [brandLogoAttachment, ...(qrAttachment ? [qrAttachment] : [])],
   });
 }

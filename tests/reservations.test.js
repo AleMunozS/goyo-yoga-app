@@ -185,15 +185,53 @@ test('classes page renders the editorial shell in week and month views with live
   const weekHtml = await weekResponse.text();
   assert.match(weekHtml, /class="site-header/);
   assert.match(weekHtml, /classes-timetable-stack/);
+  assert.match(weekHtml, /classes-day-name-short/);
   assert.match(weekHtml, /data-classes-day-selector/);
-  assert.match(weekHtml, /<h2>Semana editorial<\/h2>/);
-  assert.match(weekHtml, /1 horario para reservar/);
+  assert.match(weekHtml, /data-agenda-intensity-filter="all"/);
+  assert.match(weekHtml, /data-agenda-intensity-card/);
+  assert.match(weekHtml, /data-agenda-filter-empty/);
+  assert.match(weekHtml, /<h2>Agenda semanal<\/h2>/);
+  assert.match(weekHtml, /\d+ horarios? para reservar/);
+  assert.match(weekHtml, /class="reservation-companion/);
+  assert.match(weekHtml, /Próxima clase disponible/);
+  assert.doesNotMatch(weekHtml, /data-support-chat-form/);
   assert.match(weekHtml, new RegExp(`/booking/seats\\?occurrenceId=${soonOccurrence.id}`));
+
+  const seatsResponse = await request(`/booking/seats?occurrenceId=${soonOccurrence.id}`);
+  assert.equal(seatsResponse.status, 200);
+  const seatsHtml = await seatsResponse.text();
+  assert.match(seatsHtml, /Información del proveedor/);
+  assert.match(seatsHtml, /name="legalAccepted" value="1" required/);
+  assert.match(seatsHtml, /\[WhatsApp\]/);
+  assert.match(seatsHtml, /href="\/terms"/);
 
   const monthResponse = await request('/classes?view=month');
   assert.equal(monthResponse.status, 200);
   const monthHtml = await monthResponse.text();
   assert.match(monthHtml, /classes-month-grid/);
+});
+
+test('trainer agenda exposes progressive week and month fragments with normal link fallbacks', { concurrency: false }, async () => {
+  await seedBaseData();
+  const cookie = await loginAs('trainer@test.local', 'trainer1234');
+
+  const weekResponse = await request('/trainer/classes?view=week', {
+    headers: { cookie },
+  });
+  assert.equal(weekResponse.status, 200);
+  const weekHtml = await weekResponse.text();
+  assert.match(weekHtml, /data-trainer-agenda-toolbar/);
+  assert.match(weekHtml, /data-trainer-agenda-content/);
+  assert.match(weekHtml, /calendar-grid-body/);
+  assert.match(weekHtml, /href="\/trainer\/classes\?view=month/);
+
+  const monthResponse = await request('/trainer/classes?view=month', {
+    headers: { cookie },
+  });
+  assert.equal(monthResponse.status, 200);
+  const monthHtml = await monthResponse.text();
+  assert.match(monthHtml, /calendar-month-grid/);
+  assert.match(monthHtml, /data-trainer-agenda-toolbar/);
 });
 
 test('public go-live metadata, crawler endpoints, caching, and compression are configured', { concurrency: false }, async () => {
@@ -205,10 +243,28 @@ test('public go-live metadata, crawler endpoints, caching, and compression are c
   assert.match(homeHtml, /<link rel="canonical" href="http:\/\/127\.0\.0\.1:3000\/"/);
   assert.match(homeHtml, /<meta property="og:title" content="Inicio \| TISA"/);
   assert.match(homeHtml, /<h1 class="sr-only">/);
+  assert.match(homeHtml, /data-cookie-notice/);
+  assert.match(homeHtml, /No usamos cookies publicitarias/);
 
   const classesResponse = await request('/classes');
   assert.equal(classesResponse.status, 200);
   assert.match(await classesResponse.text(), /<link rel="canonical" href="http:\/\/127\.0\.0\.1:3000\/classes"/);
+
+  const privacyResponse = await request('/privacy');
+  assert.equal(privacyResponse.status, 200);
+  const privacyHtml = await privacyResponse.text();
+  assert.match(privacyHtml, /<link rel="canonical" href="http:\/\/127\.0\.0\.1:3000\/privacy"/);
+  assert.match(privacyHtml, /tisa\.sid/);
+  assert.match(privacyHtml, /No usamos cookies publicitarias/);
+  assert.match(privacyHtml, /derechos ARCO/);
+  assert.match(privacyHtml, /\[Correo para derechos ARCO\]/);
+
+  const termsResponse = await request('/terms');
+  assert.equal(termsResponse.status, 200);
+  const termsHtml = await termsResponse.text();
+  assert.match(termsHtml, /<link rel="canonical" href="http:\/\/127\.0\.0\.1:3000\/terms"/);
+  assert.match(termsHtml, /Identificación del proveedor/);
+  assert.match(termsHtml, /\[Razón social o nombre del responsable\]/);
 
   const robotsResponse = await request('/robots.txt');
   assert.equal(robotsResponse.status, 200);
@@ -221,10 +277,12 @@ test('public go-live metadata, crawler endpoints, caching, and compression are c
   const sitemap = await sitemapResponse.text();
   assert.match(sitemap, /<loc>http:\/\/127\.0\.0\.1:3000\/<\/loc>/);
   assert.match(sitemap, /<loc>http:\/\/127\.0\.0\.1:3000\/classes<\/loc>/);
+  assert.match(sitemap, /<loc>http:\/\/127\.0\.0\.1:3000\/terms<\/loc>/);
+  assert.match(sitemap, /<loc>http:\/\/127\.0\.0\.1:3000\/privacy<\/loc>/);
 
   const faviconResponse = await request('/favicon.ico', { redirect: 'manual' });
   assert.equal(faviconResponse.status, 308);
-  assert.equal(faviconResponse.headers.get('location'), '/static/tisa-mat-mark.svg');
+  assert.equal(faviconResponse.headers.get('location'), '/static/tisa-header-lockup.png');
 
   const stylesheetResponse = await request('/static/style.css', {
     headers: { 'accept-encoding': 'gzip' },
@@ -581,7 +639,7 @@ test('booking and admin layout pages render mat markup and persisted background 
   const bookingHtml = await bookingResponse.text();
   assert.match(bookingHtml, /seat-map-background/);
   assert.match(bookingHtml, /seat-mat__label/);
-  assert.match(bookingHtml, /tisa-mat-mark\.svg/);
+  assert.match(bookingHtml, /tisa-header-lockup\.png/);
   assert.match(bookingHtml, /render-room\.png/);
   assert.match(bookingHtml, /<h1>Flow Test<\/h1>/);
 

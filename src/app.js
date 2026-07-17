@@ -73,7 +73,7 @@ function requireRole(...roles) {
 function renderError(message) {
   return `<section class="section page-shell">
     <div class="status-card status-card-error">
-      <p class="page-kicker">${brand.name} · ESTADO</p>
+      <p class="page-kicker brand-page-kicker"><img src="${brand.assets.headerLogo}" alt="${brand.name}" /><span>Estado</span></p>
       <h1>Algo necesita atención.</h1>
       <p>${esc(message)}</p>
     </div>
@@ -195,7 +195,7 @@ function safeJsonForHtml(value) {
 }
 
 const CLASS_PREVIEW_VIDEO = {
-  title: 'Muestra de práctica TISA',
+  title: 'Muestra de práctica',
   source: 'YouTube',
   embedUrl: 'https://www.youtube-nocookie.com/embed/S6PQeVpmSfY?rel=0&modestbranding=1',
   watchUrl: 'https://www.youtube.com/watch?v=S6PQeVpmSfY',
@@ -204,7 +204,7 @@ const CLASS_PREVIEW_VIDEO = {
 const SUPPORT_FAQS = [
   {
     question: '¿Qué hago si no encuentro mi boleto?',
-    answer: 'Revisa el correo usado al pagar y busca la referencia de TISA. Si no aparece, escribe tu correo y nombre en el chat de ayuda para ubicar tu reserva.',
+    answer: 'Revisa el correo usado al pagar y busca la referencia de tu reserva. Si no aparece, escribe tu correo y nombre en el chat de ayuda para ubicarla.',
   },
   {
     question: '¿Puedo cambiar mi lugar?',
@@ -216,7 +216,7 @@ const SUPPORT_FAQS = [
   },
   {
     question: '¿Qué pasa si el pago no se confirma?',
-    answer: 'La página de checkout te indicará si puedes reintentar. Si tu banco muestra un cargo pero TISA no confirmó el QR, contacta al equipo con tu referencia.',
+    answer: 'La página de checkout te indicará si puedes reintentar. Si tu banco muestra un cargo pero el QR no aparece, contacta al equipo con tu referencia.',
   },
 ];
 
@@ -258,38 +258,69 @@ function renderClassPreviewModal() {
   `;
 }
 
-function renderCustomerHelpSection({ compact = false } = {}) {
-  const faqMarkup = SUPPORT_FAQS.map(
-    (item) => `
-      <details class="support-faq-item">
-        <summary>${esc(item.question)}</summary>
-        <p>${esc(item.answer)}</p>
-      </details>
-    `,
-  ).join('');
+function renderCustomerHelpSection({ compact = false, nextOccurrence = null } = {}) {
+  const nextClassMarkup = nextOccurrence
+    ? `
+      <aside class="reservation-companion__next" aria-label="Próxima clase disponible">
+        <div class="reservation-companion__next-status"><span aria-hidden="true"></span>Próxima salida</div>
+        <div class="reservation-companion__next-date">
+          <span>${esc(formatAgendaDayName(nextOccurrence.startsAt))}</span>
+          <strong>${dayjs(nextOccurrence.startsAt).format('DD')}</strong>
+          <small>${dayjs(nextOccurrence.startsAt).format('MMM · HH:mm')}</small>
+        </div>
+        <div class="reservation-companion__next-copy">
+          <strong>${esc(nextOccurrence.classType.name)}</strong>
+          <p>${esc(nextOccurrence.trainer.displayName)} · ${esc(nextOccurrence.location.name)}</p>
+          <span>${nextOccurrence.availableSlots} ${nextOccurrence.availableSlots === 1 ? 'lugar disponible' : 'lugares disponibles'}</span>
+        </div>
+        <a href="${buildSeatSelectionUrl(nextOccurrence.id)}">Elegir mi lugar <span aria-hidden="true">→</span></a>
+      </aside>`
+    : `
+      <aside class="reservation-companion__next reservation-companion__next--reference" aria-label="Datos importantes de la reserva">
+        <div class="reservation-companion__next-status"><span aria-hidden="true"></span>Dato importante</div>
+        <div class="reservation-companion__reference-copy">
+          <strong>Conserva tu correo de confirmación.</strong>
+          <p>Ahí viven tu referencia, el enlace privado de la reserva y el QR cuando el pago queda confirmado.</p>
+        </div>
+        <a href="/classes#classes-editorial-grid">Volver a la agenda <span aria-hidden="true">→</span></a>
+      </aside>`;
 
   return `
-    <section class="support-section ${compact ? 'is-compact' : ''}" id="ayuda">
-      <div class="support-section__intro">
-        <p class="classes-kicker">Ayuda y boletos</p>
-        <h2>¿Problemas con tus boletos o dudas antes de reservar?</h2>
-        <p>Revisa respuestas rápidas o escribe una pregunta. Si hay llave de OpenAI en el servidor, responde el asistente; si no, te guía con información local de TISA.</p>
+    <section class="reservation-companion ${compact ? 'is-compact' : ''}" id="ayuda" aria-labelledby="reservation-companion-title">
+      <div class="reservation-companion__intro">
+        <p class="classes-kicker">Tu reserva, paso a paso</p>
+        <h2 id="reservation-companion-title">Reserva con certeza. Llega sin buscar nada.</h2>
+        <p>Lo esencial queda en un solo recorrido: lugar exacto, confirmación y acceso.</p>
       </div>
-      <div class="support-section__grid">
-        <div class="support-faq-list">
-          ${faqMarkup}
-        </div>
-        <form class="support-chat" data-support-chat-form>
-          <div class="support-chat__log" data-support-chat-log aria-live="polite">
-            <p><strong>Asistente TISA</strong><span>Hola. Puedo ayudarte con agenda, lugares, pagos, QR y problemas con boletos.</span></p>
-          </div>
-          <label class="support-chat__field">
-            <span>Tu pregunta</span>
-            <textarea name="message" rows="3" maxlength="420" placeholder="Ej. pagué pero no veo mi QR..." required></textarea>
-          </label>
-          <button class="btn" type="submit">Preguntar</button>
-          <p class="support-chat__note">Para casos de cobro bancario, conserva tu referencia y correo de pago.</p>
-        </form>
+      <div class="reservation-companion__body">
+        <ol class="reservation-companion__steps" aria-label="Pasos de la reserva">
+          <li>
+            <span>01</span>
+            <div>
+              <strong>Elige horario y tapete</strong>
+              <p>Tu lugar se aparta durante 10 minutos mientras completas el pago.</p>
+            </div>
+          </li>
+          <li>
+            <span>02</span>
+            <div>
+              <strong>Busca “Acceso confirmado”</strong>
+              <p>El correo incluye tu referencia y el enlace privado para consultar la reserva.</p>
+            </div>
+          </li>
+          <li>
+            <span>03</span>
+            <div>
+              <strong>Presenta tu QR al llegar</strong>
+              <p>El código aparece después de la confirmación definitiva del pago.</p>
+            </div>
+          </li>
+        </ol>
+        ${nextClassMarkup}
+      </div>
+      <div class="reservation-companion__footnote">
+        <span>Si tu banco muestra un cargo pero no recibiste el QR</span>
+        <p>Conserva tu nombre, correo de pago y referencia para que el equipo pueda localizar la operación sin duplicarla.</p>
       </div>
     </section>
   `;
@@ -604,7 +635,7 @@ function renderLayoutsIndexBody({ locations, classTypes, staffRole = null }) {
     ${renderStudioWorkspace({
       activeKey: 'layouts',
       staffRole,
-      eyebrow: 'TISA / LAYOUTS',
+      eyebrow: 'LAYOUTS',
       title: 'El salón ya no depende de un mapa fijo.',
       subtitle: 'Admin y operación pueden mantener layouts base por sede y layouts compartidos por tipo de clase.',
       content,
@@ -943,10 +974,13 @@ function renderClassesTimetable({ days, classesByDay, classTypes, classes }) {
     .join('');
 
   const daySections = renderedDays
-    .map((day) => {
+    .map((day, dayIndex) => {
       const dayKey = day.format('YYYY-MM-DD');
       const dayClasses = classesByDay.get(dayKey) || [];
-      const experienceCards = serviceRows
+      const availableServiceRows = serviceRows.filter((classType) =>
+        dayClasses.some((occurrence) => occurrence.classTypeId === classType.id),
+      );
+      const experienceCards = availableServiceRows
         .map((classType) => {
           const occurrencesForType = dayClasses
             .filter((occurrence) => occurrence.classTypeId === classType.id)
@@ -955,11 +989,10 @@ function renderClassesTimetable({ days, classesByDay, classTypes, classes }) {
           const capacity = getClassTypeCapacity(classType, classes);
           const intensity = getAgendaIntensityMeta(classType.intensity);
           const serviceClass = getAgendaServiceClass(classType);
-          const chips = occurrencesForType.length
-            ? occurrencesForType
-                .map((occurrence) => {
-                  const disabled = occurrence.status === 'CANCELLED' || occurrence.availableSlots <= 0;
-                  return `<a
+          const chips = occurrencesForType
+            .map((occurrence) => {
+              const disabled = occurrence.status === 'CANCELLED' || occurrence.availableSlots <= 0;
+              return `<a
                     class="classes-experience-slot ${intensity.className} ${serviceClass} ${disabled ? 'is-disabled' : ''}"
                     href="${disabled ? '#' : buildSeatSelectionUrl(occurrence.id)}"
                     ${disabled ? '' : 'data-preserve-classes-scroll="true"'}
@@ -969,10 +1002,14 @@ function renderClassesTimetable({ days, classesByDay, classTypes, classes }) {
                     <span>${occurrence.availableSlots}/${occurrence.capacity} cupos</span>
                     <small>${disabled ? 'No disponible' : 'Reservar'}</small>
                   </a>`;
-                })
-                .join('')
-            : '<span class="classes-experience-slot is-empty"><strong>Próximamente</strong><span>Sin horario abierto</span></span>';
-          return `<article class="classes-experience-card ${intensity.className} ${serviceClass}">
+            })
+            .join('');
+          return `<article
+            class="classes-experience-card ${intensity.className} ${serviceClass}"
+            data-agenda-intensity-card
+            data-agenda-intensity="${intensity.className.replace('is-', '')}"
+            data-agenda-occurrence-count="${occurrencesForType.length}"
+          >
             <header class="classes-experience-card__header">
               <div>
                 <p>${esc(intensity.description)}</p>
@@ -1001,8 +1038,10 @@ function renderClassesTimetable({ days, classesByDay, classTypes, classes }) {
         data-day-meta="${esc(dayMeta)}"
       >
         <header class="classes-timetable-day__header">
-          <div>
-            <span>${formatAgendaDayName(day)}</span>
+          <span class="classes-timetable-day__index" aria-hidden="true">${String(dayIndex + 1).padStart(2, '0')}</span>
+          <div class="classes-timetable-day__date" aria-label="${formatAgendaDayName(day)} ${formatAgendaDateLabel(day)}">
+            <span class="classes-day-name-full">${formatAgendaDayName(day)}</span>
+            <span class="classes-day-name-short" aria-hidden="true">${formatAgendaDayNameShort(day)}</span>
             <strong>${formatAgendaDateLabel(day)}</strong>
           </div>
           <p>${dayMeta}</p>
@@ -1131,15 +1170,17 @@ function renderClassesCustomFooter({ view, periodStart }) {
     </div>
     <footer class="classes-site-footer">
       <div class="classes-site-footer__brand">
-        <strong>${esc(brand.name)}</strong>
+        <img src="${brand.assets.headerLogo}" alt="${esc(brand.name)}" />
         <p>${esc(brand.descriptorLong)}</p>
       </div>
       <div class="classes-site-footer__links">
         <a href="/">Inicio</a>
         <a href="/classes">Agenda</a>
+        <a href="/terms">Términos</a>
+        <a href="/privacy">Privacidad</a>
         <a href="/staff/login">Staff</a>
       </div>
-      <p class="classes-site-footer__caption">© ${dayjs().year()} ${esc(brand.name)}. Agenda editorial con disponibilidad real.</p>
+      <p class="classes-site-footer__caption"><span>© ${dayjs().year()}</span><img src="${brand.assets.headerLogo}" alt="${esc(brand.name)}" /><span>Agenda editorial con disponibilidad real.</span></p>
     </footer>
   `;
 }
@@ -1157,6 +1198,9 @@ function renderClassesEditorialEventCard(occurrence, { compact = false } = {}) {
     return `
       <a
         class="classes-mini-event ${intensity.className} ${isCancelled ? 'is-cancelled' : ''} ${isFull ? 'is-full' : ''}"
+        data-agenda-intensity-card
+        data-agenda-intensity="${intensity.className.replace('is-', '')}"
+        data-agenda-occurrence-count="1"
         href="${disabled ? '#' : buildSeatSelectionUrl(occurrence.id)}"
         ${disabled ? '' : 'data-preserve-classes-scroll="true"'}
         ${disabled ? 'aria-disabled="true"' : ''}
@@ -1174,6 +1218,9 @@ function renderClassesEditorialEventCard(occurrence, { compact = false } = {}) {
   return `
     <a
       class="classes-event-card ${intensity.className} ${isCancelled ? 'is-cancelled' : ''} ${isFull ? 'is-full' : ''}"
+      data-agenda-intensity-card
+      data-agenda-intensity="${intensity.className.replace('is-', '')}"
+      data-agenda-occurrence-count="1"
       href="${disabled ? '#' : buildSeatSelectionUrl(occurrence.id)}"
       ${disabled ? '' : 'data-preserve-classes-scroll="true"'}
       ${disabled ? 'aria-disabled="true"' : ''}
@@ -1200,6 +1247,40 @@ function renderClassesEditorialEventCard(occurrence, { compact = false } = {}) {
         <span class="classes-event-card__cta">${ctaLabel}</span>
       </div>
     </a>
+  `;
+}
+
+function hasPendingPublicBusinessFields() {
+  return Object.values(config.publicBusiness).some((value) => String(value).includes('['));
+}
+
+function renderProviderDisclosure({ totalCents = null } = {}) {
+  const business = config.publicBusiness;
+  return `
+    <section class="checkout-provider" aria-labelledby="checkout-provider-title">
+      <div class="checkout-provider__heading">
+        <div>
+          <p class="seat-floorplan-eyebrow">Quién recibe tu pago</p>
+          <h4 id="checkout-provider-title">Información del proveedor</h4>
+        </div>
+        ${hasPendingPublicBusinessFields() ? '<span class="legal-draft-badge">Campos por completar</span>' : ''}
+      </div>
+      <dl class="checkout-provider__grid">
+        <div><dt>Responsable</dt><dd>${esc(business.legalName)}</dd></div>
+        <div><dt>RFC</dt><dd>${esc(business.rfc)}</dd></div>
+        <div class="is-wide"><dt>Domicilio</dt><dd>${esc(business.address)}</dd></div>
+        <div><dt>Teléfono</dt><dd>${esc(business.supportPhone)}</dd></div>
+        <div><dt>WhatsApp</dt><dd>${esc(business.whatsapp)}</dd></div>
+        <div><dt>Correo</dt><dd>${esc(business.supportEmail)}</dd></div>
+        <div><dt>Atención</dt><dd>${esc(business.supportHours)}</dd></div>
+      </dl>
+      <div class="checkout-provider__payment">
+        <p><span>Forma de pago</span><strong>Tarjetas de crédito y débito mediante Stripe.</strong></p>
+        ${totalCents === null ? '' : `<p><span>Total actual</span><strong id="checkout-provider-total">MXN ${(totalCents / 100).toLocaleString('es-MX')}</strong></p>`}
+        <p><span>Precios y cargos</span><strong>Todos los importes se muestran en MXN. ${esc(business.taxDisclosure)}.</strong></p>
+        <p><span>Facturación</span><strong>${esc(business.invoiceContact)}</strong></p>
+      </div>
+    </section>
   `;
 }
 
@@ -1356,6 +1437,11 @@ function renderSeatSelectionBody({
                   <input type="tel" name="customerPhone" value="${esc(customerPhone)}" placeholder="55..." autocomplete="tel" />
                 </label>
               </div>
+              ${renderProviderDisclosure({ totalCents: initialTotalCents })}
+              <label class="checkout-legal-acceptance">
+                <input type="checkbox" name="legalAccepted" value="1" required />
+                <span>Confirmo que revisé el total, los datos del proveedor y acepto los <a href="/terms" target="_blank" rel="noopener">Términos y condiciones</a> y el <a href="/privacy" target="_blank" rel="noopener">Aviso de privacidad</a>.</span>
+              </label>
               <div class="seat-floorplan-summary__actions">
                 <button class="btn" type="submit" id="seat-selection-submit">${brand.seatSelection.cta}</button>
                 <a class="btn alt" href="${esc(safeReturnTo)}">Volver a la agenda</a>
@@ -1390,7 +1476,7 @@ function renderAssistedSalesBody({
   return `<section class="section">
     <div class="system-shell">
       <section class="system-hero scroll-hero" data-scroll-target="staff-assisted-sales-grid">
-        <p class="concept-kicker">TISA / VENTAS ASISTIDAS</p>
+        <p class="concept-kicker">VENTAS ASISTIDAS</p>
         <h1>Crea una reservación y comparte el Checkout por WhatsApp.</h1>
         <p>El staff genera primero la reservación interna, conserva el amarre a lugares concretos y luego comparte una URL única de Stripe Checkout para cerrar el pago asistido.</p>
       </section>
@@ -1519,6 +1605,8 @@ export function createApp({ prisma }) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${esc(`${baseUrl}/`)}</loc></url>
   <url><loc>${esc(`${baseUrl}/classes`)}</loc></url>
+  <url><loc>${esc(`${baseUrl}/terms`)}</loc></url>
+  <url><loc>${esc(`${baseUrl}/privacy`)}</loc></url>
 </urlset>`);
   });
   app.use(session({
@@ -1626,6 +1714,137 @@ export function createApp({ prisma }) {
     expiryTimer.unref?.();
   }
 
+  app.get('/terms', (req, res) => {
+    const business = config.publicBusiness;
+    const body = `
+      <div class="privacy-page-shell legal-page-shell">
+        <header class="privacy-hero legal-hero">
+          <p class="rd-kicker">TÉRMINOS / RESERVAS Y PAGOS</p>
+          <h1>Condiciones claras antes de reservar.</h1>
+          <p class="privacy-hero__lede">Esta página concentra quién presta el servicio, qué estás comprando y qué sucede si necesitas cambiar tu reserva.</p>
+          <p class="privacy-updated">VIGENCIA · ${esc(business.termsEffectiveDate)}</p>
+          ${hasPendingPublicBusinessFields() ? '<p class="legal-draft-notice"><strong>Borrador público:</strong> sustituye todos los campos entre corchetes antes del go-live comercial.</p>' : ''}
+        </header>
+
+        <div class="privacy-content">
+          <aside class="privacy-index" aria-label="Contenido de términos">
+            <span>EN ESTA PÁGINA</span>
+            <a href="#terms-provider">Proveedor</a>
+            <a href="#terms-payment">Pago</a>
+            <a href="#terms-changes">Cambios</a>
+            <a href="#terms-contact">Contacto</a>
+          </aside>
+          <article class="privacy-article">
+            <section id="terms-provider"><span class="privacy-number">01</span><div>
+              <h2>Identificación del proveedor</h2>
+              <dl class="legal-definition-list">
+                <div><dt>Nombre o razón social</dt><dd>${esc(business.legalName)}</dd></div>
+                <div><dt>Nombre comercial</dt><dd>TISA</dd></div>
+                <div><dt>RFC</dt><dd>${esc(business.rfc)}</dd></div>
+                <div><dt>Domicilio</dt><dd>${esc(business.address)}</dd></div>
+                <div><dt>Teléfono</dt><dd>${esc(business.supportPhone)}</dd></div>
+                <div><dt>WhatsApp</dt><dd>${esc(business.whatsapp)}</dd></div>
+                <div><dt>Correo</dt><dd>${esc(business.supportEmail)}</dd></div>
+                <div><dt>Horario</dt><dd>${esc(business.supportHours)}</dd></div>
+              </dl>
+            </div></section>
+            <section id="terms-payment"><span class="privacy-number">02</span><div>
+              <h2>Servicio, precios y pago</h2>
+              <p>TISA ofrece acceso a la práctica, horario, guía y lugares indicados en la pantalla de reserva. Antes de salir al pago se muestra el precio por lugar, la cantidad seleccionada y el total en pesos mexicanos.</p>
+              <p>El cobro se procesa mediante Stripe con tarjeta de crédito o débito. TISA no almacena los datos completos de la tarjeta. <strong>${esc(business.taxDisclosure)}.</strong></p>
+              <p>Para solicitar factura: <strong>${esc(business.invoiceContact)}</strong>.</p>
+            </div></section>
+            <section id="terms-changes"><span class="privacy-number">03</span><div>
+              <h2>Cambios, cancelaciones y reembolsos</h2>
+              <p>Plazo aplicable: <strong>${esc(business.cancellationWindow)}</strong>.</p>
+              <p>Resolución aplicable: <strong>${esc(business.refundPolicy)}</strong>.</p>
+              <p><strong>[Definir tratamiento de inasistencias, llegadas tarde, cancelaciones atribuibles a TISA, reprogramaciones y clases suspendidas por causas de fuerza mayor].</strong></p>
+            </div></section>
+            <section id="terms-contact"><span class="privacy-number">04</span><div>
+              <h2>Aclaraciones y reclamaciones</h2>
+              <p>Escríbenos a <strong>${esc(business.supportEmail)}</strong>, llama al <strong>${esc(business.supportPhone)}</strong> o contáctanos por WhatsApp en <strong>${esc(business.whatsapp)}</strong>. Horario: <strong>${esc(business.supportHours)}</strong>.</p>
+              <p><strong>[Definir condiciones de salud, participación de menores, responsabilidad durante la práctica y jurisdicción aplicable].</strong></p>
+              <a class="rd-text-link privacy-back-link" href="/classes">Volver a la agenda <svg class="rd-arrow" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 20h24M23 11l9 9-9 9"/></svg></a>
+            </div></section>
+          </article>
+        </div>
+      </div>`;
+    res.send(renderLayout({ title: 'Términos y condiciones', body, simulationMode: config.simulationMode, bodyClass: 'privacy-page legal-page', canonicalPath: '/terms' }));
+  });
+
+  app.get('/privacy', (req, res) => {
+    const business = config.publicBusiness;
+    const body = `
+      <div class="privacy-page-shell">
+        <header class="privacy-hero">
+          <p class="rd-kicker">PRIVACIDAD / COOKIES</p>
+          <h1>Claridad también en lo que guardamos.</h1>
+          <p class="privacy-hero__lede">TISA utiliza únicamente la información necesaria para operar la agenda, proteger tu sesión y acompañar una reserva de principio a fin.</p>
+          <p class="privacy-updated">ÚLTIMA ACTUALIZACIÓN · 17 JUL 2026</p>
+          ${hasPendingPublicBusinessFields() ? '<p class="legal-draft-notice"><strong>Campos por completar:</strong> esta estructura todavía requiere los datos definitivos del responsable.</p>' : ''}
+        </header>
+
+        <div class="privacy-content">
+          <aside class="privacy-index" aria-label="Contenido de privacidad">
+            <span>EN ESTA PÁGINA</span>
+            <a href="#privacy-cookies">Cookies técnicas</a>
+            <a href="#privacy-data">Datos de reserva</a>
+            <a href="#privacy-controls">Tus controles</a>
+            <a href="#privacy-owner">Responsable</a>
+          </aside>
+
+          <article class="privacy-article">
+            <section id="privacy-cookies">
+              <span class="privacy-number">01</span>
+              <div>
+                <h2>Cookies y almacenamiento técnico</h2>
+                <p>La aplicación puede crear <strong>tisa.sid</strong>, una cookie de sesión protegida contra acceso desde JavaScript, limitada al mismo sitio y con una duración máxima de ocho horas. Sirve para seguridad, acceso autorizado y continuidad de procesos como una reserva.</p>
+                <p>También usamos almacenamiento local o de sesión para recordar decisiones de interfaz —por ejemplo, el día seleccionado en móvil— y para conservar que ya viste el aviso. Esto no crea perfiles publicitarios.</p>
+                <div class="privacy-fact"><strong>No usamos cookies publicitarias</strong><span>Ni rastreadores de marketing propios en esta versión de TISA.</span></div>
+              </div>
+            </section>
+
+            <section id="privacy-data">
+              <span class="privacy-number">02</span>
+              <div>
+                <h2>Datos que acompañan tu reserva</h2>
+                <p>Cuando reservas podemos tratar tu nombre, correo, clase elegida, lugares seleccionados, estado de pago, identificadores de transacción y acceso QR. Los usamos para gestionar el apartado, confirmar el pago, entregar tu acceso, realizar check-in y atender incidencias relacionadas con la compra.</p>
+                <p>El pago puede ser procesado por el proveedor de pagos configurado por TISA. La aplicación conserva referencias y estados operativos; no necesita guardar los datos completos de tu tarjeta.</p>
+              </div>
+            </section>
+
+            <section id="privacy-controls">
+              <span class="privacy-number">03</span>
+              <div>
+                <h2>Lo que puedes controlar</h2>
+                <p>Puedes borrar cookies y almacenamiento desde la configuración de tu navegador. Si bloqueas la cookie técnica, algunas funciones de sesión, reserva o acceso de staff podrían dejar de funcionar correctamente.</p>
+                <p>Si TISA incorpora analítica o publicidad que no sea estrictamente necesaria, este aviso deberá actualizarse y se solicitará la elección correspondiente antes de activarla.</p>
+                <a class="rd-text-link privacy-back-link" href="/classes">Volver a la agenda <svg class="rd-arrow" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 20h24M23 11l9 9-9 9"/></svg></a>
+              </div>
+            </section>
+            <section id="privacy-owner">
+              <span class="privacy-number">04</span>
+              <div>
+                <h2>Responsable y derechos ARCO</h2>
+                <p>Responsable del tratamiento: <strong>${esc(business.legalName)}</strong>, RFC <strong>${esc(business.rfc)}</strong>, con domicilio en <strong>${esc(business.address)}</strong>.</p>
+                <p>Para solicitar acceso, rectificación, cancelación u oposición al tratamiento de tus datos, escribe a <strong>${esc(business.arcoEmail)}</strong>. <strong>[Definir procedimiento, requisitos, plazo de respuesta, periodo de conservación, transferencias y mecanismo para comunicar cambios al aviso].</strong></p>
+                <p>Contacto general: <strong>${esc(business.supportEmail)}</strong> · <strong>${esc(business.supportPhone)}</strong> · WhatsApp <strong>${esc(business.whatsapp)}</strong>.</p>
+              </div>
+            </section>
+          </article>
+        </div>
+      </div>
+    `;
+
+    res.send(renderLayout({
+      title: 'Privacidad',
+      body,
+      simulationMode: config.simulationMode,
+      bodyClass: 'privacy-page',
+      canonicalPath: '/privacy',
+    }));
+  });
+
   app.get('/', async (req, res) => {
     const [types, upcoming] = await Promise.all([
       prisma.class_types.findMany({ orderBy: { name: 'asc' }, take: 7 }),
@@ -1725,7 +1944,7 @@ export function createApp({ prisma }) {
             name: type.name,
             description: type.description || profile.description,
             durationMin: type.durationMin || profile.durationMin,
-            trainerName: 'Equipo TISA',
+            trainerName: 'Equipo del estudio',
             scheduleLabel: 'Agenda en actualización',
             availabilityLabel: 'Consulta horarios',
             priceLabel: 'Ver agenda',
@@ -1740,7 +1959,7 @@ export function createApp({ prisma }) {
         })
         .map((fallback) => ({
           ...fallback,
-          trainerName: 'Equipo TISA',
+          trainerName: 'Equipo del estudio',
           scheduleLabel: 'Agenda en actualización',
           availabilityLabel: 'Consulta horarios',
           priceLabel: 'Ver agenda',
@@ -1810,9 +2029,46 @@ export function createApp({ prisma }) {
       )
       .join('');
 
+    const homePracticeRows = [...classProfiles]
+      .sort((a, b) => a.intensityOrder - b.intensityOrder)
+      .map((profile, index) => `
+        <a class="rd-practice-row reveal" href="/classes" style="--rd-index:${index}">
+          <span class="rd-practice-row__number">0${index + 1}</span>
+          <div class="rd-practice-row__title">
+            <span>${esc(profile.intensity)}</span>
+            <h3>${esc(profile.name)}</h3>
+          </div>
+          <p>${esc(profile.guideText)}</p>
+          <span class="rd-practice-row__duration">${profile.durationMin} MIN</span>
+          <svg class="rd-arrow" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 20h24M23 11l9 9-9 9"/></svg>
+        </a>
+      `)
+      .join('');
+
+    const homeScheduleRows = upcoming.length
+      ? upcoming.slice(0, 4).map((occurrence, index) => `
+        <a class="rd-schedule-row" href="${buildSeatSelectionUrl(occurrence.id)}">
+          <span class="rd-schedule-row__day">${dayjs(occurrence.startsAt).format('ddd').toUpperCase()}<strong>${dayjs(occurrence.startsAt).format('DD')}</strong></span>
+          <span class="rd-schedule-row__time">${dayjs(occurrence.startsAt).format('HH:mm')}</span>
+          <span class="rd-schedule-row__class"><strong>${esc(occurrence.classType.name)}</strong><small>${esc(occurrence.trainer.displayName)}</small></span>
+          <span class="rd-schedule-row__availability">${occurrence.availableSlots} lugares</span>
+          <svg class="rd-arrow" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 20h24M23 11l9 9-9 9"/></svg>
+        </a>
+      `).join('')
+      : '<div class="rd-schedule-empty"><strong>Nuevos horarios en camino.</strong><p>La agenda se actualizará en cuanto el estudio publique las próximas sesiones.</p></div>';
+
+    const homeJourney = brand.home.principles.map((item) => `
+      <article class="rd-journey-step reveal">
+        <span>${esc(item.label)}</span>
+        <h3>${esc(item.title)}</h3>
+        <p>${esc(item.text)}</p>
+      </article>
+    `).join('');
+
+    const marqueeGroup = `<div class="rd-marquee__group"><span>YOGA</span><i></i><span>INMERSIÓN</span><i></i><span>HEAD SPA</span><i></i><span>PRESENCIA</span><i></i><span>RESPIRACIÓN</span><i></i><span>DESCANSO</span><i></i></div>`;
+
     const body = `
       <section class="landing-intro" id="landing-intro" aria-label="Pantalla de bienvenida de TISA">
-        <h1 class="sr-only">${brand.home.title}</h1>
         <div class="intro-shell">
           <div class="intro-copy">
             <div class="intro-panel">
@@ -1820,7 +2076,7 @@ export function createApp({ prisma }) {
                 <button type="button" class="btn intro-glass-button intro-glass-button-wordmark" id="intro-discover" aria-label="Conoce Tisa">
                   <span class="intro-button-copy">
                     <span>Conoce</span>
-                    <img class="intro-button-wordmark" src="/static/intro-tisa-wordmark.svg" alt="Tisa" />
+                    <img class="intro-button-wordmark" src="${brand.assets.headerLogo}" alt="TISA" />
                   </span>
                 </button>
                 <a class="btn intro-glass-button" id="intro-reserve" href="/classes">Reservar Ahora</a>
@@ -1830,105 +2086,88 @@ export function createApp({ prisma }) {
         </div>
       </section>
 
-      <section class="landing-page story-root">
-        <section class="landing-hero reveal scroll-hero" data-scroll-target="home-overview">
-          <div class="landing-hero-main">
-            <p class="page-kicker">${brand.home.kicker}</p>
-            <h1>${brand.home.title}</h1>
-            <p class="page-lede">${brand.home.lede}</p>
-            <div class="hero-actions">
-              <a class="btn" href="/classes">Ver agenda</a>
-              <button type="button" class="btn alt" data-scroll-target="home-overview">Cómo funciona</button>
+      <div class="rd-home story-root">
+        <h1 class="sr-only">${brand.home.title}</h1>
+        <section class="rd-hero" aria-labelledby="rd-home-title">
+          <div class="rd-hero__copy">
+            <p class="rd-kicker">${brand.home.kicker}</p>
+            <div class="rd-hero__title" id="rd-home-title">Tu cuerpo no necesita <em>más ruido.</em></div>
+            <p class="rd-hero__lede">${brand.home.lede}</p>
+            <div class="rd-actions">
+              <a class="rd-button rd-button--solid" href="/classes">Encontrar una clase</a>
+              <button class="rd-button rd-button--line" type="button" data-scroll-target="rd-practices">Conocer las prácticas</button>
             </div>
-            <div class="landing-stat-grid">
-              <article class="landing-stat-card"><span>Prácticas activas</span><strong>${stats.classTypes}</strong></article>
-              <article class="landing-stat-card"><span>Próximas salidas</span><strong>${stats.upcoming}</strong></article>
-              <article class="landing-stat-card"><span>Primera clase</span><strong>${stats.firstClass ? dayjs(stats.firstClass.startsAt).format('DD MMM · HH:mm') : 'En actualización'}</strong></article>
+            <div class="rd-hero__signal" aria-label="Próxima actividad">
+              <span>PRÓXIMA SESIÓN</span>
+              <strong>${stats.firstClass ? dayjs(stats.firstClass.startsAt).format('DD MMM / HH:mm') : 'AGENDA EN ACTUALIZACIÓN'}</strong>
+              <small>${stats.upcoming} sesiones publicadas</small>
             </div>
           </div>
-          <aside class="landing-hero-side">
-            <figure class="landing-media-frame">
-              <img src="${brand.assets.editorialGrid}" alt="Atmósfera editorial de TISA" />
-            </figure>
-            <div class="landing-note-card">
-              <span>${brand.home.noteTitle}</span>
-              <strong>${brand.home.noteText}</strong>
-            </div>
-          </aside>
+          <figure class="rd-hero__visual">
+            <img src="${brand.assets.editorialGrid}" alt="Espacios y prácticas de bienestar que inspiran la experiencia TISA" />
+            <figcaption><span class="rd-hero__signature"><img src="${brand.assets.headerLogo}" alt="TISA" /><small>/ 2026</small></span><strong>${brand.home.noteTitle}</strong></figcaption>
+          </figure>
+          <p class="rd-hero__side-note">MOVIMIENTO QUE REGULA / DESCANSO QUE SE SIENTE</p>
         </section>
 
-        <section class="landing-principles" id="home-overview">
-          ${principleCards}
-        </section>
+        <div class="rd-marquee" aria-hidden="true">
+          <div class="rd-marquee__track">${marqueeGroup}${marqueeGroup}</div>
+        </div>
 
-        <section class="landing-feature reveal">
-          <article class="landing-feature-copy">
-            <p class="eyebrow">${brand.home.storyKicker}</p>
+        <section class="rd-manifesto" id="home-overview">
+          <div class="rd-manifesto__label"><span>01</span><p>${brand.home.storyKicker}</p></div>
+          <div class="rd-manifesto__copy reveal">
             <h2>${brand.home.storyTitle}</h2>
             <p>${brand.home.storyBody}</p>
-            <p class="quote">"${brand.home.storyQuote}"</p>
-          </article>
-          <article class="landing-feature-media">
-            <img src="${brand.assets.conceptGrid}" alt="Referencia conceptual TISA" />
-          </article>
+            <blockquote>“${brand.home.storyQuote}”</blockquote>
+          </div>
+          <figure class="rd-manifesto__image reveal">
+            <img src="${brand.assets.conceptGrid}" alt="Cuerpos en movimiento en distintas atmósferas naturales" />
+          </figure>
         </section>
 
-        <section class="landing-band reveal">
-          <div class="landing-band-lead">
-            <p class="eyebrow">TIPOS DE CLASE</p>
-            <h2>Diferentes prácticas para distintos ritmos y necesidades.</h2>
-            <p>Revisa cada clase con su enfoque, horario, guía, cupos y precio para identificar rápido la opción que mejor acompaña tu momento.</p>
-          </div>
-          <div class="landing-band-body landing-practice-carousel" data-card-carousel>
-            <div class="landing-carousel-toolbar">
-              <div class="landing-carousel-controls" aria-label="Controles de navegación de clases">
-                <button type="button" class="landing-carousel-button" data-carousel-prev aria-label="Ver clase anterior">&larr;</button>
-                <button type="button" class="landing-carousel-button" data-carousel-next aria-label="Ver siguiente clase">&rarr;</button>
-              </div>
-            </div>
-            <div class="landing-carousel-viewport" data-carousel-viewport aria-label="Tipos de clase disponibles">
-              <div class="landing-practice-grid landing-carousel-track">
-                ${typeCards}
-              </div>
-            </div>
-          </div>
+        <section class="rd-practices" id="rd-practices">
+          <header class="rd-section-head reveal">
+            <p><span>02</span> ELIGE DESDE LO QUE NECESITAS</p>
+            <h2>Tres prácticas.<br />Tres estados del cuerpo.</h2>
+          </header>
+          <div class="rd-practice-list">${homePracticeRows}</div>
         </section>
 
-        <section class="landing-panel reveal">
-          <div class="landing-panel-head">
-            <p class="eyebrow">GUÍA RÁPIDA</p>
-            <h2>Una forma simple de elegir entre las tres prácticas.</h2>
-            <p>Cada clase responde a una intención distinta: bajar el ritmo, profundizar la energía o descansar con suavidad.</p>
+        <section class="rd-live">
+          <div class="rd-live__intro reveal">
+            <p class="rd-kicker">AGENDA ABIERTA</p>
+            <h2>Tu próxima pausa puede empezar aquí.</h2>
+            <p>Disponibilidad real, lugar exacto y una decisión a la vez.</p>
+            <a class="rd-text-link" href="/classes">Ver agenda completa <svg class="rd-arrow" viewBox="0 0 40 40" aria-hidden="true"><path d="M7 20h24M23 11l9 9-9 9"/></svg></a>
           </div>
-          <div class="landing-panel-body landing-class-guide-grid">
-            ${classGuideCards}
-          </div>
+          <div class="rd-live__schedule">${homeScheduleRows}</div>
         </section>
 
-        <section class="landing-panel reveal landing-ops-panel">
-          <div class="landing-panel-head">
-            <p class="eyebrow">RESERVA EN TRES PASOS</p>
-            <h2>Elige tu práctica, tu lugar y confirma sin perder claridad.</h2>
-            <p>La experiencia guía a cada persona desde la agenda hasta el acceso, con información simple antes de pagar.</p>
-          </div>
-          <div class="landing-panel-body landing-ops-layout">
-            <div class="ops-panels">
-              <div class="ops-panel ops-panel--admin">
-                <span>1. Práctica</span>
-                <strong>Compara intensidad, duración y disponibilidad antes de decidir.</strong>
-              </div>
-              <div class="ops-panel ops-panel--trainer">
-                <span>2. Lugar</span>
-                <strong>Selecciona tu tapete disponible en el mapa de la sala.</strong>
-              </div>
-              <div class="ops-panel ops-panel--ops">
-                <span>3. Acceso</span>
-                <strong>Confirma el pago y recibe tu acceso para llegar sin fricción.</strong>
-              </div>
-            </div>
-          </div>
+        <section class="rd-journey">
+          <header class="rd-section-head rd-section-head--compact reveal">
+            <p><span>03</span> DEL HORARIO A TU TAPETE</p>
+            <h2>Reservar también puede bajar el ritmo.</h2>
+          </header>
+          <div class="rd-journey__grid">${homeJourney}</div>
         </section>
-      </section>
+
+        <section class="rd-closing reveal">
+          <div>
+            <p class="rd-kicker">TU CUERPO YA SABE</p>
+            <h2>Solo hace falta darle espacio.</h2>
+          </div>
+          <a class="rd-button rd-button--light" href="/classes">Reservar mi lugar</a>
+          <img src="${brand.assets.headerLogo}" alt="" aria-hidden="true" />
+        </section>
+
+        <footer class="rd-footer">
+          <a href="/" class="rd-footer__brand"><img src="${brand.assets.headerLogo}" alt="TISA" /></a>
+          <p>${brand.descriptorLong}</p>
+          <nav><a href="/classes">Agenda</a><a href="/terms">Términos</a><a href="/privacy">Privacidad</a><a href="/staff/login">Staff</a></nav>
+          <small class="rd-footer__copyright"><span>© ${dayjs().year()}</span><img src="${brand.assets.headerLogo}" alt="TISA" /></small>
+        </footer>
+      </div>
     `;
 
     res.send(renderLayout({ title: 'Inicio', body, simulationMode: config.simulationMode, canonicalPath: '/' }));
@@ -2004,7 +2243,7 @@ export function createApp({ prisma }) {
           <div class="concept-noise" aria-hidden="true"></div>
           <div class="concept-hero-grid">
             <div class="concept-headline">
-              <p class="concept-label">TISA / CONCEPTO 01</p>
+              <p class="concept-label">CONCEPTO 01</p>
               <h1>Una identidad más precisa para un estudio que debe sentirse sereno, deseable e inmediato.</h1>
               <p class="concept-copy">Esta propuesta abandona la estética anterior y cambia el tono completo: más contraste, más composición editorial, menos bloques repetidos y una agenda que se siente parte de una marca, no de un panel operativo genérico.</p>
               <div class="concept-actions">
@@ -2014,7 +2253,7 @@ export function createApp({ prisma }) {
             </div>
             <div class="concept-poster">
               <div class="concept-poster-card">
-                <span>TISA Studio System</span>
+                <span>Studio System</span>
                 <strong>Respiración, calor, foco y pausa.</strong>
                 <p>Un sistema visual creado para convertir mejor y sentirse más valioso, especialmente en móvil.</p>
               </div>
@@ -2137,9 +2376,9 @@ export function createApp({ prisma }) {
       <section class="concept2-shell">
         <section class="concept2-hero">
           <div class="concept2-copy">
-            <p class="concept-label">TISA / CONCEPTO 02</p>
+            <p class="concept-label">CONCEPTO 02</p>
             <h1>La agenda y la reserva como una experiencia serena, clara y deseable.</h1>
-            <p>Este concepto lleva la calma visual de TISA al momento más importante: elegir una práctica, entender el valor de cada lugar y cerrar la reserva dentro de una superficie cálida, simple y precisa.</p>
+            <p>Este concepto lleva la calma visual de la marca al momento más importante: elegir una práctica, entender el valor de cada lugar y cerrar la reserva dentro de una superficie cálida, simple y precisa.</p>
           </div>
           <div class="concept2-chip-row">
             <span>Agenda contemplativa</span>
@@ -2207,7 +2446,7 @@ export function createApp({ prisma }) {
 
         <section class="concept2-final">
           <p class="concept-label">DIRECCIÓN</p>
-          <h2>Este concepto conserva la sensibilidad editorial de TISA, pero la acerca más al producto real: agenda, checkout y reserva dentro de una experiencia coherente.</h2>
+          <h2>Este concepto conserva la sensibilidad editorial de la marca, pero la acerca más al producto real: agenda, checkout y reserva dentro de una experiencia coherente.</h2>
         </section>
       </section>
     `;
@@ -2244,7 +2483,7 @@ export function createApp({ prisma }) {
         <div class="mobile-device-frame">
           <div class="mobile-device-inner">
             <div class="mobile-hero-card">
-              <p class="concept-label">TISA / CONCEPTO MÓVIL</p>
+              <p class="concept-label">CONCEPTO MÓVIL</p>
               <h1>Reservar desde el móvil debe sentirse simple, íntimo y natural.</h1>
               <p>Este concepto reúne agenda, selección, pago y confirmación en una experiencia más cálida, pensada para moverse con una mano y decidir sin esfuerzo.</p>
             </div>
@@ -2363,9 +2602,9 @@ export function createApp({ prisma }) {
       <section class="system-shell">
         <section class="system-hero scroll-hero" data-scroll-target="calendar-week">
           <div>
-            <p class="concept-label">TISA / CALENDARIO</p>
+            <p class="concept-label">CALENDARIO</p>
             <h1>Un calendario que invita a reservar con claridad, no a descifrar bloques.</h1>
-            <p>Esta versión transforma la agenda en una superficie editorial: semana clara, mes legible y una reserva contextual que no rompe el ritmo visual de TISA.</p>
+            <p>Esta versión transforma la agenda en una superficie editorial: semana clara, mes legible y una reserva contextual que no rompe el ritmo visual de la marca.</p>
           </div>
           <div class="system-chip-row">
             <button class="system-chip-button" type="button" data-scroll-target="calendar-week">Semana serena</button>
@@ -2457,7 +2696,7 @@ export function createApp({ prisma }) {
       <section class="system-shell">
         <section class="system-hero scroll-hero" data-scroll-target="access-entry">
           <div>
-            <p class="concept-label">TISA / CHECKOUT Y RESERVA</p>
+            <p class="concept-label">CHECKOUT Y RESERVA</p>
             <h1>El checkout, la confirmación y el QR deben sentirse parte del mismo ritual.</h1>
             <p>Este board ordena el tramo más sensible del producto: elegir lugares, decidir qué horario pagar y llegar con una confirmación que inspire calma y certeza.</p>
           </div>
@@ -2555,7 +2794,7 @@ export function createApp({ prisma }) {
       <section class="system-shell">
         <section class="system-hero scroll-hero" data-scroll-target="admin-login">
           <div>
-            <p class="concept-label">TISA / ADMIN Y STAFF</p>
+            <p class="concept-label">ADMIN Y STAFF</p>
             <h1>La operación también debe sentirse precisa, elegante y fácil de usar.</h1>
             <p>Este board reúne ingreso staff, métricas, agenda de trainers y check-in operativo dentro de una misma familia visual. La meta es quitar sensación de backoffice improvisado.</p>
           </div>
@@ -2678,10 +2917,11 @@ export function createApp({ prisma }) {
     });
 
     const orderedClassTypes = [...classTypes].sort(sortAgendaServices);
-    const typeLabels = orderedClassTypes.map((item) => item.name);
-    const intensityLabels = Array.from(new Set(classTypes.map((item) => normalizeAgendaIntensity(item.intensity)))).sort(
-      (a, b) => AGENDA_INTENSITY_ORDER.indexOf(a) - AGENDA_INTENSITY_ORDER.indexOf(b),
-    );
+    const intensityCounts = classes.reduce((counts, occurrence) => {
+      const key = getAgendaIntensityMeta(occurrence.classType.intensity).className.replace('is-', '');
+      counts.set(key, (counts.get(key) || 0) + 1);
+      return counts;
+    }, new Map());
 
     const typeChips = orderedClassTypes.length
       ? orderedClassTypes
@@ -2691,14 +2931,20 @@ export function createApp({ prisma }) {
           })
           .join('')
       : '<span class="classes-filter-chip is-muted">Agenda en actualización</span>';
-    const intensityChips = intensityLabels.length
-      ? intensityLabels
-          .map((label) => {
-            const meta = getAgendaIntensityMeta(label);
-            return `<span class="classes-filter-chip ${meta.className}"><span>${esc(meta.label)}</span></span>`;
-          })
-          .join('')
-      : '<span class="classes-filter-chip is-muted">Sin intensidades en este rango</span>';
+    const intensityChips = AGENDA_INTENSITY_ORDER
+      .map((label) => {
+        const meta = getAgendaIntensityMeta(label);
+        const key = meta.className.replace('is-', '');
+        const count = intensityCounts.get(key) || 0;
+        return `<button
+          type="button"
+          class="classes-filter-chip classes-intensity-filter ${meta.className}"
+          data-agenda-intensity-filter="${key}"
+          aria-pressed="false"
+          ${count ? '' : 'disabled'}
+        ><span>${esc(meta.label)}</span><small>${count}</small></button>`;
+      })
+      .join('');
 
     const weekColumns = days
       .map((d) => {
@@ -2742,7 +2988,7 @@ export function createApp({ prisma }) {
         const dayMeta = dayClasses.length ? `${dayClasses.length} horarios para reservar` : 'Sin clases programadas';
         return `
           <section
-            class="classes-month-day ${!d.isSame(periodStart, 'month') ? 'is-out-of-range' : ''} ${dayjs().isSame(d, 'day') ? 'is-today' : ''}"
+            class="classes-month-day ${!d.isSame(periodStart, 'month') ? 'is-out-of-range' : ''} ${dayClasses.length ? '' : 'is-empty'} ${dayjs().isSame(d, 'day') ? 'is-today' : ''}"
             data-classes-day-marker
             data-day-title="${esc(dayTitle)}"
             data-day-meta="${esc(dayMeta)}"
@@ -2789,62 +3035,85 @@ export function createApp({ prisma }) {
           </div>
         </div>
         <aside class="classes-hero__aside">
-          <article class="classes-spotlight-card">
-            <span>${firstBookableClass ? 'Próxima clase disponible' : 'Agenda en actualización'}</span>
-            <strong>${firstBookableClass ? esc(firstBookableClass.classType.name) : 'Agenda en actualización'}</strong>
-            <p>${
-              firstBookableClass
-                ? `${formatAgendaDayName(firstBookableClass.startsAt)} ${formatAgendaDateLabel(firstBookableClass.startsAt)} · ${dayjs(firstBookableClass.startsAt).format('HH:mm')} · ${esc(firstBookableClass.trainer.displayName)}`
-                : 'Estamos preparando nuevos horarios. Cuando haya clases activas, aquí aparecerá la primera opción para reservar.'
-            }</p>
-          </article>
+          <figure class="classes-hero__visual">
+            <img src="/static/pexels-yoga-plants.jpg" alt="Práctica de yoga consciente en un espacio sereno" />
+            <figcaption class="classes-spotlight-card">
+              <span>${firstBookableClass ? 'Próxima clase disponible' : 'Agenda en actualización'}</span>
+              <strong>${firstBookableClass ? esc(firstBookableClass.classType.name) : 'Agenda en actualización'}</strong>
+              <p>${
+                firstBookableClass
+                  ? `${formatAgendaDayName(firstBookableClass.startsAt)} ${formatAgendaDateLabel(firstBookableClass.startsAt)} · ${dayjs(firstBookableClass.startsAt).format('HH:mm')} · ${esc(firstBookableClass.trainer.displayName)}`
+                  : 'Estamos preparando nuevos horarios. Cuando haya clases activas, aquí aparecerá la primera opción para reservar.'
+              }</p>
+              ${
+                firstBookableClass
+                  ? `<a href="${buildSeatSelectionUrl(firstBookableClass.id)}" data-preserve-classes-scroll="true">Reservar esta clase <span aria-hidden="true">↗</span></a>`
+                  : ''
+              }
+            </figcaption>
+          </figure>
           <div class="classes-reserve-guide" aria-label="Cómo reservar">
             <article>
               <span>1</span>
-              <strong>Elige una fecha</strong>
-              <p>Usa semana o mes para encontrar una clase disponible.</p>
+              <strong>Elige tu horario</strong>
+              <p>Encuentra el día y la intensidad que hoy te hacen sentido.</p>
             </article>
             <article>
               <span>2</span>
-              <strong>Revisa cupos</strong>
-              <p>Abre la clase y confirma intensidad, guía y precio.</p>
+              <strong>Confirma disponibilidad</strong>
+              <p>Revisa guía, cupos y valor antes de continuar.</p>
             </article>
             <article>
               <span>3</span>
-              <strong>Reserva tu lugar</strong>
-              <p>Selecciona tapete, paga y recibe tu confirmación.</p>
+              <strong>Reserva tu tapete</strong>
+              <p>Elige tu lugar exacto y recibe el acceso.</p>
             </article>
           </div>
         </aside>
       </section>
 
-      <section class="classes-filter-panel">
-        <div class="classes-filter-group">
-          <span class="classes-filter-group__label">Prácticas en este rango</span>
-          <div class="classes-filter-group__chips">${typeChips}</div>
-        </div>
-        <div class="classes-filter-group">
-          <span class="classes-filter-group__label">Intensidades activas</span>
-          <div class="classes-filter-group__chips">${intensityChips}</div>
-        </div>
-      </section>
+      <section class="classes-control-deck" aria-label="Controles de la agenda">
+        <section class="classes-filter-panel">
+          <div class="classes-filter-group classes-filter-group--intensity">
+            <div class="classes-filter-group__heading">
+              <div class="classes-filter-group__copy">
+                <span class="classes-filter-group__eyebrow">Encuentra tu ritmo</span>
+                <strong>Filtra por intensidad</strong>
+                <p>Elige una opción o combina varias.</p>
+              </div>
+              <output data-agenda-filter-status aria-live="polite">${classCount} horarios</output>
+            </div>
+            <div class="classes-filter-group__chips classes-intensity-filter-list" role="group" aria-label="Filtrar agenda por intensidad">
+              <button type="button" class="classes-filter-chip classes-intensity-filter is-all is-active" data-agenda-intensity-filter="all" aria-pressed="true"><span>Todas</span><small>${classCount}</small></button>
+              ${intensityChips}
+            </div>
+            <button type="button" class="classes-filter-clear" data-agenda-filter-clear hidden>Limpiar selección</button>
+          </div>
+          <div class="classes-filter-group classes-filter-group--services">
+            <span class="classes-filter-group__label">Prácticas disponibles</span>
+            <div class="classes-filter-group__chips">${typeChips}</div>
+          </div>
+        </section>
 
-      <section class="classes-toolbar" id="classes-toolbar">
-        <div class="classes-toolbar__copy">
-          <p class="classes-toolbar__eyebrow">Navegación</p>
-          <h2>${view === 'month' ? 'Mes editorial' : 'Semana editorial'}</h2>
-          <p>${titleRange}</p>
-        </div>
-        <div class="classes-toolbar__actions">
-          <a class="classes-toolbar-link" href="/classes?view=${view}&start=${prevStart.format('YYYY-MM-DD')}">Anterior</a>
-          <span class="classes-toolbar-range">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>
-            ${titleRange}
-          </span>
-          <a class="classes-toolbar-link" href="/classes?view=${view}&start=${nextStart.format('YYYY-MM-DD')}">Siguiente</a>
-          <a class="classes-toolbar-link ${view === 'week' ? 'is-active' : ''}" href="/classes?view=week&start=${startOfWeekMonday(periodStart).format('YYYY-MM-DD')}">Semana</a>
-          <a class="classes-toolbar-link ${view === 'month' ? 'is-active' : ''}" href="/classes?view=month&start=${dayjs(periodStart).startOf('month').format('YYYY-MM-DD')}">Mes</a>
-        </div>
+        <section class="classes-toolbar" id="classes-toolbar">
+          <div class="classes-toolbar__copy">
+            <p class="classes-toolbar__eyebrow">Periodo visible</p>
+            <h2>${view === 'month' ? 'Agenda mensual' : 'Agenda semanal'}</h2>
+            <p>${titleRange}</p>
+          </div>
+          <div class="classes-toolbar__actions">
+            <a class="classes-toolbar-link is-prev" href="/classes?view=${view}&start=${prevStart.format('YYYY-MM-DD')}" aria-label="${view === 'month' ? 'Mes anterior' : 'Semana anterior'}"><span aria-hidden="true">←</span><span>Anterior</span></a>
+            <span class="classes-toolbar-range">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4.5 9h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg>
+              ${titleRange}
+            </span>
+            <div class="classes-toolbar-view-switch" aria-label="Cambiar vista">
+              <a class="classes-toolbar-link ${view === 'week' ? 'is-active' : ''}" href="/classes?view=week&start=${startOfWeekMonday(periodStart).format('YYYY-MM-DD')}">Semana</a>
+              <a class="classes-toolbar-link ${view === 'month' ? 'is-active' : ''}" href="/classes?view=month&start=${dayjs(periodStart).startOf('month').format('YYYY-MM-DD')}">Mes</a>
+            </div>
+            <a class="classes-toolbar-link is-next" href="/classes?view=${view}&start=${nextStart.format('YYYY-MM-DD')}" aria-label="${view === 'month' ? 'Mes siguiente' : 'Semana siguiente'}"><span>Siguiente</span><span aria-hidden="true">→</span></a>
+          </div>
+        </section>
       </section>
 
       ${
@@ -2860,6 +3129,11 @@ export function createApp({ prisma }) {
       }
 
       <section class="classes-board" id="classes-editorial-grid">
+        <div class="classes-agenda-filter-empty" data-agenda-filter-empty hidden>
+          <span>Sin coincidencias</span>
+          <strong>No hay horarios con esa intensidad en este rango.</strong>
+          <p>Prueba otra combinación o vuelve a mostrar todas las prácticas.</p>
+        </div>
         <div class="classes-mobile-day-sticky" data-classes-day-sticky aria-live="polite">
           <span>Estás viendo</span>
           <strong data-classes-day-sticky-title>${esc(firstClass ? `${formatAgendaDayName(firstClass.startsAt)} ${formatAgendaDateLabel(firstClass.startsAt)}` : titleRange)}</strong>
@@ -2871,7 +3145,7 @@ export function createApp({ prisma }) {
             : weekTimetable || `<div class="classes-week-grid">${weekColumns}</div>`
         }
       </section>
-      ${renderCustomerHelpSection()}
+      ${renderCustomerHelpSection({ nextOccurrence: firstBookableClass })}
       ${renderClassPreviewModal()}
     </section>`;
     res.send(
@@ -3012,6 +3286,15 @@ export function createApp({ prisma }) {
 
   app.post('/reservations/web-checkout', async (req, res) => {
     const seatCodes = Array.isArray(req.body.seatCodes) ? req.body.seatCodes : req.body.seatCodes ? [req.body.seatCodes] : [];
+    if (req.body.legalAccepted !== '1') {
+      return res.status(400).redirect(buildSeatSelectionUrl(String(req.body.occurrenceId || ''), {
+        error: 'Revisa y acepta los términos y el aviso de privacidad antes de continuar al pago.',
+        customerName: String(req.body.customerName || ''),
+        customerEmail: String(req.body.customerEmail || ''),
+        customerPhone: String(req.body.customerPhone || ''),
+        returnTo: normalizeReturnTo(req.body.returnTo),
+      }));
+    }
     const parsed = reservationSchema.safeParse({
       ...req.body,
       seatCodes,
@@ -3113,7 +3396,7 @@ export function createApp({ prisma }) {
 
       const body = `<section class="section"><div class="system-shell">
         <section class="system-hero">
-          <p class="concept-kicker">TISA / CHECKOUT</p>
+          <p class="concept-kicker">CHECKOUT</p>
           <h1>${heroTitle}</h1>
           <p>${heroCopy}</p>
         </section>
@@ -3153,7 +3436,7 @@ export function createApp({ prisma }) {
       const canRetry = reservation.status === 'PENDING_PAYMENT' || reservation.status === 'PAYMENT_PENDING_ASYNC';
       const body = `<section class="section"><div class="system-shell">
         <section class="system-hero">
-          <p class="concept-kicker">TISA / CHECKOUT</p>
+          <p class="concept-kicker">CHECKOUT</p>
           <h1>Pausa en el pago.</h1>
           <p>No se registró un cobro confirmado. Si el apartado sigue vigente, puedes retomarlo desde esta misma pantalla.</p>
         </section>
@@ -3485,7 +3768,7 @@ export function createApp({ prisma }) {
     const layout = parseLayoutJson(location.layoutJson, fallbackCapacity);
     const body = renderLayoutEditorBody({
       title: `Layout base · ${location.name}`,
-      kicker: 'TISA / LAYOUT BASE',
+      kicker: 'LAYOUT BASE',
       subtitle: 'Este layout se clona cuando se programa una clase nueva en esta sede.',
       staffRole: req.session.staffRole,
       details: `
@@ -3558,7 +3841,7 @@ export function createApp({ prisma }) {
     const structureLocked = classType.classes.some((occurrence) => occurrence.bookings.length > 0);
     const body = renderLayoutEditorBody({
       title: `Layout de tipo · ${classType.name}`,
-      kicker: 'TISA / LAYOUT POR TIPO',
+      kicker: 'LAYOUT POR TIPO',
       subtitle: 'Este layout lo comparten todos los horarios creados para este tipo de clase.',
       staffRole: req.session.staffRole,
       details: `
@@ -3680,7 +3963,7 @@ export function createApp({ prisma }) {
       ${renderStudioWorkspace({
         activeKey: 'dashboard',
         staffRole: req.session.staffRole,
-        eyebrow: 'TISA / ADMIN',
+        eyebrow: 'ADMIN',
         title: 'La operación también debe sentirse precisa, elegante y confiable.',
         subtitle: 'Lectura clara de métricas, seguimiento de ocupación y acceso directo a la agenda activa del estudio dentro de una sola superficie.',
         content,
@@ -3733,7 +4016,7 @@ export function createApp({ prisma }) {
     const nextStart = view === 'month' ? periodStart.add(1, 'month') : periodStart.add(7, 'day');
     const titleRange =
       view === 'month'
-        ? periodStart.format('MMMM YYYY')
+        ? formatAgendaMonthLabel(periodStart)
         : `${periodStart.format('DD MMM')} - ${periodStart.add(6, 'day').format('DD MMM YYYY')}`;
 
     const startHour = 6;
@@ -3811,11 +4094,11 @@ export function createApp({ prisma }) {
     const body = `<section class="section">
       <div class="system-shell">
       <section class="system-hero scroll-hero" data-scroll-target="trainer-calendar">
-        <p class="concept-kicker">TISA / TRAINER</p>
+        <p class="concept-kicker">TRAINER</p>
         <h1>Tu agenda debe sentirse tan clara como tu práctica.</h1>
         <p>Programa sesiones, revisa reservas y cancela clases desde una vista pensada para leerse con rapidez, en semana o en mes.</p>
       </section>
-      <div class="calendar-toolbar" id="trainer-calendar">
+      <div class="calendar-toolbar" id="trainer-calendar" data-trainer-agenda-toolbar>
         <h2>Agenda del trainer</h2>
         <div class="calendar-toolbar-actions">
           <a class="btn alt" href="/trainer/classes?view=${view}&start=${prevStart.format('YYYY-MM-DD')}">Anterior</a>
@@ -3840,7 +4123,7 @@ export function createApp({ prisma }) {
           <button class="btn" type="submit">Guardar en agenda</button>
         </form>
       </div>
-      <div class="calendar-shell reveal">
+      <div class="calendar-shell reveal" data-trainer-agenda-content>
         ${
           view === 'month'
             ? `<div class="calendar-month-grid">${trainerColumns}</div>`
@@ -3986,7 +4269,7 @@ export function createApp({ prisma }) {
     const body = `<section class="section">
       <div class="system-shell">
         <section class="system-hero scroll-hero" data-scroll-target="ops-checkin-grid">
-          <p class="concept-kicker">TISA / CHECK-IN</p>
+          <p class="concept-kicker">CHECK-IN</p>
           <h1>Validar accesos debe sentirse inmediato y seguro.</h1>
           <p>Escanea un QR o pega el payload manual y recibe una respuesta clara dentro de la misma superficie operativa.</p>
         </section>
@@ -4071,7 +4354,7 @@ export function createApp({ prisma }) {
 
     const body = `<section class="section"><div class="system-shell">
       <section class="system-hero">
-        <p class="concept-kicker">TISA / CHECK-IN</p>
+        <p class="concept-kicker">CHECK-IN</p>
         <h1>Acceso autorizado.</h1>
         <p>La referencia ${booking.bookingRef} ya quedó validada para ${esc(booking.client.email)} y puede entrar al estudio.</p>
       </section>

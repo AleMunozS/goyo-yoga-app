@@ -18,8 +18,9 @@ export function renderLayout({
   const isConceptBoard = title.startsWith('Concept') && !staff;
   const isHome = title === 'Inicio' && !staff;
   const isStaffLogin = title === 'Staff Login' && !staff;
+  const showPrivacyNotice = !staff && !isConceptBoard;
   const appName = brand.name;
-  const assetVersion = '20260713-go-live-v2';
+  const assetVersion = '20260717-redesign-v28';
   const canonicalUrl = canonicalPath
     ? new URL(canonicalPath, `${config.appUrl.replace(/\/+$/, '')}/`).toString()
     : null;
@@ -124,12 +125,22 @@ export function renderLayout({
     <meta property="og:image" content="${esc(socialImageUrl)}" />
     <meta name="twitter:card" content="summary_large_image" />` : ''}
     <title>${esc(fullTitle)}</title>
-    <link rel="icon" href="${brand.assets.matMark}" type="image/svg+xml" />
-    <script>document.documentElement.classList.add('js');</script>
+    <link rel="icon" href="${brand.assets.favicon || brand.assets.headerLogo}" type="image/png" />
+    <script>
+      document.documentElement.classList.add('js');
+      try {
+        if (window.localStorage.getItem('tisa.privacy-notice.v1') === 'acknowledged') {
+          document.documentElement.classList.add('privacy-notice-seen');
+        }
+      } catch (error) {
+        // El aviso sigue visible si el navegador bloquea el almacenamiento local.
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Mono:wght@300;400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css?v=${assetVersion}" />
+    <link rel="stylesheet" href="/static/tisa-redesign.css?v=${assetVersion}" />
   </head>
   <body
     class="${bodyClasses}"
@@ -140,6 +151,20 @@ export function renderLayout({
     ${customHeaderHtml}
     <main${mainClassAttr}>${body}</main>
     ${customFooterHtml}
+    ${showPrivacyNotice ? `
+      <aside class="cookie-notice" data-cookie-notice aria-labelledby="cookie-notice-title">
+        <div class="cookie-notice__mark" aria-hidden="true"><span></span></div>
+        <div class="cookie-notice__copy">
+          <p class="cookie-notice__eyebrow">PRIVACIDAD EN TISA</p>
+          <h2 id="cookie-notice-title">Solo lo necesario para tu recorrido.</h2>
+          <p>Usamos una cookie técnica para mantener segura tu sesión y tu reserva. No usamos cookies publicitarias.</p>
+        </div>
+        <div class="cookie-notice__actions">
+          <a href="/privacy">Conocer detalles</a>
+          <button type="button" data-cookie-notice-dismiss>Entendido</button>
+        </div>
+      </aside>
+    ` : ''}
     <script src="/static/app.js?v=${assetVersion}"></script>
   </body>
   </html>`;
